@@ -4,7 +4,7 @@
 
 Cross 以「線上預約與院所營運管理」為核心，優先完成醫美院所的諮詢與療程預約導入及付費驗證。民眾找院所／預約與院所導入是主要入口；開發者文件、設備與 API 為次要擴充，不可將預約描述為參考應用或附加能力。
 
-## 目前架構（2026-10-23）
+## 目前架構（2026-10-25）
 
 Cross Web 使用 SvelteKit 3.1 / Svelte 5，UI 一律繁體中文。正式網址 https://cross.twinhao.com，發布紀錄位於上層 `docs/deployment-sveltekit-2026-10-23.md`。
 
@@ -16,14 +16,18 @@ Cross Web 使用 SvelteKit 3.1 / Svelte 5，UI 一律繁體中文。正式網址
 - 登入與主題沿用 `access_token` / `refresh_token` / `theme` 儲存鍵；不要建立另一份 React token 狀態。
 - 需登入頁面關閉 SSR。公開文件與公開頁保留 SSR 與 SEO；看板使用遮罩姓名並設 noindex。
 - 框架設定：`vite.config.ts` 的 `sveltekit(...)`，SvelteKit 3 不使用 `svelte.config.js`；TypeScript extends `$app/tsconfig`。
-- Vercel 專案 `cross-web`，`vercel.json` 指定 `sveltekit`，區域 `sin1`，Node 24。先 staged production 驗收，再 promote 相同產物。
+- 正式網站為 Cloudflare Workers + Static Assets，Worker `cross-web`，唯一正式入口 `cross.twinhao.com`；設定在 `wrangler.jsonc` 的 `env.production`。Cloud Run API 與 Neon PostgreSQL 18 維持既有位置。
+- 預覽 Worker `cross-web-preview` 預設禁止寫入正式 API；正式 Worker 關閉 workers.dev 及版本預覽網址。`BACKEND_URL` 必須明確設定，禁止缺值時自動回退正式後端。
+- Cloudflare Builds 連接 `twinhao/cross-web` 的 `main`，建置命令 `pnpm check && pnpm lint && pnpm build`，部署命令 `pnpm exec wrangler deploy --env production`。不可省略環境旗標，否則會部署預覽 Worker。
+- Vercel Git 自動部署已在 `vercel.json` 停用，既有部署保留為歷史回復產物。正式版回復優先使用 Cloudflare 既有版本。
 
 ## 開發與驗證
 
-- Node 22.17 以上或 24；pnpm 10.34.5。Node 26 不受目前 Vercel adapter 支援。
+- Node 22.17 以上或 24；pnpm 10.34.5。
 - `pnpm dev`，預設 http://localhost:5173。
 - `pnpm check`、`pnpm lint`、`pnpm build`、`pnpm test`。瀏覽器測試前先建置，允許本機測試伺服器與無頭 Chrome；測試會拒絕過期產物。
 - `pnpm preview`。唯讀正式 API 驗收需明確覆寫本機的 `BACKEND_URL`，不可拿 `.env.local` 的本機後端結果當正式資料。
+- `pnpm check:worker` 檢查 Workers 產物；`pnpm deploy:preview` 發布唯讀預覽，`pnpm deploy:production` 發布正式環境。私密綁定使用 Wrangler secrets，不將憑證提交 Git。
 - 所有寫入驗收使用虛構 API 或隔離測試環境，不對正式病人／預約資料做測試寫入。
 - 原遷移設計：`docs/superpowers/plans/2026-10-19-sveltekit-migration.md`。歷史計畫保留原紀錄；目前全面原生化範圍與測試以 `docs/admin-compatibility.md` 為準。
 
@@ -50,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 院所可儲存上午／下午／晚間的常用時段，僅套用新建班表；修改常用時段不得覆寫既有排班、營業時間或預約。公開時刻表顯示完整起迄時間，保留連續跨時段及休息前後班段。
+- 班表編輯／刪除需由後端確認未排除已確認、已報到或進行中的預約；409 衝突須在表單呈現，不能先更新介面假裝成功。
 - 可用時段依已授權的班表、休假、院所營業時間與預約時長快照計算，改期需排除原預約；送出仍由後端鎖定並檢查衝突。不得將前端時段計算當作授權或交易邊界。
 - 列表失敗不得顯示成無預約；保留舊資料時標示更新時間。取消、未到與完成服務必須核對客戶與時段，409 等錯誤應在介面顯示。
 - 日期、人員、服務、狀態與頁籤以網址保留；客戶姓名／電話搜尋留在元件狀態，不新增到工作區網址。

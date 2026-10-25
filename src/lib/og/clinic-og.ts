@@ -1,8 +1,8 @@
 // 每間診所專屬的分享卡（1200×630，移植自舊 Next 的 app/clinic/[clinic-id]/opengraph-image.tsx）：
 // 有 logo 用 logo，沒 logo 也以診所名 + 品牌呈現，讓每次分享都是「該診所自己的」識別，而非千篇一律的 Cross 品牌圖。
-// 中文需載入 Noto Sans TC 子集（@vercel/og 內建字型僅 Latin），載入失敗則優雅退化。
+// 中文需載入 Noto Sans TC 子集（cf-workers-og 內建字型僅 Latin），載入失敗則優雅退化。
 // 不用 JSX：版面以 Satori 接受的 { type, props } 元素物件描述，樣式與舊版逐項相同。
-import { ImageResponse } from "@vercel/og";
+import { ImageResponse } from "cf-workers-og";
 import { parseCityFromAddress } from "../constants/clinic-constants.ts";
 
 type Fetch = typeof globalThis.fetch;
@@ -248,9 +248,9 @@ function fallbackCardElement(): OgNode {
 }
 
 /** ImageResponse 在讀取 body 時才渲染；這裡直接讀完，渲染錯誤才會落在呼叫端的 try/catch 內 */
-async function renderPng(element: OgNode, options: ConstructorParameters<typeof ImageResponse>[1]): Promise<ArrayBuffer> {
-  // @vercel/og 的型別要 ReactElement；Satori 實際接受同形狀的元素物件
-  return new ImageResponse(element as never, options).arrayBuffer();
+async function renderPng(element: OgNode, options: NonNullable<Parameters<typeof ImageResponse.create>[1]>): Promise<ArrayBuffer> {
+  // cf-workers-og 的型別要 ReactElement；Satori 實際接受同形狀的元素物件
+  return (await ImageResponse.create(element as never, options)).arrayBuffer();
 }
 
 /** 分享卡結果；degraded=true 表示這張卡受暫時失敗影響，不是該診所應有的樣子 */
@@ -288,7 +288,7 @@ export async function renderClinicOg(
 
     const png = await renderPng(clinicCardElement({ name, subtitle, logo, hasFont }), {
       ...OG_SIZE,
-      // 載入失敗時「省略 fonts」讓 @vercel/og 用內建 Latin 字型（傳空陣列會讓
+      // 載入失敗時「省略 fonts」讓 cf-workers-og 用內建 Latin 字型（傳空陣列會讓
       // Satori 丟 No fonts are loaded）；此時版面走 Latin 分支。
       ...(fontData
         ? {

@@ -8,6 +8,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { svelte, vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import { build } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const SUPPORT = fileURLToPath(new URL("./", import.meta.url));
@@ -18,7 +19,7 @@ const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
  * @param {string} name tests/support 底下的資料夾名稱
  * @returns {Promise<{ origin: string, close: () => Promise<void> }>}
  */
-export async function startHarness(name) {
+export async function startHarness(name, options = {}) {
   const harness = join(SUPPORT, name);
   const outDir = await mkdtemp(join(tmpdir(), `${name}-`));
   await build({
@@ -26,7 +27,7 @@ export async function startHarness(name) {
     root: harness,
     logLevel: "error",
     mode: "production",
-    plugins: [svelte({ configFile: false, preprocess: vitePreprocess() })],
+    plugins: [...(options.tailwind ? [tailwindcss()] : []), svelte({ configFile: false, preprocess: vitePreprocess() })],
     resolve: {
       alias: {
         "#lib": join(ROOT, "src/lib"),

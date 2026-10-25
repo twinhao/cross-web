@@ -15,7 +15,7 @@ function clientIp(request: Request): string | null {
 	return request.headers.get("x-real-ip");
 }
 
-export const POST: RequestHandler = async ({ request, fetch }) => {
+export const POST: RequestHandler = async ({ request, fetch, getClientAddress }) => {
 	let clinicId: string | undefined;
 	try {
 		({ clinicId } = await request.json());
@@ -35,7 +35,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 	const salt = process.env.VISITOR_HASH_SALT;
 	if (!salt) return new Response(null, { status: 204 });
 
-	const ip = clientIp(request);
+	// Workers 由 adapter 取得 Cloudflare 驗證過的來源，避免讀到偽造的轉送標頭。
+    let ip: string | null;
+    try { ip = getClientAddress ? getClientAddress() : clientIp(request); }
+    catch { ip = null; }
 	// 拿不到 IP 也不記，寧可少算也不要把所有無 IP 訪客併成同一個人
 	if (!ip) return new Response(null, { status: 204 });
 

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { isRedirect } from "@sveltejs/kit";
 import { CLINIC_OG_CACHE, CLINIC_OG_DEGRADED_CACHE } from "../src/lib/cache-control.ts";
@@ -15,8 +15,11 @@ const { clinicCardElement, renderClinicOg } = await import("../src/lib/og/clinic
 
 const ID = "c406782c-628f-411c-890c-62a3dc4a5cf0";
 const RAW = { id: ID, name: "喬鋭德鶴", address: "高雄市三民區博愛里長明街175號", logo: null };
-// 以 @vercel/og 自帶的 Latin 字型充當「下載到的字型子集」（測試不連 Google Fonts）
-const FONT = readFileSync(new URL("../node_modules/@vercel/og/dist/Geist-Regular.ttf", import.meta.url));
+// 以 cf-workers-og 自帶的 Latin 字型充當「下載到的字型子集」（測試不連 Google Fonts）
+const fontDir = new URL("../node_modules/cf-workers-og/dist/", import.meta.url);
+const fontModule = readdirSync(fontDir).find(name => name.startsWith("fonts.shared-") && name.endsWith(".js"));
+const fontBase64 = readFileSync(new URL(fontModule, fontDir), "utf8").match(/const DEFAULT_FONT_BASE64 = `([\s\S]*?)`;/)[1];
+const FONT = Buffer.from(fontBase64, "base64");
 // 1×1 透明 PNG
 const PNG_1PX = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { schedulePresets, SESSION_LABELS, type SchedulePresets } from "#lib/schedule-presets.ts";
   import DateInput from "#lib/components/ui/date-input/DateInput.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
   import * as NativeSelect from "#lib/components/ui/native-select/index.ts";
@@ -20,14 +21,22 @@
   let {
     open = $bindable(false),
     facilityId,
+    presets = schedulePresets(),
     staff,
     onSaved,
   }: {
     open?: boolean;
     facilityId: string;
+    presets?: SchedulePresets;
     staff: ApiStaff[];
     onSaved: () => void;
   } = $props();
+  function applyPreset() { from = presets[session].start; to = presets[session].end; }
+  let wasOpen = false;
+  $effect(() => {
+    if (open && !wasOpen) applyPreset();
+    wasOpen = open;
+  });
   let mode = $state("pattern"),
     start = $state(taipeiToday()),
     end = $state(addDateDays(taipeiToday(), 27)),
@@ -274,13 +283,14 @@
                   id="batch-session"
                   class="w-full"
                   bind:value={session}
+                  onchange={applyPreset}
                 >
                   <NativeSelect.Option value="morning">
-                    早班
+                    {SESSION_LABELS.morning}
                   </NativeSelect.Option><NativeSelect.Option value="afternoon">
-                    午班
+                    {SESSION_LABELS.afternoon}
                   </NativeSelect.Option><NativeSelect.Option value="evening">
-                    晚班
+                    {SESSION_LABELS.evening}
                   </NativeSelect.Option>
                 </NativeSelect.Root>
               </div>

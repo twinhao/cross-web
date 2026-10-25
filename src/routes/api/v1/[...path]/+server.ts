@@ -1,15 +1,16 @@
-import { BACKEND_URL } from "$app/env/private";
+import { BACKEND_URL, ALLOW_PRODUCTION_WRITES } from "$app/env/private";
 import type { RequestHandler } from './$types';
 
-// 後端代理：移植自舊 Next 的 api/[...path]/route.ts。
-// 帶尾斜線與不帶尾斜線的 /api/v1 路徑都由此路由處理（vercel.json 不再設 rewrite）。
-//
-// BACKEND_URL 未設定（含 Vercel preview 部署）時，刻意指向「正式後端」：
-// 目前沒有 staging 後端，preview 要能打到真實 API 才有辦法驗證，故以正式後端為預設值。
-// 此網址在程式碼中只在這裡出現一次。
-const backendUrl = BACKEND_URL || 'https://cross-backend-vrqytyiqxq-de.a.run.app';
-
+// 明確指定正式與預覽後端；未設定時回傳錯誤，不隱性連到正式環境。
 const handler: RequestHandler = async ({ request, url }) => {
+    if (!BACKEND_URL) return new Response('後端尚未設定', { status: 503 });
+    const backendUrl = BACKEND_URL;
+    const productionBackend = new URL(backendUrl).hostname.endsWith('.run.app');
+    if (productionBackend && ALLOW_PRODUCTION_WRITES !== 'true' && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+        return new Response(JSON.stringify({ detail: '預覽站不開放正式資料操作，請使用正式網站。' }), {
+            status: 403, headers: { 'content-type': 'application/json', 'cache-control': 'private, no-store' },
+        });
+    }
 	const targetUrl = `${backendUrl}${url.pathname}${url.search}`;
 
 	const headers = new Headers();

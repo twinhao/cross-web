@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cross-web-preview",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare"
+  },
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "vars": {
+    "BACKEND_URL": "https://cross-backend-vrqytyiqxq-de.a.run.app",
+    "ALLOW_PRODUCTION_WRITES": "false"
+  },
+  "env": {
+    "production": {
+      "name": "cross-web",
+      "vars": {
+        "BACKEND_URL": "https://cross-backend-vrqytyiqxq-de.a.run.app",
+        "ALLOW_PRODUCTION_WRITES": "true"
+      },
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        {
+          "pattern": "cross.twinhao.com",
+          "custom_domain": true,
+          "zone_name": "twinhao.com"
+        }
+      ]
+    }
+  }
+}

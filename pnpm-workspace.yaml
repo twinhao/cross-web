@@ -4,5 +4,7 @@ packages:
 # pnpm 11 起讀 allowBuilds；onlyBuiltDependencies 給仍讀舊鍵的 pnpm 10（例如 Vercel 依 lockfile v9 選用的版本）。
 allowBuilds:
   esbuild: true
+  workerd: true
 onlyBuiltDependencies:
   - esbuild
+  - workerd

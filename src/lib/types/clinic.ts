@@ -1,3 +1,4 @@
+import type { SchedulePresets } from "../schedule-presets.ts";
 import type { ScheduleSession } from "./schedule.ts";
 
 // 醫療分級
@@ -228,6 +229,7 @@ export interface MedicalFacility {
   payment_type: PaymentType;
   facility_type: FacilityType;
   business_hours: Record<string, { open: string; close: string; breaks?: BreakTime[] }> | null;
+  schedule_presets?: SchedulePresets | null;
   slot_duration: number; // 預約時段間隔（分鐘）
   is_active: boolean;
   phone_booking_enabled: boolean; // 未開通線上預約時是否顯示電話預約（後台勾選，預設關閉）

@@ -1,3 +1,4 @@
+import type { SchedulePresets } from "../../schedule-presets.ts";
 import { api } from "../client.ts";
 import type {
   MedicalFacility,
@@ -121,12 +122,12 @@ export const adminClinicsApi = {
 
   settings: {
     get: (facilityId: string) =>
-      api.get<{ business_hours: Record<string, unknown> | null; slot_duration: number }>(
+      api.get<{ business_hours: Record<string, unknown> | null; slot_duration: number; schedule_presets?: SchedulePresets | null }>(
         `${BASE_PATH}/${facilityId}/settings`
       ),
 
-    update: (facilityId: string, data: { business_hours?: unknown; slot_duration?: number }) =>
-      api.patch<{ business_hours: Record<string, unknown> | null; slot_duration: number }>(
+    update: (facilityId: string, data: { business_hours?: unknown; slot_duration?: number; schedule_presets?: SchedulePresets | null }) =>
+      api.patch<{ business_hours: Record<string, unknown> | null; slot_duration: number; schedule_presets?: SchedulePresets | null }>(
         `${BASE_PATH}/${facilityId}/settings`,
         data
       ),

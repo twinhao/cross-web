@@ -22,6 +22,8 @@
     ApiStaffLeave,
   } from "#lib/types/clinic.ts";
   import type { ScheduleSession } from "#lib/types/schedule.ts";
+  import { schedulePresets, SESSION_LABELS, type SchedulePresets } from "#lib/schedule-presets.ts";
+  import SchedulePresetsEditor from "./SchedulePresetsEditor.svelte";
   import BatchSchedule from "./BatchSchedule.svelte";
   let { facility }: { facility: MedicalFacility } = $props();
   const month = $derived(
@@ -88,7 +90,19 @@
       staffId: string;
     } | null>(null),
     batch = $state(false);
-  const sessions = { morning: "早班", afternoon: "午班", evening: "晚班" };
+  const sessions = SESSION_LABELS;
+  let customPresets = $state<SchedulePresets | null>(null);
+  let editing = $state<ApiSchedule | null>(null);
+  const presets = $derived(schedulePresets(customPresets ?? facility.schedule_presets));
+  function applyPreset() {
+    start = presets[session].start;
+    end = presets[session].end;
+  }
+  function editShift(row: ApiSchedule) {
+    editing = row; staffId = row.staff_id; session = row.session_type;
+    start = row.start_time.slice(0,5); end = row.end_time.slice(0,5);
+    dialogError = ""; remove = null;
+  }
   const professionals = $derived(
     staff.filter(
       (s) =>
@@ -161,8 +175,8 @@
     selected = day;
     staffId = staffFilter;
     session = "morning";
-    start = "09:00";
-    end = "12:00";
+    editing = null;
+    applyPreset();
     note = "";
     dialogError = "";
     remove = null;
@@ -172,19 +186,18 @@
     busy = true;
     dialogError = "";
     try {
-      if (kind === "shift")
-        await adminClinicsApi.schedules.create(facility.id, staffId, {
-          date: selected,
-          start_time: start,
-          end_time: end,
-          session_type: session,
-        });
+      if (kind === "shift") {
+        const data = { date: selected, start_time: start, end_time: end, session_type: session };
+        if (editing) await adminClinicsApi.schedules.update(facility.id, editing.staff_id, editing.id, data);
+        else await adminClinicsApi.schedules.create(facility.id, staffId, data);
+      }
       else
         await adminClinicsApi.staffLeaves.create(facility.id, staffId, {
           date: selected,
           note: note || undefined,
         });
-      message = kind === "shift" ? "排班已新增" : "休假已設定";
+      message = kind === "shift" ? (editing ? "排班已更新" : "排班已新增") : "休假已設定";
+      editing = null;
       revision++;
     } catch (e) {
       dialogError = apiMessage(e, "儲存失敗，請重試");
@@ -228,7 +241,7 @@
         按日期管理人員班表與休假，支援週期樣板及複製。
       </p>
     </div>
-    <Button onclick={() => (batch = true)}>智慧排班</Button>
+    <div class="flex flex-wrap gap-2"><SchedulePresetsEditor facilityId={facility.id} onSaved={value => { customPresets = value; message = "常用時段已更新，既有班表保持原值"; }} /><Button onclick={() => (batch = true)}>智慧排班</Button></div>
   </div>
   <div class="flex flex-wrap items-end gap-2">
     <Button
@@ -418,6 +431,7 @@
               {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
             </span>
           </p>
+          <div class="flex shrink-0 flex-wrap justify-end gap-2"><Button variant="outline" size="sm" disabled={busy} onclick={() => editShift(s)} aria-label={"編輯" + s.staff_name + "的排班"}>編輯時間</Button>
           <Button
             variant="outline"
             size="sm"
@@ -427,7 +441,7 @@
             aria-label={"移除" + s.staff_name + "的排班"}
           >
             移除班次
-          </Button>
+          </Button></div>
         </div>{/each}{#each leaves.filter((l) => l.date === selected) as l (l.id)}<div
           class="flex items-center justify-between gap-2 rounded-xl border p-3"
         >
@@ -477,7 +491,7 @@
           id="shift-staff"
           class="w-full"
           bind:value={staffId}
-          disabled={busy}
+          disabled={busy || !!editing}
         >
           <NativeSelect.Option value="">
             請選擇人員
@@ -496,14 +510,7 @@
             id="shift-session"
             class="w-full"
             bind:value={session}
-            onchange={() => {
-              [start, end] =
-                session === "morning"
-                  ? ["09:00", "12:00"]
-                  : session === "afternoon"
-                    ? ["13:00", "17:00"]
-                    : ["17:00", "21:00"];
-            }}
+            onchange={applyPreset}
           >
             {#each Object.entries(sessions) as [value, label] (value)}<NativeSelect.Option
                 {value}
@@ -533,8 +540,10 @@
         disabled={busy || !staffId || !start || !end || start >= end}
         onclick={() => save("shift")}
       >
-        新增班次
+        {editing ? "儲存班次" : "新增班次"}
       </Button>
+      {#if editing}<Button variant="outline" disabled={busy} onclick={() => { editing = null; }}>取消編輯</Button>{/if}
+      <p class="text-xs leading-relaxed text-muted-foreground">起訖時間可依當天調整，連續服務可直接填完整班段，例如 13:00–21:00。修改若影響既有預約，請先處理改期或取消。</p>
       <div class="space-y-1 border-t pt-3">
         <Field.Label for="leave-note" class="text-sm font-medium">
           休假備註
@@ -557,6 +566,7 @@
 <BatchSchedule
   bind:open={batch}
   facilityId={facility.id}
+  {presets}
   staff={professionals}
   onSaved={() => {
     revision++;
