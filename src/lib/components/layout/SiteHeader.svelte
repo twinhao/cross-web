@@ -4,9 +4,10 @@
 	import AuthButton from "./AuthButton.svelte";
 	import ClinicEntry from "./ClinicEntry.svelte";
 	import { getAuth } from "#lib/auth/auth.svelte.ts";
+	import { page } from "$app/state";
 	import { canAccessAdmin } from "#lib/auth/roles.ts";
 
-	let { home = false }: { home?: boolean } = $props();
+	let { home = false, compact = false }: { home?: boolean; compact?: boolean } = $props();
 	const auth = getAuth();
 	const isAdmin = $derived(canAccessAdmin(auth.user));
 </script>
@@ -17,9 +18,10 @@
 	>
 		<a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="Cross 首頁">
 			<img src="/cross-icon.png" alt="" width="32" height="32" class="size-8 rounded-lg" />
-			<span class="text-lg font-semibold tracking-tight">Cross</span>
+			<span class="hidden text-lg font-semibold tracking-tight min-[360px]:inline">Cross</span>
 		</a>
 		<nav aria-label="主要導覽" class="flex items-center gap-1 sm:gap-2">
+			{#if !compact}
 			<Button
 				href={`${home ? "" : "/"}#how-it-works`}
 				variant="ghost"
@@ -32,12 +34,13 @@
 			{#if !auth.isLoading && !isAdmin}
 				<Button href="/member" variant="ghost" size="sm" class={home ? "min-h-11" : undefined}>我的預約</Button>
 			{/if}
-			{#if !isAdmin}<ClinicEntry />{/if}
+			{#if !isAdmin}<span class={auth.isAuthenticated ? "hidden md:inline-flex" : "inline-flex"}><ClinicEntry /></span>{/if}
+			{/if}
 			<span class="hidden min-[400px]:inline-flex">
 				<ThemeToggle class={home ? "size-11" : undefined} />
 			</span>
-			<span class={isAdmin ? "inline-flex" : "hidden md:inline-flex"}>
-				<AuthButton />
+			<span class={compact ? (auth.isAuthenticated ? "inline-flex" : "hidden") : (auth.isAuthenticated ? "inline-flex" : "hidden md:inline-flex")}>
+				<AuthButton next={compact ? page.url.pathname : undefined}/>
 			</span>
 		</nav>
 	</div>

@@ -26,8 +26,8 @@ export const NO_PREFERENCE_DOCTOR: DoctorOption = {
 // 預約步驟
 export const BOOKING_STEPS = [
   { step: 1, label: "選擇服務" },
-  { step: 2, label: "選擇人員" },
-  { step: 3, label: "選擇時間" },
+  { step: 2, label: "選擇時間" },
+  { step: 3, label: "確認資料" },
 ] as const;
 
 // 星期對照

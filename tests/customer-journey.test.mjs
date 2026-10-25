@@ -284,7 +284,7 @@ test("選擇方案延續到申請與通知內容，所有送出均為虛構 API"
   }
 });
 
-test("會員讀取失敗不偽裝空預約，重試後最近預約位於個人資料之前", async () => {
+test("會員讀取失敗不偽裝空預約，重試後預約可讀且帳戶資料獨立", async () => {
   const { page, errors, state } = await guest(390, false, true);
   try {
     await page.goto(preview.origin + "/member");
@@ -309,10 +309,8 @@ test("會員讀取失敗不偽裝空預約，重試後最近預約位於個人�
       .locator('[role="tabpanel"]:visible')
       .getByText("虛構預約院所", { exact: true })
       .boundingBox();
-    const profile = await page
-      .getByRole("heading", { name: "虛構會員", exact: true })
-      .boundingBox();
-    assert(appointment.y < profile.y);
+    assert.equal(await page.getByRole("heading", { name: "虛構會員", exact: true }).count(),0);
+    assert.equal(await page.getByRole("button", { name: "刪除帳號", exact: true }).count(),0);
     assert(appointment.y < 900);
     await fits(page);
     await page.screenshot({

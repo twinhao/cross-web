@@ -1,6 +1,7 @@
 <script lang="ts">
 	import CalendarDays from "@lucide/svelte/icons/calendar-days";
 	import Heart from "@lucide/svelte/icons/heart";
+	import UserRound from "@lucide/svelte/icons/user-round";
 	import Users from "@lucide/svelte/icons/users";
 	import { page } from "$app/state";
 	import { cn } from "#lib/utils.ts";
@@ -9,6 +10,7 @@
 		{ href: "/member", label: "我的預約", icon: CalendarDays },
 		{ href: "/member/favorites", label: "收藏店家", icon: Heart },
 		{ href: "/member/patients", label: "預約對象", icon: Users },
+		{ href: "/member/profile", label: "帳戶設定", icon: UserRound },
 	];
 
 	const pathname = $derived<string>(page.url.pathname);
@@ -17,7 +19,7 @@
 <div class="border-b border-border/60 bg-[#eff4fa] dark:bg-[#142238]">
 	<div class="home-container py-6 sm:py-8">
 		<p class="home-eyebrow">MY CROSS / 你的健康日常</p>
-		<nav aria-label="會員功能" class="mt-4 flex gap-1 sm:gap-3">
+		<nav aria-label="會員功能" class="mt-4 grid grid-cols-2 gap-2 sm:flex sm:gap-3">
 			{#each LINKS as { href, label, icon: Icon } (href)}
 				{@const active =
 					href === "/member"
@@ -27,7 +29,7 @@
 					{href}
 					aria-current={active ? "page" : undefined}
 					class={cn(
-						"inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium transition-colors sm:px-5",
+						"inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors sm:px-5",
 						active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-card hover:text-primary",
 					)}><Icon class="hidden size-4 min-[370px]:block" />{label}</a
 				>

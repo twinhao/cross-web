@@ -22,23 +22,18 @@
 	// 與站上 --primary 一致；原本寫死的 #ec4899 配白字只有 3.53:1
 	const primaryColor = "#1d4ed8";
 
-	$effect(() => {
-		const id = bookingId;
-		if (!id) return;
+  $effect(() => {
+    const id=bookingId;
+    booking=null;error=!id;isLoading=!!id;
+    let cancelled=false;
+    if(id)bookingApi.getBooking(id).then(result=>{if(!cancelled)booking=result;}).catch(()=>{if(!cancelled)error=true;}).finally(()=>{if(!cancelled)isLoading=false;});
+    return ()=>{cancelled=true;};
+  });
 
-		bookingApi
-			.getBooking(id)
-			.then((result) => (booking = result))
-			.catch((err) => {
-				console.error("Failed to load booking:", err);
-				error = true;
-			})
-			.finally(() => (isLoading = false));
-	});
 </script>
 
-<PublicFrame footer={false}>
-	<div class="mx-auto min-h-[70vh] max-w-3xl bg-background pb-24">
+<PublicFrame footer={false} booking>
+	<div class="mx-auto min-h-[70vh] max-w-xl bg-background pb-12">
 		<!-- Header -->
 		<div class="px-4 py-6">
 			<a
@@ -68,17 +63,15 @@
 				<SuccessCard {booking} {primaryColor} />
 			</div>
 
-			<!-- Calendar Buttons -->
-			<div class="py-4">
-				<CalendarButtons {booking} {primaryColor} />
-			</div>
+
 		{/if}
 
 		<!-- Actions -->
-		<div
-			class="fixed inset-x-0 bottom-0 space-y-2 border-t border-border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-		>
-			<Button href={`/clinic/${clinicId}`} variant="outline" class="h-12 w-full text-base">返回診所首頁</Button>
-		</div>
+    <div class="mt-4 grid gap-3 px-4">
+      <Button href="/member" class="min-h-12 rounded-xl">查看我的預約</Button>
+      <Button href={`/clinic/${clinicId}`} variant="outline" class="min-h-12 rounded-xl">返回診所首頁</Button>
+    </div>
+    {#if booking && !isLoading && !error}<div class="py-6"><CalendarButtons {booking} {primaryColor}/></div>{/if}
+
 	</div>
 </PublicFrame>

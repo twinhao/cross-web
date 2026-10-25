@@ -34,9 +34,9 @@
 		</div>
 	</div>
 {:else}
-	<div class="space-y-7 px-4">
+	<div class="space-y-6">
 		<div class="space-y-1">
-			<h2 class="text-2xl font-semibold tracking-tight text-foreground">選擇服務項目</h2>
+			<h2 class="text-xl font-semibold tracking-tight text-foreground">選擇服務項目</h2>
 			<p class="text-sm text-muted-foreground">請選擇您本次想預約的服務</p>
 		</div>
 

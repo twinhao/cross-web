@@ -137,7 +137,7 @@ test("團隊成員分頁：依角色組顯示分頁，點「醫師」只列醫�
 });
 
 test("預約流程：重複的日期、時段、服務、人員都渲染", { skip: noChrome }, async () => {
-  assert.equal(await count("#booking-dates", "週三"), 2);
+  assert.equal(await page.locator('#booking-dates [data-value="2026-10-21"][role="button"]').count(), 1);
   assert.equal(await count("#booking-slots", "09:30"), 2);
   assert.equal(await count("#booking-services", "重複預約服務"), 2);
   assert.equal(await count("#booking-doctors", "重複預約醫師"), 2);

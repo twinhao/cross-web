@@ -28,8 +28,8 @@
 	} = $props();
 </script>
 
-<section class={cn("rounded-3xl border border-border/80 bg-card p-5 sm:p-7", className)}>
-	<div class="mb-6 flex items-start justify-between gap-3">
+<section class={cn("rounded-2xl border border-border/80 bg-card p-5 sm:p-6", className)}>
+	<div class="mb-4 flex items-start justify-between gap-3">
 		<div class="flex items-center gap-2.5">
 			{#if index !== undefined}
 				<span

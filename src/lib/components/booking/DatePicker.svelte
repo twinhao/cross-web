@@ -1,97 +1,24 @@
 <script lang="ts">
-	import CalendarX2 from "@lucide/svelte/icons/calendar-x-2";
-	import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-	import ChevronRight from "@lucide/svelte/icons/chevron-right";
-	import { groupDatesByMonth } from "#lib/booking/booking-flow.ts";
-	import { inkOn } from "#lib/color-contrast.ts";
-	import type { BookableDate } from "#lib/types/booking.ts";
-	import { cn } from "#lib/utils.ts";
-
-	// 移植自舊版 components/booking/date-picker.tsx（自製月份切換 + 7 欄日期格，不是 react-day-picker）。
-	// 換服務／人員時由 BookingFlow 以 {#key} 重掛載，月份回到第一個（舊版 key={service-doctor}）。
-	let {
-		dates,
-		selectedDate,
-		onSelectDate,
-		primaryColor = "#1d4ed8",
-	}: {
-		dates: BookableDate[];
-		selectedDate: string | null;
-		onSelectDate: (date: string) => void;
-		primaryColor?: string;
-	} = $props();
-
-	const hasAvailableDates = $derived(dates.some((d) => d.isAvailable));
-
-	// 按月份分組
-	const dateGroups = $derived(groupDatesByMonth(dates));
-
-	let currentMonthIndex = $state(0);
-
-	const currentGroup = $derived(dateGroups[currentMonthIndex]);
-	const hasPrev = $derived(currentMonthIndex > 0);
-	const hasNext = $derived(currentMonthIndex < dateGroups.length - 1);
+  import { untrack } from "svelte";
+  import CalendarX2 from "@lucide/svelte/icons/calendar-x-2";
+  import { parseDate, type DateValue } from "@internationalized/date";
+  import { Calendar } from "#lib/components/ui/calendar/index.js";
+  import { taipeiToday } from "#lib/constants/appointment.ts";
+  import { inkOn } from "#lib/color-contrast.ts";
+  import type { BookableDate } from "#lib/types/booking.ts";
+  let { dates, selectedDate, onSelectDate, primaryColor = "#1d4ed8" }: {
+    dates:BookableDate[]; selectedDate:string|null; onSelectDate:(date:string)=>void; primaryColor?:string;
+  } = $props();
+  const available = $derived(dates.filter(date => date.isAvailable));
+  const min = $derived(dates.length ? parseDate(dates[0].date) : undefined);
+  const max = $derived(dates.length ? parseDate(dates[dates.length - 1].date) : undefined);
+  const value = $derived(selectedDate ? parseDate(selectedDate) : undefined);
+  let placeholder = $state.raw<DateValue>(untrack(() => parseDate(selectedDate ?? dates.find(date => date.isAvailable)?.date ?? dates[0]?.date ?? taipeiToday())));
 </script>
-
-{#if dates.length === 0 || !hasAvailableDates}
-	<div class="flex flex-col items-center gap-2 rounded-2xl bg-muted/40 py-10 text-center">
-		<CalendarX2 class="size-6 text-muted-foreground/60" />
-		<p class="text-sm text-muted-foreground">暫無可預約日期</p>
-	</div>
+{#if available.length === 0}
+  <div class="rounded-xl bg-muted/50 px-4 py-8 text-center"><CalendarX2 class="mx-auto mb-3 size-6 text-muted-foreground"/><p class="text-sm font-medium">暫無可預約日期</p><p class="mt-2 text-xs leading-5 text-muted-foreground">可以更換服務人員，或聯絡院所確認其他時間。</p></div>
 {:else}
-	<div class="space-y-4">
-		<!-- 月份切換 -->
-		<div class="flex items-center justify-between">
-			<button
-				type="button"
-				aria-label="上個月"
-				onclick={() => (currentMonthIndex -= 1)}
-				disabled={!hasPrev}
-				class={cn(
-					"flex size-9 items-center justify-center rounded-full transition-colors",
-					hasPrev ? "text-foreground hover:bg-muted" : "cursor-not-allowed text-muted-foreground opacity-30",
-				)}
-			>
-				<ChevronLeft class="size-5" />
-			</button>
-			<span class="text-base font-semibold text-foreground">{currentGroup?.label}</span>
-			<button
-				type="button"
-				aria-label="下個月"
-				onclick={() => (currentMonthIndex += 1)}
-				disabled={!hasNext}
-				class={cn(
-					"flex size-9 items-center justify-center rounded-full transition-colors",
-					hasNext ? "text-foreground hover:bg-muted" : "cursor-not-allowed text-muted-foreground opacity-30",
-				)}
-			>
-				<ChevronRight class="size-5" />
-			</button>
-		</div>
-
-		<!-- 日期網格 — 橫向 7 欄，每格顯示 週X / DD（日期來自後端，不以日期當 key，重複時 keyed each 會丟錯） -->
-		<div class="grid grid-cols-7 gap-1.5">
-			{#each currentGroup?.dates ?? [] as dateInfo, i (i)}
-				{@const isSelected = selectedDate === dateInfo.date}
-				{@const isDisabled = !dateInfo.isAvailable}
-				<button
-					type="button"
-					aria-pressed={isSelected}
-					onclick={() => !isDisabled && onSelectDate(dateInfo.date)}
-					disabled={isDisabled}
-					class={cn(
-						"flex flex-col items-center rounded-2xl py-2.5 transition-all",
-						isSelected && "scale-[1.03] shadow-md",
-						!isSelected && !isDisabled && "text-foreground hover:bg-muted",
-						isDisabled && "cursor-not-allowed opacity-30",
-					)}
-					style:background-color={isSelected ? primaryColor : undefined}
-					style:color={isSelected ? inkOn(primaryColor) : undefined}
-				>
-					<span class="text-xs font-medium">{dateInfo.isToday ? "今天" : `週${dateInfo.dayOfWeek}`}</span>
-					<span class="mt-0.5 text-lg font-bold">{dateInfo.dayNumber}</span>
-				</button>
-			{/each}
-		</div>
-	</div>
+  <div class="mx-auto w-full max-w-[340px]" style={`--primary:${primaryColor};--primary-foreground:${inkOn(primaryColor)}`}>
+    <Calendar type="single" {value} bind:placeholder locale="zh-TW" weekStartsOn={1} minValue={min} maxValue={max} isDateUnavailable={day => !available.some(date => date.date === day.toString())} onValueChange={day => { if (day) onSelectDate(day.toString()); }} class="w-full bg-transparent p-0 [--cell-radius:0.75rem] [--cell-size:1.75rem] sm:[--cell-size:2rem]"/>
+  </div>
 {/if}

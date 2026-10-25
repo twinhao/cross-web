@@ -36,7 +36,7 @@
 	<!-- 舊版 notFound()：沒有自訂 not-found，由 root 的預設 404 取代整個 booking layout（無 header） -->
 	<NextErrorFallback status={404} message="This page could not be found." />
 {:else}
-	<PublicFrame footer={false}>
+	<PublicFrame footer={false} booking>
 		{#if result === null || result.kind === "redirect"}
 			<BookingLoading />
 		{:else if result.kind === "error"}

@@ -13,7 +13,7 @@ async function runLoad(file, params = {}) {
   return { data, headers };
 }
 
-for (const route of ["auth", "auth/complete-profile", "member", "member/favorites", "member/patients"]) {
+for (const route of ["auth", "auth/complete-profile", "member", "member/favorites", "member/patients", "member/profile"]) {
   test(`/${route}：靜態頁快取，<head> 用全站預設（不回 seo）`, async () => {
     const { data, headers } = await runLoad(`../src/routes/${route}/+page.ts`);
     assert.deepEqual(headers, [{ "cache-control": STATIC_PAGE_CACHE }]);

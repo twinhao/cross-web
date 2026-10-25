@@ -46,8 +46,8 @@
 				href="/privacy"
 				target="_blank"
 				class="font-medium underline underline-offset-2"
-				style:color={primaryColor}>隱私權政策</a
-			> 及 <a href="/terms" target="_blank" class="font-medium underline underline-offset-2" style:color={primaryColor}
+				>隱私權政策</a
+			> 及 <a href="/terms" target="_blank" class="font-medium underline underline-offset-2"
 				>服務條款</a
 			>
 		</Label>

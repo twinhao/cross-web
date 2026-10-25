@@ -84,7 +84,7 @@ export function canProceed(input: ProceedInput): boolean {
     case 1:
       return input.selection.service !== null;
     case 2:
-      return input.selection.doctor !== null;
+      return input.selection.service !== null && input.selection.doctor !== null && input.validSlot;
     case 3:
       return (
         !input.isDemo &&
@@ -101,9 +101,9 @@ export function canProceed(input: ProceedInput): boolean {
 export function nextButtonLabel(currentStep: number, isAuthenticated: boolean, isDemo: boolean): string {
   switch (currentStep) {
     case 1:
-      return "選擇人員";
+      return "選擇預約時間";
     case 2:
-      return "選擇時間";
+      return "確認預約資料";
     case 3:
       return isDemo ? "示範流程，不會建立預約" : isAuthenticated ? "確認送出預約" : "登入並繼續預約";
     default:

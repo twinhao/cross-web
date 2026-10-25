@@ -3,6 +3,7 @@
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import UserCheck from "@lucide/svelte/icons/user-check";
 	import UserPlus from "@lucide/svelte/icons/user-plus";
+	import { Skeleton } from "#lib/components/ui/skeleton/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
 	import { RadioGroup, RadioGroupItem } from "#lib/components/ui/radio-group/index.js";
 	import { memberPatientApi } from "#lib/api/member-patient.ts";
@@ -32,7 +33,9 @@
 	const auth = getAuth();
 
 	let patients = $state.raw<MemberPatientRead[]>([]);
-	let isLoading = $state(false);
+	let isLoading = $state(true);
+	let patientRequest = 0;
+	let loadError = $state(false);
 	let dialogOpen = $state(false);
 	// 對話框預設關係：「為本人預約」帶 self，其餘帶 other
 	let dialogRelation = $state("other");
@@ -45,9 +48,12 @@
 		lastBooked: string | null | undefined,
 		select: (patient: MemberPatientRead) => void,
 	) {
+		const requestId=++patientRequest;
 		isLoading = true;
+		loadError = false;
 		try {
 			const data = await memberPatientApi.list();
+			if(requestId !== patientRequest) return;
 			patients = data;
 
 			// 如果 selectedId 為空，預設選 last_booked，否則本人（self），最後退回第一位
@@ -56,24 +62,21 @@
 				if (defaultPatient) select(defaultPatient);
 			}
 		} catch (err) {
+			if(requestId !== patientRequest) return;
+			loadError = true;
 			console.error("Failed to load patients:", err);
 		} finally {
-			isLoading = false;
+			if(requestId === patientRequest) isLoading = false;
 		}
 	}
 
-	// 登入後自動載入 patients。依賴同舊版 useEffect [authLoading, isAuthenticated, fetchPatients]，
-	// 而 fetchPatients 依賴 [selectedId, user.last_booked_member_patient_id, onSelect]：
-	// 舊版每次改選看診對象都會重新載入清單（短暫顯示載入中），照舊。
-	$effect(() => {
-		const authLoading = auth.isLoading;
-		const isAuthenticated = auth.isAuthenticated;
-		const currentSelectedId = selectedId;
-		const lastBooked = auth.user?.last_booked_member_patient_id;
-		const select = onSelect;
-		if (authLoading) return;
-		if (isAuthenticated) untrack(() => fetchPatients(currentSelectedId, lastBooked, select));
-	});
+  // 只在帳戶確定或切換時讀取，不因改選對象而讓整份清單閃爍。
+  $effect(() => {
+    const loading=auth.isLoading,authenticated=auth.isAuthenticated;
+    void auth.user?.id;
+    if(!loading && authenticated) untrack(()=>fetchPatients(selectedId,auth.user?.last_booked_member_patient_id,onSelect));
+    return ()=>{patientRequest++;};
+  });
 
 	// 看診人上限控管（與 iOS / Android 一致，最多 MAX_PATIENTS 位）
 	const canAddPatient = $derived(patients.length < MAX_PATIENTS);
@@ -97,9 +100,9 @@
 	<!-- 舊版「未登入：顯示 inline 登入」分支，見上方說明；預約流程中不會出現，這裡不顯示任何內容 -->
 {:else if auth.isLoading || isLoading}
 	<!-- Loading -->
-	<div class="flex items-center justify-center py-6">
-		<div class="size-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
-	</div>
+	<div role="status" aria-label="載入預約對象中" class="space-y-3 py-2"><Skeleton class="h-4 w-32"/><Skeleton class="h-20 w-full rounded-xl"/></div>
+{:else if loadError}
+  <div role="alert" class="space-y-3 rounded-xl border p-4"><p class="text-sm">無法載入預約對象，請重新載入後再選擇。</p><Button variant="outline" class="min-h-11 rounded-xl" onclick={()=>fetchPatients(selectedId,auth.user?.last_booked_member_patient_id,onSelect)}>重新載入預約對象</Button></div>
 {:else}
 	<!-- 已登入：顯示看診對象列表 -->
 	<div class={className}>
@@ -136,12 +139,7 @@
 			<!-- 已有看診對象：清單 -->
 			<div>
 				<div class="mb-3 flex items-center justify-between">
-					<div class="flex items-center gap-2 text-sm font-semibold text-foreground">
-						<span class="flex size-7 items-center justify-center rounded-xl bg-primary/10 text-primary">
-							<UserCheck class="size-4" />
-						</span>
-						看診對象
-					</div>
+					<p class="text-xs text-muted-foreground">選擇一位預約對象</p>
 					<!-- 已達上限時隱藏新增入口 -->
 					{#if canAddPatient}
 						<Button type="button" variant="outline" size="sm" class="rounded-full" onclick={() => openDialog("other")}>
