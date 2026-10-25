@@ -428,3 +428,15 @@ test('院所詳情保留公開 API 的價格顯示設定，隱藏服務不被還
  assert.equal(detail.clinic.services[0].show_price,false);
  assert.equal(detail.clinic.services[0].duration_minutes,30);
 });
+
+test("相簿依公開 API 順序呈現，保留說明並使載入失敗採降級快取", async () => {
+  const photos = [{ id: "photo-a", url: "https://images.example.invalid/a.avif", caption: "接待空間" }, { id: "photo-b", url: "https://images.example.invalid/b.avif", caption: "診間" }];
+  const routes = { ...okRoutes(), [`${BASE}/${ID}/photos`]: () => json(photos) };
+  const detail = await loadClinicDetail(fakeFetch(routes).fetch, ID);
+  assert.deepEqual(detail.clinic.photos, photos);
+  assert.deepEqual(detail.clinic.images, photos.map((photo) => photo.url));
+  assert.equal(detail.degraded, false);
+  const failed = await loadClinicDetail(fakeFetch({ ...routes, [`${BASE}/${ID}/photos`]: () => json({ detail: "失敗" }, 500) }).fetch, ID);
+  assert.deepEqual(failed.clinic.photos, []);
+  assert.equal(failed.degraded, true);
+});

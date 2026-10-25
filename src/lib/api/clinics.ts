@@ -28,6 +28,7 @@ export interface BackendClinic {
   facility_type?: FacilityType;
   payment_type?: PaymentType;
   logo?: string | null;
+  cover_image?: string | null;
   // departments 攜帶 service_category code（看診沿用 18 科別 code，其餘 aes_/bty_/oth_ 前綴）
   departments?: string[];
   phone: string | null;
@@ -108,6 +109,7 @@ export function transformClinic(backendClinic: BackendClinic): Clinic {
     facility_type: backendClinic.facility_type ?? deriveFacilityType(members),
     payment_type: backendClinic.payment_type,
     logo: backendClinic.logo ?? null,
+    images: backendClinic.cover_image ? [backendClinic.cover_image] : [],
     description: backendClinic.description ?? undefined,
     latitude: backendClinic.latitude ?? null,
     longitude: backendClinic.longitude ?? null,

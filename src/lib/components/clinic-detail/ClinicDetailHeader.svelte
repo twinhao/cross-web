@@ -7,6 +7,7 @@
 	import Share2 from "@lucide/svelte/icons/share-2";
 	import Star from "@lucide/svelte/icons/star";
 	import FavoriteButton from "#lib/components/clinics/FavoriteButton.svelte";
+	import ClinicGallery from "./ClinicGallery.svelte";
 	import ShareClinicDialog from "#lib/components/clinics/ShareClinicDialog.svelte";
 	import { Badge } from "#lib/components/ui/badge/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
@@ -85,13 +86,8 @@
 		</div>
 		<p class="mt-3 text-xs leading-6 text-muted-foreground">{clinic.online_booking_enabled ? "先選服務與時間，確認資料後再送出預約。" : canCall ? "本院所採電話／現場預約，請向院所確認服務與可到訪時間。" : "本院所採現場預約，到訪前請先查看營業與交通資訊。"}</p>
 		</div>
-		{#if clinic.images?.length}
-			<div class="grid gap-3 overflow-hidden rounded-3xl" aria-label="院所環境照片">
-				<img src={clinic.images[0]} alt={`${clinic.clinic_name}院所環境`} fetchpriority="high" decoding="async" class="aspect-[4/3] w-full bg-muted object-cover" />
-				{#if clinic.images.length > 1}<div class="grid grid-cols-2 gap-3">
-					{#each clinic.images.slice(1, 3) as photo, i (i)}<img src={photo} alt={`${clinic.clinic_name}環境照片 ${i + 2}`} loading="lazy" class="aspect-[2/1] w-full rounded-xl bg-muted object-cover" />{/each}
-				</div>{/if}
-			</div>
+		{#if clinic.photos?.length}
+			<ClinicGallery photos={clinic.photos} clinicName={clinic.clinic_name} />
 		{:else}
 			<div class="rounded-3xl border border-border/70 bg-muted/40 p-6 sm:p-8">
 				<p class="home-eyebrow">到訪前，先認識我們</p>
@@ -111,6 +107,7 @@
 		{/if}
 		</div>
 		<nav aria-label="店家內容" class="mt-7 flex flex-wrap gap-2 border-t border-border/70 pt-5 text-sm">
+			{#if clinic.photos?.length}<a href="#photos" class="rounded-full bg-muted px-4 py-2.5 hover:text-primary">院所環境</a>{/if}
 			{#if clinic.services?.length}<a href="#services" class="rounded-full bg-card px-4 py-2.5 hover:text-primary">服務項目</a>{/if}
 			{#if clinic.members?.length}<a href="#team" class="rounded-full bg-card px-4 py-2.5 hover:text-primary">專業團隊</a>{/if}
 			<a href="#contact" class="rounded-full bg-card px-4 py-2.5 hover:text-primary">聯絡與交通</a>

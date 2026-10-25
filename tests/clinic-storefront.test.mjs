@@ -10,11 +10,12 @@ import { buildProblem, CHROME, startPreview } from "./support/built-app.mjs";
 const id = "11111111-3333-4444-5555-666666666666";
 const dir = process.env.STOREFRONT_EVIDENCE_DIR ?? "/private/tmp/cross-storefront-qa-20261025";
 let server, preview, browser;
-const state = { online: true, phone: true, type: "aesthetic" };
+const state = { online: true, phone: true, type: "aesthetic", photos: [] };
 const description = "先了解服務內容與預約安排。\n這是第二段完整說明，應能直接閱讀，不需要從截斷的一行猜測內容。";
 function response(path) {
   const clinic = { id, name: "虛構品牌門面診所", facility_type: state.type, payment_type: "self_pay", logo: "/cross-icon.png", description: "虛構院所介紹，僅供版面與預約入口驗收。", phone: "0200000000", address: "臺北市信義區虛構路1號", online_booking_enabled: state.online, phone_booking_enabled: state.phone, show_schedule: true, members: [{ id: "staff-a", name: "虛構醫師", role: "doctor" }] };
   if (path === "/api/v1/service-categories") return FALLBACK_TAXONOMY;
+  if (path.endsWith("/photos")) return state.photos;
   if (path === "/api/v1/booking/clinics") return [clinic];
   if (path.endsWith("/services")) return [{ id: "hidden", service_name: "虛構隱藏價格療程", description, duration_minutes: 30, price: 9876, show_price: false }];
   if (path.endsWith("/doctors")) return [{ id: "staff-a", name: "虛構醫師", avatar_url: "/cross-icon.png", main_specialties: ["虛構專長"], education: ["虛構學歷"], experience: [] }];
@@ -97,4 +98,33 @@ test("院所與方案頁在最窄手機、平板、桌面亮暗色可操作，FA
       } finally { await page.close(); }
     }
   }
+});
+
+test("公開相簿在手機與桌面亮暗色可放大及鍵盤切換，關閉後返回原按鈕；無照片保留服務摘要", async () => {
+  state.photos = ["接待空間", "診間", "設備空間"].map((caption, i) => ({ id: `photo-${i}`, url: "/cross-icon.png", caption }));
+  for (const width of [320, 1440]) for (const dark of [false, true]) {
+    const { page, errors } = await open(width, dark);
+    try {
+      const cover = page.getByRole("button", { name: "放大虛構品牌門面診所環境照片", exact: true });
+      await cover.click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByRole("img", { name: "接待空間", exact: true }).waitFor();
+      await dialog.getByRole("button", { name: "下一張", exact: true }).click();
+      await dialog.getByRole("img", { name: "診間", exact: true }).waitFor();
+      await page.keyboard.press("ArrowRight");
+      await dialog.getByRole("img", { name: "設備空間", exact: true }).waitFor();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: `${dir}/gallery-${width}-${dark ? "dark" : "light"}.png`, fullPage: false });
+      await page.keyboard.press("Escape");
+      await cover.waitFor();
+      assert.equal(await cover.evaluate((el) => el === document.activeElement), true);
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  }
+  state.photos = [];
+  const { page } = await open();
+  try {
+    assert.equal(await page.getByRole("button", { name: /放大.*環境照片/ }).count(), 0);
+    await page.getByRole("heading", { name: "從你需要的服務開始。", exact: true }).waitFor();
+  } finally { await page.close(); }
 });

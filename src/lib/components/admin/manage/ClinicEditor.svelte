@@ -11,6 +11,7 @@
   import Modal from "./Modal.svelte";
   import GoogleMapsLocation from "./GoogleMapsLocation.svelte";
   import Feedback from "./Feedback.svelte";
+  import ClinicPhotoManager from "./ClinicPhotoManager.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import {
@@ -71,10 +72,12 @@
     >([]),
     logo = $state<string | null>(null),
     busy = $state(false),
+    galleryBusy = $state(false),
     error = $state(""),
     message = $state(""),
     tax = $state(FALLBACK_TAXONOMY);
   const clinicKey = $derived(clinic?.id ?? "new");
+  let photoManager = $state<{ savePending: () => Promise<boolean> }>();
   $effect(() => {
     if (!open) return;
     const key = clinicKey;
@@ -156,6 +159,7 @@
   }
   async function save(e: SubmitEvent) {
     e.preventDefault();
+    if (busy || galleryBusy) return;
     error = "";
     if (!mapValid || mapPending) {
       error = "請先完成地圖連結解析，或清空連結後再儲存。";
@@ -214,6 +218,7 @@
       phone_booking_enabled: phoneBooking,
       show_schedule: showSchedule,
     };
+    if (photoManager && !(await photoManager.savePending())) return;
     busy = true;
     try {
       const updated = clinic
@@ -236,10 +241,10 @@
   bind:open
   title={clinic ? "編輯院所" : "新增院所"}
   description="設定公開資訊、服務類型與可預約營業時間。"
-  {busy}
+  busy={busy || galleryBusy}
 >
   <form onsubmit={save} class="space-y-6">
-    <Feedback {error} {message} /><Field.Set disabled={busy} class="gap-5">
+    <Feedback {error} {message} /><Field.Set disabled={busy || galleryBusy} class="gap-5">
       <Field.Legend>基本資訊</Field.Legend>{#if clinic}<div
           class="flex flex-wrap items-center gap-3"
         >
@@ -426,7 +431,9 @@
             </Field.Label>
           </Field.Field>{/if}
       </div>
-    </Field.Set><Field.Set disabled={busy} class="gap-5">
+    </Field.Set>
+    {#if clinic}{#key clinic.id}<fieldset disabled={busy} class="min-w-0"><legend class="sr-only">院所環境相簿</legend><ClinicPhotoManager clinicId={clinic.id} bind:this={photoManager} bind:busy={galleryBusy} /></fieldset>{/key}{:else}<p class="text-sm text-muted-foreground">儲存院所後即可新增環境照片。</p>{/if}
+    <Field.Set disabled={busy || galleryBusy} class="gap-5">
       <Field.Legend>營業時間與預約</Field.Legend><Field.Field
         orientation="horizontal"
         class="items-center gap-2.5"
@@ -552,9 +559,9 @@
           </div>{/each}{/if}
     </Field.Set>
     <Dialog.Footer class="admin-dialog-footer">
-      <Button variant="outline" disabled={busy} onclick={() => (open = false)}>
+      <Button variant="outline" disabled={busy || galleryBusy} onclick={() => (open = false)}>
         取消
-      </Button><Button type="submit" disabled={busy || mapPending}>
+      </Button><Button type="submit" disabled={busy || galleryBusy || mapPending}>
         {busy ? "儲存中…" : mapPending ? "位置解析中…" : "儲存院所"}
       </Button>
     </Dialog.Footer>

@@ -29,6 +29,7 @@
   import Schedule from "./Schedule.svelte";
   import Customers from "./Customers.svelte";
   import ClinicEditor from "../manage/ClinicEditor.svelte";
+  import ClinicPhotoManager from "../manage/ClinicPhotoManager.svelte";
   import Personnel from "../manage/Personnel.svelte";
   import Services from "../manage/Services.svelte";
   import Announcements from "../manage/Announcements.svelte";
@@ -40,6 +41,12 @@
   let { name, facilityId }: { name: string; facilityId: string } = $props();
   const auth = getAuth();
   const system = $derived(isSystemAdmin(auth.user));
+  const canManageGallery = $derived(system || auth.user?.roles.includes("facility_admin"));
+  let galleryOpen = $state(false), galleryBusy = $state(false);
+  let galleryManager = $state<{ savePending: () => Promise<boolean> }>();
+  async function finishGallery() {
+    if (!galleryBusy && (!galleryManager || await galleryManager.savePending())) galleryOpen = false;
+  }
   const tab = $derived(
     name === "dashboard"
       ? "today"
@@ -349,9 +356,12 @@
                       class="flex flex-wrap items-center justify-between gap-3"
                     >
                       <h2 class="font-semibold">基本資訊</h2>
+                      <div class="flex flex-wrap gap-2">
+                      {#if canManageGallery}<Button variant="outline" onclick={() => (galleryOpen = true)}>環境相簿</Button>{/if}
                       <Button variant="outline" onclick={() => (edit = true)}>
                         編輯資訊
                       </Button>
+                      </div>
                     </div>
                     <dl class="grid gap-4 text-sm sm:grid-cols-2">
                       {#each [{ label: "院所名稱", value: facility.name }, { label: "電話", value: facility.phone }, { label: "地址", value: facility.address }, { label: "預約間隔", value: facility.slot_duration + " 分鐘" }, { label: "院所狀態", value: facility.is_active ? "啟用" : "停用" }, { label: "營業時間", value: facility.business_hours ? Object.entries(facility.business_hours)
@@ -403,6 +413,7 @@
       notice = "院所資訊已更新";
     }}
   />{/if}
+{#if facility && galleryOpen}<Modal bind:open={galleryOpen} title="管理院所環境相簿" description="讓民眾在院所門面先認識你的空間。" busy={galleryBusy}><ClinicPhotoManager clinicId={facilityId} bind:this={galleryManager} bind:busy={galleryBusy} /><div class="admin-dialog-footer"><Button disabled={galleryBusy} onclick={finishGallery}>{galleryBusy ? "儲存中…" : "完成"}</Button></div></Modal>{/if}
 <Modal
   bind:open={remove}
   title="刪除院所"

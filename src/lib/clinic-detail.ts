@@ -17,6 +17,7 @@ import type {
   Clinic,
   ClinicDoctorDetail,
   FacilityType,
+  FacilityPhoto,
   Member,
   PaymentType,
   Service,
@@ -112,6 +113,7 @@ export function transformClinicData(found: any): Clinic {
       deriveFacilityType(members),
     payment_type: found.payment_type as PaymentType | undefined,
     logo: found.logo ?? null,
+    images: found.cover_image ? [found.cover_image] : [],
     description: found.description ?? undefined,
     latitude: found.latitude ?? null,
     longitude: found.longitude ?? null,
@@ -192,6 +194,20 @@ async function getAnnouncementsFromApi(fetch: Fetch, clinicId: string): Promise<
   }
 }
 
+async function getPhotosFromApi(fetch: Fetch, clinicId: string): Promise<Fetched<FacilityPhoto[]>> {
+  try {
+    const res = await fetch(clinicPath(clinicId, "/photos"));
+    // 後端尚未提供相簿時，維持原有門面；其餘錯誤使頁面採降級快取規則。
+    if (res.status === 404) return { value: [], ok: true };
+    if (!res.ok) return { value: [], ok: false };
+    const value = await res.json();
+    if (!Array.isArray(value)) return { value: [], ok: false };
+    return { value: value as FacilityPhoto[], ok: true };
+  } catch {
+    return { value: [], ok: false };
+  }
+}
+
 async function getScheduleFromApi(fetch: Fetch, clinicId: string): Promise<Fetched<WeeklySchedule | null>> {
   try {
     const res = await fetch(clinicPath(clinicId, "/schedule"));
@@ -248,14 +264,20 @@ export interface ClinicDetail {
 
 /** 平行取得院所資訊、服務項目、門診排班、公告、醫師詳情與服務分類字彙（同舊版頁面） */
 export async function loadClinicDetail(fetch: Fetch, clinicId: string): Promise<ClinicDetail> {
-  const [clinic, services, schedule, announcements, doctors, taxonomy] = await Promise.all([
+  const [clinic, services, schedule, announcements, doctors, taxonomy, photos] = await Promise.all([
     getClinicFromApi(fetch, clinicId),
     getServicesFromApi(fetch, clinicId),
     getScheduleFromApi(fetch, clinicId),
     getAnnouncementsFromApi(fetch, clinicId),
     getDoctorsFromApi(fetch, clinicId),
     serviceCategoriesApi.get({ fetch }),
+    getPhotosFromApi(fetch, clinicId),
   ]);
+
+  if (clinic) {
+    clinic.photos = photos.value;
+    if (photos.ok) clinic.images = photos.value.map((photo) => photo.url);
+  }
 
   // 合併服務項目到 clinic 資料
   if (clinic && services.value.length > 0) {
@@ -268,7 +290,7 @@ export async function loadClinicDetail(fetch: Fetch, clinicId: string): Promise<
 
   // serviceCategoriesApi.get 失敗時回傳的就是 FALLBACK_TAXONOMY 本身（成功時是新解析的物件），以同一性判斷
   const degraded =
-    [services, schedule, announcements, doctors].some((r) => !r.ok) || taxonomy === FALLBACK_TAXONOMY;
+    [services, schedule, announcements, doctors, photos].some((r) => !r.ok) || taxonomy === FALLBACK_TAXONOMY;
 
   return {
     clinic,

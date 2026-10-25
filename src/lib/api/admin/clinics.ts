@@ -1,6 +1,7 @@
 import type { SchedulePresets } from "../../schedule-presets.ts";
 import { api } from "../client.ts";
 import type {
+  FacilityGallery,
   MedicalFacility,
   MedicalFacilityCreate,
   MedicalFacilityUpdate,
@@ -65,6 +66,19 @@ export const adminClinicsApi = {
 
   deleteLogo: (id: string) =>
     api.delete<MedicalFacility>(`${BASE_PATH}/${id}/logo`),
+
+  photos: {
+    get: (id: string) => api.get<FacilityGallery>(`${BASE_PATH}/${id}/photos`),
+    upload: (id: string, file: File) => {
+      const data = new FormData();
+      data.append("file", file);
+      return api.post<FacilityGallery>(`${BASE_PATH}/${id}/photos`, data);
+    },
+    update: (id: string, revision: string, photos: { id: string; caption: string }[]) =>
+      api.patch<FacilityGallery>(`${BASE_PATH}/${id}/photos`, { revision, photos }),
+    remove: (id: string, photoId: string) =>
+      api.delete<FacilityGallery>(`${BASE_PATH}/${id}/photos/${photoId}`),
+  },
 
   // ========== 公告 ==========
 

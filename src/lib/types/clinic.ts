@@ -106,6 +106,18 @@ export interface BusinessHours {
 }
 
 // 醫療院所
+export interface FacilityPhoto {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+export interface FacilityGallery {
+  photos: FacilityPhoto[];
+  revision: string;
+  max_photos: number;
+}
+
 export interface Clinic {
   id: string;
   clinic_name: string;
@@ -132,6 +144,7 @@ export interface Clinic {
   service_names?: string[]; // 公開清單的啟用服務名稱；不含價格
   business_hours?: BusinessHours[];
   images?: string[];
+  photos?: FacilityPhoto[];
   online_booking_enabled?: boolean; // 是否開通線上預約（付費功能）；false 改顯示現場/電話預約
   phone_booking_enabled?: boolean; // 未開通線上預約時是否顯示電話預約（後台勾選，預設關閉）
   show_schedule?: boolean; // 是否顯示門診時刻表（診次週班表）；看診預設開、其他預設關
