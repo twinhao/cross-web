@@ -63,6 +63,7 @@
 				{members.length} 人
 			</span>
 		{/snippet}
+		<p class="mb-5 text-sm leading-7 text-muted-foreground">認識服務團隊，點選成員查看完整介紹。</p>
 
 		{#if availableTabs.length > 2}
 			<div class="mb-4 flex flex-wrap gap-1.5">
@@ -71,6 +72,7 @@
 					<button
 						type="button"
 						onclick={() => (activeTab = tab.key)}
+						aria-pressed={isActive}
 						class={cn(
 							"rounded-full px-3.5 py-1.5 text-xs font-medium transition-all",
 							isActive
@@ -84,18 +86,21 @@
 			</div>
 		{/if}
 
-		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+		<div class="grid gap-3 sm:grid-cols-2">
 			<!-- 後端資料可能有重複 id：以索引為 key（同舊版 React 只警告、照樣渲染） -->
 			{#each filteredMembers as member, i (i)}
+				{@const detail = detailMap.get(member.id)}
+				{@const avatar = member.avatar || detail?.avatar}
+				{@const specialties = member.specialties?.length ? member.specialties : detail?.specialties}
 				<button
 					type="button"
 					onclick={() => openDetail(member)}
 					aria-label={`查看 ${member.name} 詳細資料`}
-					class="flex cursor-pointer flex-col items-center rounded-2xl bg-muted/40 p-4 text-center ring-1 ring-transparent transition-all hover:-translate-y-0.5 hover:bg-accent/40 hover:shadow-sm hover:ring-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					class="flex min-w-0 cursor-pointer items-start gap-4 rounded-2xl border border-border/70 bg-background/50 p-5 text-left transition-colors hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 				>
-					<div class="relative size-16 overflow-hidden rounded-full shadow-sm ring-2 ring-card">
-						{#if member.avatar}
-							<img src={member.avatar} alt={member.name} loading="lazy" class="size-full object-cover" />
+					<div class="relative size-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-border">
+						{#if avatar}
+							<img src={avatar} alt={member.name} loading="lazy" class="size-full object-cover" />
 						{:else}
 							<div
 								class="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 to-sky-200/50"
@@ -104,17 +109,20 @@
 							</div>
 						{/if}
 					</div>
-					<p class="mt-3 truncate text-sm font-semibold text-foreground">
+					<div class="min-w-0 flex-1">
+					<p class="break-words text-base font-semibold text-foreground">
 						{member.name}
 					</p>
-					<p class="text-xs text-primary">
+					<p class="mt-1 text-xs text-primary">
 						{member.title || MEMBER_ROLES[member.role]}
 					</p>
-					{#if member.specialties && member.specialties.length > 0}
-						<p class="mt-1 line-clamp-1 text-xs text-muted-foreground">
-							{member.specialties.slice(0, 2).join("、")}
+					{#if specialties?.length}
+						<p class="mt-3 text-sm leading-6 text-muted-foreground">
+							{specialties.slice(0, 3).join("、")}
 						</p>
 					{/if}
+					<span class="mt-3 inline-block text-xs font-medium text-primary">查看介紹 →</span>
+					</div>
 				</button>
 			{/each}
 		</div>

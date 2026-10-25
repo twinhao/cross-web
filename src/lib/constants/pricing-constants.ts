@@ -6,12 +6,16 @@ export const PRICING_PLANS = [
     id: "free",
     monthlyPrice: 0,
     description: "先建立院所資訊，整理日常管理。",
+    audience: "適合先整理品牌門面，仍以電話與現場預約為主的院所。",
+    focus: "先讓客人找得到、看得懂你的服務。",
     features: ["院所基本資料與服務展示", "現場與電話代訂", "客戶與人員管理"],
   },
   {
     id: "standard",
     monthlyPrice: 3000,
     description: "開放線上預約，集中安排院所日常。",
+    audience: "適合準備讓客人自行選時段，並集中處理預約的院所。",
+    focus: "把線上預約與櫃檯日常安排接起來。",
     features: [
       "包含免費版功能",
       "線上預約與服務時長設定",
@@ -24,6 +28,8 @@ export const PRICING_PLANS = [
     id: "pro",
     monthlyPrice: 8000,
     description: "掌握客戶與營運資訊，支援進階管理。",
+    audience: "適合已使用線上預約，需要客戶分析與進階候診管理的團隊。",
+    focus: "在日常預約之外，進一步掌握客戶與到訪狀況。",
     features: [
       "包含標準版功能",
       "客戶分析",
@@ -36,6 +42,8 @@ export const PRICING_PLANS = [
   id: SubscriptionPlan;
   monthlyPrice: number;
   description: string;
+  audience: string;
+  focus: string;
   features: readonly string[];
 }[];
 

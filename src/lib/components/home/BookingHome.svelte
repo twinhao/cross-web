@@ -25,34 +25,34 @@
     {
       icon: Search,
       title: "找到合適的院所",
-      text: "搜尋地區、院所或服務，先了解再選擇。",
+      text: "搜尋地區、院所或服務，先了解服務內容與專業團隊。",
     },
     {
       icon: CalendarDays,
-      title: "選擇服務與時間",
-      text: "依院所開放的時段，安排諮詢、看診或療程。",
+      title: "確認預約方式",
+      text: "可線上預約的院所直接選時段；其他院所依電話或現場方式安排。",
     },
     {
       icon: ClipboardList,
       title: "確認你的預約",
-      text: "核對資料後送出，隨時到「我的預約」查看狀態。",
+      text: "線上送出後，到「我的預約」查看；電話與現場預約請向院所確認。",
     },
   ];
   const clinicBenefits = [
     {
       icon: CalendarDays,
-      title: "線上接收預約",
-      text: "諮詢與療程，各有合適的預約時長。",
+      title: "把院所連結，變成預約入口",
+      text: "從 LINE、社群或 Google 商家帶客人認識服務，再安排預約。",
     },
     {
       icon: Users,
-      title: "安排人員班表",
-      text: "讓可預約時間，配合團隊實際排班。",
+      title: "諮詢與療程，分別安排",
+      text: "依服務設定時長，配合人員班表開放時段。",
     },
     {
       icon: ClipboardList,
       title: "集中管理預約",
-      text: "在同一個後台，掌握每一筆安排。",
+      text: "線上預約、電話代訂與現場安排，在同一個後台處理。",
     },
   ];
 </script>
@@ -65,7 +65,7 @@
     class="home-container grid items-center gap-8 py-9 sm:gap-10 sm:py-14 lg:grid-cols-[1.08fr_1fr] lg:gap-14 lg:py-16"
   >
     <div class="min-w-0">
-      <p class="home-eyebrow">看診・醫美諮詢・療程預約</p>
+      <p class="home-eyebrow">認識院所・了解服務・安排預約</p>
       <h1
         id="home-title"
         class="mt-4 text-[clamp(2.1rem,4.2vw,3.75rem)] font-semibold leading-[1.35] tracking-tight"
@@ -75,9 +75,9 @@
         <span class="text-primary">好好照顧自己。</span>
       </h1>
       <p class="mt-5 max-w-md text-base leading-8 text-muted-foreground">
-        找到合適的院所，選一個適合你的時間。
+        從服務、團隊到到訪資訊，先了解再選擇。
         <br class="hidden sm:block" />
-        從看診到療程，下一次預約從這裡開始。
+        找到適合的院所，依開放方式安排看診、諮詢或療程。
       </p>
 
       <form
@@ -129,12 +129,14 @@
           </a>
         {/each}
       </nav>
+      <a href="/search?online=1" class="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline">只找可線上預約的院所 <ArrowRight class="size-4" aria-hidden="true" /></a>
       <div class="mt-4 flex flex-wrap items-center gap-x-3 text-sm">
         <span class="text-muted-foreground">{isAdmin ? "回到院所日常管理" : "已經有預約？"}</span>
         <Button href={isAdmin ? getAdminHomePath(auth.user) : "/member"} variant="link" class="min-h-11 px-0">
           {isAdmin ? "管理後台" : "查看我的預約"} <ArrowRight aria-hidden="true" />
         </Button>
       </div>
+      <a href="/join" class="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground hover:text-primary">我是院所，了解門面與預約管理 <ArrowRight class="size-4" aria-hidden="true" /></a>
     </div>
 
     <div
@@ -224,12 +226,12 @@
         <div>
           <p class="home-eyebrow">給院所與服務團隊</p>
           <h2 id="clinic-intro-title" class="home-heading mt-3">
-            讓預約更有條理，
+            你的院所門面，
             <br />
-            讓團隊更從容。
+            也是團隊的預約工作台。
           </h2>
           <p class="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
-            建立專屬院所門面，讓民眾了解服務；從接收預約到人員排班，集中處理日常安排。
+            從你現有的客群開始：用專屬院所頁介紹品牌、團隊與服務，再把諮詢、療程和櫃檯日常安排接起來。
           </p>
           <div class="mt-6 flex flex-wrap gap-3">
             <Button href="/join" size="lg">

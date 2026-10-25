@@ -32,7 +32,7 @@ test("/join：院所導入 metadata 與靜態頁快取", async () => {
   assert.deepEqual(headers, [{ "cache-control": STATIC_PAGE_CACHE }]);
   assert.deepEqual(data.seo, {
     title: "院所導入",
-    description: "Cross 協助診所與醫美院所建立線上預約入口，管理諮詢、療程、人員排班與候診流程。了解方案並申請院所導入。",
+    description: "Cross 協助診所與醫美院所建立品牌門面，從 LINE 與社群承接預約，集中管理諮詢、療程、人員排班與候診流程。了解免費、標準與專業方案。",
     canonical: "/join",
   });
 });

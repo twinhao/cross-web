@@ -17,10 +17,16 @@
 	let { data } = $props();
 
 	const clinic = $derived(data.clinic);
+	const bookingHref = $derived(clinic.online_booking_enabled ? `/booking/${clinic.id}` : clinic.phone_booking_enabled && clinic.phone ? `tel:${clinic.phone}` : "#contact");
+	const bookingLabel = $derived(clinic.online_booking_enabled ? "選擇服務與時間" : clinic.phone_booking_enabled && clinic.phone ? "來電詢問與預約" : "查看到訪方式");
 </script>
 
 {#snippet servicesSection()}
-  {#if clinic.services?.length}<div id="services"><ServicePreviewList services={clinic.services} paymentType={clinic.payment_type} /></div>{/if}
+  {#if clinic.services?.length}<div id="services" class="scroll-mt-28"><ServicePreviewList services={clinic.services} paymentType={clinic.payment_type} {bookingHref} {bookingLabel} /></div>{/if}
+{/snippet}
+
+{#snippet teamSection()}
+  {#if clinic.members?.length}<div id="team" class="scroll-mt-28"><DoctorTeamSection members={clinic.members} details={data.doctorDetails} /></div>{/if}
 {/snippet}
 
 <!-- metadata 與院所 JSON-LD（示範院所不輸出）由 Seo 放進 <head>；舊版 JSON-LD 在 body，爬蟲讀到的內容相同 -->
@@ -51,18 +57,14 @@
 				<!-- 診療科別：僅看診大類顯示（元件內自動 gate，非看診不渲染） -->
 				<DepartmentBadges departments={clinic.departments} facilityType={clinic.facility_type} />
 
-				{#if clinic.facility_type !== "healthcare"}{@render servicesSection()}{/if}
+				{#if clinic.facility_type !== "healthcare"}{@render servicesSection()}{@render teamSection()}{/if}
 				<!-- 門診時刻表（醫師排班：早/午/晚 × 週一~週日） -->
 				{#if data.showSchedule && data.schedule}
 					<ScheduleTimetable schedule={data.schedule} />
 				{/if}
 
 				<!-- 團隊成員（點擊顯示詳情） -->
-				{#if clinic.members && clinic.members.length > 0}
-					<div id="team"><DoctorTeamSection members={clinic.members} details={data.doctorDetails} /></div>
-				{/if}
-
-				{#if clinic.facility_type === "healthcare"}{@render servicesSection()}{/if}
+				{#if clinic.facility_type === "healthcare"}{@render teamSection()}{@render servicesSection()}{/if}
 			</div>
 
 			<!-- ===== 側欄（桌機黏性） ===== -->
@@ -73,7 +75,7 @@
 				{:else}
 					<WalkInCard phone={clinic.phone} phoneBookingEnabled={clinic.phone_booking_enabled} />
 				{/if}
-				<div id="contact"><ClinicContactInfo {clinic} /></div>
+				<div id="contact" class="scroll-mt-28"><ClinicContactInfo {clinic} /></div>
 				{#if clinic.business_hours && clinic.business_hours.length > 0}
 					<BusinessHoursSection businessHours={clinic.business_hours} />
 				{/if}

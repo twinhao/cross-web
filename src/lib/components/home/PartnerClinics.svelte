@@ -4,6 +4,7 @@
   import type { Clinic } from "#lib/types/clinic.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
   import ClinicLogo from "#lib/components/clinics/ClinicLogo.svelte";
+  import { FACILITY_TYPE_LABELS } from "#lib/constants/clinic-constants.ts";
   let clinics = $state.raw<Clinic[]>([]),
     loading = $state(true),
     failed = $state(false);
@@ -45,7 +46,7 @@
       </Button>
     </div>
     <p class="mt-3 text-sm leading-7 text-muted-foreground">
-      合作地區與預約方式依各院所開放情況提供；營業時間不代表仍有可約名額。
+      每間院所都會標示預約方式。先認識服務與團隊，再選擇線上、電話或現場安排；營業時間不代表仍有可約名額。
     </p>
     {#if loading}<p role="status" class="mt-6 text-sm text-muted-foreground">
         正在載入合作院所…
@@ -65,21 +66,28 @@
         {#each clinics.slice(0, 3) as clinic, i (i)}<li>
             <a
               href={`/clinic/${clinic.id}`}
-              class="flex h-full flex-col gap-3 rounded-3xl border bg-card p-6 transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-primary"
+              class="group flex h-full flex-col overflow-hidden rounded-3xl border bg-card transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-primary"
             >
+              {#if clinic.images?.[0]}<img src={clinic.images[0]} alt={`${clinic.clinic_name}院所環境`} loading="lazy" class="aspect-[16/9] w-full object-cover" />{/if}
+              <div class="flex flex-1 flex-col gap-3 p-6">
+              <div class="flex items-center justify-between gap-3">
               <ClinicLogo logo={clinic.logo} name={clinic.clinic_name} />
+              {#if clinic.facility_type}<span class="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{FACILITY_TYPE_LABELS[clinic.facility_type]}</span>{/if}
+              </div>
               <h3 class="font-semibold">{clinic.clinic_name}</h3>
               <p class="text-sm text-muted-foreground">
                 {clinic.city || "地點請見院所資訊"}
               </p>
-              <p class="mt-auto text-sm font-medium text-primary">
+              {#if clinic.service_names?.length}<p class="text-sm leading-6 text-muted-foreground">{clinic.service_names.slice(0, 3).join("・")}</p>{/if}
+              <p class="mt-auto pt-2 text-sm font-medium text-primary">
                 {clinic.online_booking_enabled === true
                   ? "可線上預約"
                   : clinic.phone_booking_enabled
                     ? "電話／現場預約"
                     : "查看到訪方式"}
               </p>
-              <span class="text-sm">認識院所 →</span>
+              <span class="border-t border-border pt-3 text-sm group-hover:text-primary">認識院所與服務 →</span>
+              </div>
             </a>
           </li>{/each}
       </ul>{/if}
