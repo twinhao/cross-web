@@ -125,7 +125,7 @@ test("能否送出（第 3 步）：非示範、時段有效、登入狀態已�
 test("下一步按鈕文字", () => {
   assert.equal(nextButtonLabel(1, false, false), "選擇預約時間");
   assert.equal(nextButtonLabel(2, true, true), "確認預約資料");
-  assert.equal(nextButtonLabel(3, true, true), "示範流程，不會建立預約");
+  assert.equal(nextButtonLabel(3, true, true), "僅供體驗");
   assert.equal(nextButtonLabel(3, true, false), "確認送出預約");
   assert.equal(nextButtonLabel(3, false, false), "登入並繼續預約");
   assert.equal(nextButtonLabel(4, false, false), "下一步");

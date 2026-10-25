@@ -95,3 +95,14 @@ test('獨立帳戶設定沿用會員守衛，訪客回到指定登入頁、管�
   }finally{await page.close();}
  }
 });
+
+
+test('公開示範的短按鈕文案在最窄手機不截斷，並明確說明不建立預約',async()=>{
+ for(const width of [320,390]){
+  const {page,state}=await bookingFixture(browser,preview.origin,{width,authenticated:false});
+  try{await chooseService(page,preview.origin,'/booking/42399a23-1119-407e-91ed-e2df5bdbb218');await chooseTime(page);
+   const button=page.getByRole('button',{name:'僅供體驗',exact:true});assert(await button.isDisabled());assert(await button.evaluate(el=>el.scrollWidth<=el.clientWidth));
+   await page.getByText('示範院所不會建立實際預約',{exact:true}).waitFor();await fits(page);assert.equal(state.posts.length,0);
+  }finally{await page.close();}
+ }
+});

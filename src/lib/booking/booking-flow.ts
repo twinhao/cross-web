@@ -105,7 +105,7 @@ export function nextButtonLabel(currentStep: number, isAuthenticated: boolean, i
     case 2:
       return "確認預約資料";
     case 3:
-      return isDemo ? "示範流程，不會建立預約" : isAuthenticated ? "確認送出預約" : "登入並繼續預約";
+      return isDemo ? "僅供體驗" : isAuthenticated ? "確認送出預約" : "登入並繼續預約";
     default:
       return "下一步";
   }

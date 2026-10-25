@@ -141,7 +141,7 @@
 
 	// sticky 按鈕上方的選取摘要提示
 	const submitHint = $derived(submitHintFor(selection, currentStep));
-  const actionHint = $derived(isSubmitting ? "正在確認名額，請稍候" : !selection.service ? "先選擇一項想預約的服務" : currentStep === 2 && (!selection.date || !selection.timeSlot) ? "選擇日期與時段後，即可繼續" : currentStep === 3 && auth.isAuthenticated && !selectedPatient ? "請選擇本次預約對象" : currentStep === 3 && auth.isAuthenticated && !formData.privacyAccepted ? "請核對資料並勾選同意條款" : submitHint);
+  const actionHint = $derived(isDemo ? "示範院所不會建立實際預約" : isSubmitting ? "正在確認名額，請稍候" : !selection.service ? "先選擇一項想預約的服務" : currentStep === 2 && (!selection.date || !selection.timeSlot) ? "選擇日期與時段後，即可繼續" : currentStep === 3 && auth.isAuthenticated && !selectedPatient ? "請選擇本次預約對象" : currentStep === 3 && auth.isAuthenticated && !formData.privacyAccepted ? "請核對資料並勾選同意條款" : submitHint);
 
 
 	// 處理下一步

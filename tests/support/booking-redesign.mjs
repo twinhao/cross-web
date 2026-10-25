@@ -29,5 +29,5 @@ export async function bookingFixture(browser,origin,{width=1440,dark=false,authe
  });
  return {page,state,errors,requests,service,patient,user};
 }
-export async function chooseService(page,origin){await page.goto(origin+bookingPath);await page.getByRole('button',{name:/醫美諮詢與雷射療程/}).click();await page.getByRole('button',{name:'選擇預約時間',exact:true}).click();await page.getByRole('heading',{name:'日期與時段',exact:true}).waitFor();}
+export async function chooseService(page,origin,path=bookingPath){await page.goto(origin+path);await page.getByRole('button',{name:/醫美諮詢與雷射療程/}).click();await page.getByRole('button',{name:'選擇預約時間',exact:true}).click();await page.getByRole('heading',{name:'日期與時段',exact:true}).waitFor();}
 export async function chooseTime(page){await page.locator(`[data-value="${date}"][role="button"]`).click();await page.getByRole('button',{name:'09:00',exact:true}).click();await page.getByRole('button',{name:'確認預約資料',exact:true}).click();await page.getByRole('heading',{name:'確認預約資料',exact:true}).waitFor();}
