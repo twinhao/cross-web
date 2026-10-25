@@ -8,7 +8,11 @@ let browser,preview;
 const dir=process.env.BOOKING_REDESIGN_EVIDENCE_DIR??'/private/tmp/cross-booking-redesign-qa-20261025';
 before(async()=>{assert.equal(buildProblem(),null);preview=process.env.BOOKING_REDESIGN_ORIGIN?{origin:process.env.BOOKING_REDESIGN_ORIGIN,stop(){}}:await startPreview(4421);browser=await chromium.launch({executablePath:CHROME});await mkdir(dir,{recursive:true});});
 after(async()=>{await browser?.close();preview?.stop();});
-async function fits(page){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+async function fits(page){
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ const summary=page.getByRole('complementary',{name:'預約摘要',exact:true});
+ if(await summary.isVisible()){const a=await summary.boundingBox(),p=await page.getByRole('navigation',{name:'預約進度',exact:true}).boundingBox();assert(a.y>=p.y+p.height,'摘要不能被固定進度列遮住');}
+}
 
 test('服務、人員與日曆在手機與桌面亮暗色易讀，摘要尊重隱藏價格並可返回修改',async()=>{
  for(const width of [320,390,768,1440])for(const dark of [false,true]){

@@ -248,7 +248,7 @@
         </div>
       {/if}
     </div>
-    <aside aria-label="預約摘要" class="hidden min-w-0 lg:sticky lg:top-28 lg:block">
+    <aside aria-label="預約摘要" class="hidden min-w-0 lg:sticky lg:top-44 lg:block">
       <BookingSummary clinic={clinicConfig} {selection} {paymentType} onEdit={currentStep > 1 ? handleStepClick : undefined}/>
       <p class="mt-4 px-1 text-xs leading-6 text-muted-foreground">{isDemo ? "示範體驗不會建立預約。" : "送出前不會保留名額，預約結果以成功確認頁為準。"}</p>
     </aside>
