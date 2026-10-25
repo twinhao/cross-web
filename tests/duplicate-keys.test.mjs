@@ -105,9 +105,8 @@ test("診所詳情頁元件：公告、科別、營業時間、服務、團隊�
   assert.equal(await count("#hours", "09:00 - 12:00"), 2);
   assert.equal(await count("#services", "重複服務"), 2);
   assert.equal(await count("#team", "重複醫師"), 2);
-  // 手機與桌面各保留一筆完整班段，兩個版型都不重複顯示同一資料。
-  assert.equal(await count('#schedule [aria-label="每週服務班表"]', "重複醫師"), 1);
-  assert.equal(await count('#schedule [aria-label="每日服務班表"]', "重複醫師"), 1);
+  // 日期頁籤共用同一份班表，完全重複的班段僅顯示一次。
+  assert.equal(await count('#schedule [aria-label="當日服務班表"]', "重複醫師"), 1);
   assert.equal(await count("#landing", "重複落地診所"), 2);
   assert.equal(await count("#landing", "兒科"), 4);
 });
