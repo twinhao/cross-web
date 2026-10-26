@@ -160,9 +160,7 @@
 				{/if}
 			</div>
 
-			<!-- 右上角只留收藏愛心。原本的 hover 箭頭已移除：卡片本身已用
-			     cursor-pointer + hover 位移 + 陰影表達可點，箭頭是第四種重複訊號，
-			     且 opacity-0 時仍佔 40px 寬度，會壓縮診所名稱。 -->
+			<!-- 收藏操作獨立於院所資訊與快速檢視。 -->
 			<FavoriteButton clinicId={clinic.id} nextPath={`/clinic/${clinic.id}`} class="shrink-0" />
 		</div>
 	</CardHeader>
@@ -202,10 +200,10 @@
 			{/if}
 		</div>
 		<p class="text-sm font-medium text-primary">{clinic.online_booking_enabled === true ? "可線上預約" : clinic.online_booking_enabled === false ? (clinic.phone_booking_enabled ? "電話／現場預約" : "現場預約") : "查看預約方式"}</p>
-		<div class="mt-auto border-t border-border/70 pt-4">
+		<div class="mt-auto flex items-center gap-2 border-t border-border/70 pt-4">
 			{#if onClick}
-				<Button href={`/clinic/${clinic.id}`} variant="ghost" class="min-h-11 w-full justify-between px-0 text-primary">查看院所資訊 <ArrowUpRight class="size-4" /></Button>
-				<Button onclick={onClick} variant="ghost" size="sm" class="min-h-11 px-0 text-muted-foreground">快速檢視</Button>
+				<Button href={`/clinic/${clinic.id}`} variant="outline" class="min-h-11 min-w-0 flex-1 justify-between gap-2 rounded-xl px-3 text-primary hover:text-primary">查看院所資訊 <ArrowUpRight class="size-4" /></Button>
+				<Button onclick={onClick} variant="ghost" size="sm" class="min-h-11 shrink-0 rounded-xl px-3 text-muted-foreground">快速檢視</Button>
 			{:else}
 				<span class="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary">
 					查看店家資訊 <ArrowUpRight class="size-4" />
