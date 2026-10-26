@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import Compass from "@lucide/svelte/icons/compass";
 	import Heart from "@lucide/svelte/icons/heart";
 	import { untrack } from "svelte";
@@ -8,6 +7,7 @@
 	import { requireMember } from "#lib/auth/auth.svelte.ts";
 	import ClinicCard from "#lib/components/clinics/ClinicCard.svelte";
 	import ClinicListSkeleton from "#lib/components/clinics/ClinicListSkeleton.svelte";
+	import RecentlyViewedRail from "#lib/components/member/RecentlyViewedRail.svelte";
 	import { Button } from "#lib/components/ui/button/index.js";
 	import { Card } from "#lib/components/ui/card/index.js";
 	import { useFavorites } from "#lib/hooks/favorites.svelte.ts";
@@ -57,11 +57,8 @@
 		<!-- Header -->
 		<div class="border-b border-border/60 bg-background/80 px-4 py-4 backdrop-blur sm:px-6">
 			<div class="mx-auto flex max-w-5xl items-center gap-3">
-				<a href="/member" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-					<ArrowLeft class="mr-1 size-4" />
-					返回
-				</a>
-				<h1 class="text-lg font-bold text-foreground">我的收藏</h1>
+
+				<h1 class="text-lg font-bold text-foreground">收藏店家</h1>
 				{#if !isLoading && visibleClinics.length > 0}
 					<span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
 						{visibleClinics.length}
@@ -70,7 +67,7 @@
 			</div>
 		</div>
 
-		<div class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+		<div class="mx-auto max-w-5xl space-y-8 px-4 py-6 sm:px-6">
 			{#if isLoading}
 				<ClinicListSkeleton count={6} />
 			{:else if visibleClinics.length === 0}
@@ -93,6 +90,7 @@
 					{/each}
 				</div>
 			{/if}
+			<RecentlyViewedRail ready={guard.ready} />
 		</div>
 	</div>
 {/if}

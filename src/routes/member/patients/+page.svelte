@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import PencilIcon from "@lucide/svelte/icons/pencil";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import Trash2Icon from "@lucide/svelte/icons/trash-2";
@@ -87,11 +86,8 @@
 		<div class="border-b border-border/60 bg-background/80 px-4 py-4 backdrop-blur sm:px-6">
 			<div class="mx-auto flex max-w-4xl items-center justify-between">
 				<div class="flex items-center gap-3">
-					<a href="/member" class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-						<ArrowLeft class="mr-1 size-4" />
-						返回
-					</a>
-					<h1 class="text-lg font-bold text-foreground">看診對象管理</h1>
+
+					<h1 class="text-lg font-bold text-foreground">預約對象</h1>
 				</div>
 				<!-- 已達上限時隱藏新增入口 -->
 				{#if !isLoading && canAddPatient}

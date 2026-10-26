@@ -1,18 +1,12 @@
 <script lang="ts">
-	import CalendarCheck2 from "@lucide/svelte/icons/calendar-check-2";
 	import CalendarDays from "@lucide/svelte/icons/calendar-days";
-	import CalendarPlus from "@lucide/svelte/icons/calendar-plus";
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import Clock from "@lucide/svelte/icons/clock";
-	import Heart from "@lucide/svelte/icons/heart";
 	import MapPin from "@lucide/svelte/icons/map-pin";
 	import Stethoscope from "@lucide/svelte/icons/stethoscope";
-	import Users from "@lucide/svelte/icons/users";
-	import { untrack, type Component } from "svelte";
+	import { untrack } from "svelte";
 	import { memberAppointmentApi, type MemberAppointment } from "#lib/api/member-appointment.ts";
-	import { memberPatientApi } from "#lib/api/member-patient.ts";
 	import { requireMember } from "#lib/auth/auth.svelte.ts";
-	import RecentlyViewedRail from "#lib/components/member/RecentlyViewedRail.svelte";
 
 	import { Badge } from "#lib/components/ui/badge/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
@@ -22,86 +16,49 @@
 	import { APPOINTMENT_STATUS_LABELS, QUEUE_ACTIVE_STATUSES } from "#lib/constants/appointment.ts";
 	import {
 		STATUS_VARIANT,
-			formatMonthDay,
+		formatMonthDay,
 		formatTime,
 		formatWeekday,
-			groupMemberAppointments,
-		} from "#lib/member/appointments.ts";
+		groupMemberAppointments,
+	} from "#lib/member/appointments.ts";
 
 	// 移植自舊版 app/member/page.tsx
 	// 守衛：未登入導向登入頁，後台帳號（管理員 / 院所）導回後台，不渲染民眾端內容
 	const guard = requireMember(() => "/member");
 
 	let appointments = $state.raw<MemberAppointment[]>([]);
-	let patientCount = $state<number | null>(null);
 	let isLoading = $state(true);
 
 	let appointmentsError = $state("");
-	let patientsError = $state("");
 	let appointmentsLoaded = $state(false);
 	let updatedAt = $state("");
+	let requestVersion = 0;
 	async function fetchData() {
+		const version = ++requestVersion;
 		isLoading = true;
-		const [appts, patients] = await Promise.allSettled([
-			memberAppointmentApi.list(), memberPatientApi.list(),
-		]);
-		if (appts.status === "fulfilled") {
-			appointments = appts.value;
+		try {
+			const result = await memberAppointmentApi.list();
+			if (version !== requestVersion) return;
+			appointments = result;
 			appointmentsLoaded = true;
 			appointmentsError = "";
 			updatedAt = new Intl.DateTimeFormat("zh-TW", { timeZone: "Asia/Taipei", hour: "2-digit", minute: "2-digit" }).format(new Date());
-		} else appointmentsError = "暫時無法取得預約紀錄，請重試確認。";
-		if (patients.status === "fulfilled") {
-			patientCount = patients.value.length;
-			patientsError = "";
-		} else patientsError = "暫時無法取得預約對象資料。";
-		isLoading = false;
+		} catch {
+			if (version === requestVersion) appointmentsError = "暫時無法取得預約紀錄，請重試確認。";
+		} finally {
+			if (version === requestVersion) isLoading = false;
+		}
 	}
 
 	$effect(() => {
 		if (!guard.ready) return;
 		untrack(fetchData);
+		return () => { requestVersion++; };
 	});
 
 	const groups = $derived(groupMemberAppointments(appointments));
 
-
 </script>
-
-{#snippet statCard(Icon: Component<{ class?: string }>, label: string, value: number | null, failed = false)}
-	<Card class="flex flex-col items-center gap-1 p-3 text-center shadow-sm">
-		<span class="text-primary"><Icon class="size-4" /></span>
-		{#if failed}<span class="text-2xl font-bold">—<span class="sr-only">尚未取得資料</span></span>{:else if value === null}
-			<Skeleton class="h-6 w-6" />
-		{:else}
-			<span class="text-2xl font-bold text-foreground tabular-nums">{value}</span>
-		{/if}
-		<span class="text-xs text-muted-foreground">{label}</span>
-	</Card>
-{/snippet}
-
-{#snippet actionCard(href: string, Icon: Component<{ class?: string }>, title: string, desc: string, accent = false)}
-	<a {href}>
-		<Card
-			class="group flex flex-row items-center gap-3 p-4 text-left transition-colors hover:bg-accent/40 hover:ring-primary/30"
-		>
-			<span
-				class={accent
-					? "flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
-					: "flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground"}
-			>
-				<Icon class="size-5" />
-			</span>
-			<div class="min-w-0 flex-1">
-				<div class="font-medium text-foreground">{title}</div>
-				<div class="truncate text-xs text-muted-foreground">{desc}</div>
-			</div>
-			<ChevronRight
-				class="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-			/>
-		</Card>
-	</a>
-{/snippet}
 
 {#snippet emptyState(text: string, showCta: boolean)}
 	<Card class="flex flex-col items-center gap-3 p-10 text-center">
@@ -197,7 +154,7 @@
 		<div class="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:px-6">
 			<!-- 預約紀錄 -->
 			<div>
-				<div class="mb-3 flex flex-wrap items-center justify-between gap-3"><h1 class="text-xl font-semibold text-foreground">我的預約</h1><Button href="/search" size="sm" class="min-h-11">預約服務</Button></div>
+				<div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h1 class="text-xl font-semibold text-foreground">我的預約</h1><p class="mt-2 text-sm text-muted-foreground">查看預約時間、狀態與到訪資訊。</p></div><Button href="/search" size="sm" class="min-h-11">預約服務</Button></div>
                 {#if appointmentsError}<div role="alert" class="mb-4 space-y-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-4"><p>{appointmentsError}</p>{#if appointmentsLoaded}<p class="text-sm text-muted-foreground">以下保留上次資料，最後更新 {updatedAt}（臺北時間）。</p>{/if}<Button variant="outline" disabled={isLoading} onclick={fetchData}>重新載入預約</Button></div>{/if}
 
 				{#if isLoading}
@@ -230,29 +187,7 @@
 				{/if}
 			</div>
 
-
-			<!-- 統計卡 -->
-			<div class="grid grid-cols-3 gap-3">
-				{@render statCard(Clock, "即將預約", isLoading ? null : groups.confirmed.length, !!appointmentsError && !appointmentsLoaded)}
-				{@render statCard(CalendarCheck2, "已完成", isLoading ? null : groups.completed.length, !!appointmentsError && !appointmentsLoaded)}
-				{@render statCard(Users, "預約對象", isLoading ? null : patientCount, !!patientsError)}
-			</div>
-
-			{#if patientsError}<div role="alert" class="space-y-2 rounded-xl border p-4 text-sm"><p>{patientsError}{patientCount !== null ? " 數量保留上次結果。" : ""}</p><Button variant="outline" size="sm" disabled={isLoading} onclick={fetchData}>重試預約對象資料</Button></div>{/if}
-            <!-- 快捷功能 -->
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				{@render actionCard("/search", CalendarPlus, "預約服務", "尋找院所、諮詢與療程", true)}
-				{@render actionCard("/member/patients", Users, "預約對象管理", "管理家人與本人資料")}
-				{@render actionCard("/member/favorites", Heart, "我的收藏", "收藏的診所一覽")}
-			</div>
-
-			<!-- 最近瀏覽 -->
-			<RecentlyViewedRail ready={guard.ready} />
-
-
-
 		</div>
-
 
 	</div>
 {/if}

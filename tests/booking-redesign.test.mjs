@@ -80,10 +80,42 @@ test('姓名開啟帳戶選單，預約與個人設定入口不同，手機也�
   try{
    await page.goto(preview.origin+'/member');await page.getByRole('heading',{name:'我的預約',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'刪除帳號',exact:true}).count(),0);
    const nav=page.getByRole('navigation',{name:'主要導覽',exact:true});assert.equal(await nav.locator('a[href="/member"]').count(),1);
-   await nav.getByRole('button',{name:'帳戶選單',exact:true}).click();await page.getByRole('navigation',{name:'帳戶功能',exact:true}).getByRole('link',{name:'個人資料與設定',exact:true}).click();await page.waitForURL('**/member/profile');
+   await nav.getByRole('button',{name:'帳戶選單',exact:true}).click();await page.getByRole('navigation',{name:'帳戶功能',exact:true}).getByRole('link',{name:'帳戶設定',exact:true}).click();await page.waitForURL('**/member/profile');
    await page.getByRole('heading',{name:'帳戶設定',exact:true}).waitFor();await fits(page);assert.equal(state.posts.length,0);
    await page.getByRole('button',{name:'編輯個人資料',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'取消',exact:true}).click();
    await page.getByRole('button',{name:'刪除帳號',exact:true}).click();await page.getByRole('alertdialog').getByRole('button',{name:'取消',exact:true}).click();await page.getByRole('alertdialog').waitFor({state:'hidden'});await page.evaluate(()=>window.scrollTo(0,0));assert.equal(requests.filter(r=>r.method==='DELETE').length,0);await page.screenshot({path:`${dir}/account-${width}.png`,fullPage:false});assert.deepEqual(errors,[]);
+  }finally{await page.close();}
+ }
+});
+
+test('我的預約不重複帳戶功能或讀取家人資料，帳戶子頁導覽與預約入口分開',async()=>{
+ for(const width of [320,1440])for(const dark of [false,true]){
+  const {page,requests,errors}=await bookingFixture(browser,preview.origin,{width,dark});
+  try{
+   await page.goto(preview.origin+'/member');await page.getByRole('heading',{name:'我的預約',exact:true}).waitFor();
+   const main=page.getByRole('main'),nav=page.getByRole('navigation',{name:'主要導覽',exact:true});
+   assert.equal(await main.getByRole('navigation',{name:'帳戶設定導覽',exact:true}).count(),0);
+   for(const path of ['/member/profile','/member/patients','/member/favorites'])assert.equal(await main.locator(`a[href="${path}"]`).count(),0);
+   assert.equal(requests.filter(r=>r.path==='/api/v1/member/patients'||r.path.includes('favorites')).length,0);
+   assert.equal(await nav.getByRole('link',{name:'我的預約',exact:true}).getAttribute('aria-current'),'page');
+   await page.screenshot({path:`${dir}/appointments-separation-${width}-${dark?'dark':'light'}.png`,fullPage:false});
+   await nav.getByRole('button',{name:'帳戶選單',exact:true}).click();
+   const menu=page.getByRole('navigation',{name:'帳戶功能',exact:true});
+   assert.equal(await menu.locator('a[href="/member"]').count(),0);
+   await menu.getByRole('link',{name:'帳戶設定',exact:true}).click();await page.waitForURL('**/member/profile');
+   await main.getByRole('heading',{name:'帳戶設定',exact:true}).waitFor();
+   const account=main.getByRole('navigation',{name:'帳戶設定導覽',exact:true});
+   assert.equal(await account.getByRole('link').count(),3);assert.equal(await account.locator('a[href="/member"]').count(),0);
+   assert.equal(await nav.getByRole('link',{name:'我的預約',exact:true}).getAttribute('aria-current'),null);
+   await fits(page);await page.screenshot({path:`${dir}/account-separation-${width}-${dark?'dark':'light'}.png`,fullPage:false});
+   await account.getByRole('link',{name:'預約對象',exact:true}).click();await page.waitForURL('**/member/patients');
+   await page.getByRole('heading',{name:'預約對象',exact:true}).waitFor();await fits(page);
+   await account.getByRole('link',{name:'收藏店家',exact:true}).click();await page.waitForURL('**/member/favorites');
+   await page.getByRole('heading',{name:'收藏店家',exact:true}).waitFor();await fits(page);
+   await nav.getByRole('link',{name:'我的預約',exact:true}).click();await page.waitForURL(preview.origin+'/member');
+   await main.getByRole('heading',{name:'我的預約',exact:true}).waitFor();
+   assert.equal(await main.getByRole('navigation',{name:'帳戶設定導覽',exact:true}).count(),0);
+   await fits(page);assert.deepEqual(errors,[]);assert.equal(requests.filter(r=>r.method!=='GET').length,0);
   }finally{await page.close();}
  }
 });

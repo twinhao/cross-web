@@ -234,7 +234,7 @@ const SITE_TITLE = "Cross | 線上預約與院所管理平台";
 const SPINNER_60 =
   '<div class="flex min-h-[60vh] items-center justify-center bg-background"><div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div></div>';
 const memberNav = (current) =>
-  new RegExp(`<nav aria-label="會員功能"[\\s\\S]*?<a href="${current}" aria-current="page"`);
+  new RegExp(`<nav aria-label="帳戶設定導覽"[\\s\\S]*?<a href="${current}" aria-current="page"`);
 for (const [path, cache, title, checks] of [
   [
     "/auth",
@@ -259,15 +259,15 @@ for (const [path, cache, title, checks] of [
       /<footer/,
     ],
   ],
-  ["/member", STATIC_PAGE_CACHE, SITE_TITLE, [memberNav("/member"), SPINNER_60, /<footer/]],
+  ["/member", STATIC_PAGE_CACHE, SITE_TITLE, [SPINNER_60, /<footer/]],
   ["/member/favorites", STATIC_PAGE_CACHE, SITE_TITLE, [memberNav("/member/favorites"), SPINNER_60]],
   ["/member/patients", STATIC_PAGE_CACHE, SITE_TITLE, [memberNav("/member/patients"), SPINNER_60]],
-  ["/member/appointments/x", DYNAMIC_PAGE_CACHE, SITE_TITLE, [memberNav("/member"), SPINNER_60]],
+  ["/member/appointments/x", DYNAMIC_PAGE_CACHE, SITE_TITLE, [SPINNER_60]],
   ["/join", STATIC_PAGE_CACHE, "院所導入 | Cross", [/讓預約更有條理，/, /申請院所導入/]],
   ["/join/apply", STATIC_PAGE_CACHE, "申請加入 Cross | Cross", [/成為 Cross 合作夥伴/, /第 1 \/ 3 步 · 你經營的是哪一種？/]],
   ["/join/verify", STATIC_PAGE_CACHE, "驗證信箱並設定密碼 | Cross", [/<div class="text-sm text-muted-foreground">載入中…<\/div>/]],
 ]) {
-  test(`${path}：伺服器 HTML 為舊版的外框與快取標頭`, async () => {
+  test(`${path}：伺服器 HTML 保留對應外框與快取標頭`, async () => {
     if (problem) assert.fail(problem);
     const res = await fetch(base + path);
     const html = await res.text();

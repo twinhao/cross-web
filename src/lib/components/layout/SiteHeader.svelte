@@ -6,6 +6,7 @@
 	import { getAuth } from "#lib/auth/auth.svelte.ts";
 	import { page } from "$app/state";
 	import { canAccessAdmin } from "#lib/auth/roles.ts";
+	import { isAppointmentPage } from "#lib/member/navigation.ts";
 
 	let { home = false, compact = false }: { home?: boolean; compact?: boolean } = $props();
 	const auth = getAuth();
@@ -32,7 +33,7 @@
 			</Button>
 			<Button href="/search" size="sm" class={home ? "min-h-11" : undefined}>線上預約</Button>
 			{#if !auth.isLoading && !isAdmin}
-				<Button href="/member" variant="ghost" size="sm" class={home ? "min-h-11" : undefined}>我的預約</Button>
+				<Button href="/member" aria-current={isAppointmentPage(page.url.pathname) ? "page" : undefined} variant={isAppointmentPage(page.url.pathname) ? "secondary" : "ghost"} size="sm" class={home ? "min-h-11" : undefined}>我的預約</Button>
 			{/if}
 			{#if !isAdmin}<span class={auth.isAuthenticated ? "hidden md:inline-flex" : "inline-flex"}><ClinicEntry /></span>{/if}
 			{/if}
