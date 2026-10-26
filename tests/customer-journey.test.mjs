@@ -187,6 +187,13 @@ test("療程搜尋、電話與線上預約的快速檢視、重新整理與返�
   const { page, errors, writes } = await guest();
   try {
     await page.goto(preview.origin + "/search");
+    const sorting = page.getByRole("combobox", { name: "排序方式", exact: true });
+    assert((await sorting.boundingBox()).height >= 44, "手機排序入口保留足夠點擊範圍");
+    await sorting.click();
+    await page.locator('[data-slot="select-content"]').evaluate((content) =>
+      Promise.all(content.getAnimations().map((animation) => animation.finished)));
+    assert((await page.getByRole("option", { name: "預設排序", exact: true }).boundingBox()).height >= 44);
+    await page.keyboard.press("Escape");
     const input = page.getByRole("textbox", {
       name: "搜尋院所、療程、專業人員或地址",
     });

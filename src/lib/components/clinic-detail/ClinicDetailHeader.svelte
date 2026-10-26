@@ -31,7 +31,7 @@
 			>
 			<div class="flex items-center gap-2">
 				<FavoriteButton clinicId={clinic.id} nextPath={`/clinic/${clinic.id}`} />
-				<Button variant="outline" size="icon" onclick={() => (shareOpen = true)} aria-label="分享此頁面"
+				<Button variant="outline" size="icon" onclick={() => (shareOpen = true)} aria-label="分享此頁面" class="size-11 md:size-9"
 					><Share2 class="size-4" /></Button
 				>
 			</div>

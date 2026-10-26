@@ -67,10 +67,10 @@ test.beforeEach((t) => {
   t.mock.method(globalThis, "fetch", () => assert.fail("不應呼叫全域 fetch"));
 });
 
-test("transformClinicData：營業時間依週一到週日排序並轉中文、去掉 breaks，人員與預設值照舊版", () => {
+test("transformClinicData：營業時間依週一到週日排序並轉中文、保留休息區間與既有預設值", () => {
   const clinic = transformClinicData(RAW);
   assert.deepEqual(clinic.business_hours, [
-    { day: "週一", open: "13:00", close: "21:00", is_closed: false },
+    { day: "週一", open: "13:00", close: "21:00", is_closed: false, breaks: [{ start: "15:00", end: "16:00" }] },
     { day: "週二", open: "13:00", close: "21:00", is_closed: false },
     { day: "週六", open: "13:00", close: "21:00", is_closed: false },
   ]);
@@ -298,7 +298,7 @@ test("buildClinicSeo：示範院所 noindex 且不輸出院所 JSON-LD", () => {
   assert.equal(seo.jsonLd, undefined);
 });
 
-test("buildClinicJsonLd：MedicalClinic + 營業時間 + 麵包屑，與 3100 基準相同", () => {
+test("buildClinicJsonLd：保留院所資料與麵包屑，營業時間排除休息", () => {
   const clinic = transformClinicData(RAW);
   const url = `https://cross.twinhao.com/clinic/${ID}`;
   assert.deepEqual(buildClinicJsonLd(clinic, ID, FALLBACK_TAXONOMY), {
@@ -320,7 +320,8 @@ test("buildClinicJsonLd：MedicalClinic + 營業時間 + 麵包屑，與 3100 �
         areaServed: "高雄市",
         medicalSpecialty: ["傳統整復推拿"],
         openingHoursSpecification: [
-          { "@type": "OpeningHoursSpecification", dayOfWeek: "Monday", opens: "13:00", closes: "21:00" },
+          { "@type": "OpeningHoursSpecification", dayOfWeek: "Monday", opens: "13:00", closes: "15:00" },
+          { "@type": "OpeningHoursSpecification", dayOfWeek: "Monday", opens: "16:00", closes: "21:00" },
           { "@type": "OpeningHoursSpecification", dayOfWeek: "Tuesday", opens: "13:00", closes: "21:00" },
           { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "13:00", closes: "21:00" },
         ],

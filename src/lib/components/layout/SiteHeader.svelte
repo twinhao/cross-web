@@ -15,11 +15,11 @@
 
 <header class="glass-bar sticky top-0 z-50 border-b border-border/70">
 	<div
-		class="home-container flex h-16 flex-nowrap items-center justify-between gap-2 sm:h-20"
+		class="home-container @container flex h-16 flex-nowrap items-center justify-between gap-2 sm:h-20"
 	>
 		<a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="Cross 首頁">
 			<img src="/cross-icon.png" alt="" width="32" height="32" class="size-8 rounded-lg" />
-			<span class="hidden text-lg font-semibold tracking-tight min-[360px]:inline">Cross</span>
+			<span class={isAdmin ? "hidden text-lg font-semibold tracking-tight @min-[28rem]:inline" : "hidden text-lg font-semibold tracking-tight @min-[20rem]:inline"}>Cross</span>
 		</a>
 		<nav aria-label="主要導覽" class="flex items-center gap-1 sm:gap-2">
 			{#if !compact}
@@ -31,14 +31,14 @@
 			>
 				如何預約
 			</Button>
-			<Button href="/search" size="sm" class="min-h-11">線上預約</Button>
+			<Button href="/search" aria-label="線上預約" size="sm" class={isAdmin ? "min-h-11 @max-[18rem]:hidden" : "min-h-11"}><span class="@max-[18rem]:hidden">線上預約</span><span class="hidden @max-[18rem]:inline">找院所</span></Button>
 			{#if !auth.isLoading && !isAdmin}
-				<Button href="/member" aria-current={isAppointmentPage(page.url.pathname) ? "page" : undefined} variant={isAppointmentPage(page.url.pathname) ? "secondary" : "ghost"} size="sm" class="min-h-11">我的預約</Button>
+				<Button href="/member" aria-label="我的預約" aria-current={isAppointmentPage(page.url.pathname) ? "page" : undefined} variant={isAppointmentPage(page.url.pathname) ? "secondary" : "ghost"} size="sm" class="min-h-11"><span class="@max-[18rem]:hidden">我的預約</span><span class="hidden @max-[18rem]:inline">預約</span></Button>
 			{/if}
 			{#if !isAdmin}<span class={auth.isAuthenticated ? "hidden md:inline-flex" : "inline-flex"}><ClinicEntry /></span>{/if}
 			{/if}
-			<span class="hidden md:inline-flex">
-				<ThemeToggle class={home ? "size-11" : undefined} />
+			<span class={isAdmin ? "inline-flex" : "hidden md:inline-flex"}>
+				<ThemeToggle class={home || isAdmin ? "size-11" : undefined} />
 			</span>
 			<span class={compact ? (auth.isAuthenticated ? "inline-flex" : "hidden") : (auth.isAuthenticated ? "inline-flex" : "hidden md:inline-flex")}>
 				<AuthButton next={compact ? page.url.pathname : undefined}/>

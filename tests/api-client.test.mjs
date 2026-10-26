@@ -83,6 +83,10 @@ test("非 ApiError 的錯誤（壞 JSON、格式不對）同樣回 fallback", as
   const html = async () => new Response("<!doctype html><title>502</title>", { status: 200 });
   const notArray = async () => json({ unexpected: true });
   assert.equal(await serviceCategoriesApi.get({ fetch: html }), FALLBACK_TAXONOMY);
+  for (const malformed of [null, [], {}, { facility_types: [], payment_types: [] },
+    { facility_types: [{ value: "healthcare", label: "看診", categories: null }], payment_types: [{ value: "nhi", label: "健保" }] }]) {
+    assert.equal(await serviceCategoriesApi.get({ fetch: async () => json(malformed) }), FALLBACK_TAXONOMY);
+  }
   assert.deepEqual(await getAllClinics({ fetch: html }), []);
   assert.deepEqual(await getAllClinics({ fetch: notArray }), []);
 });

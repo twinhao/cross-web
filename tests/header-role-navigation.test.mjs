@@ -175,3 +175,18 @@ test("確認登入身分期間不顯示錯誤的會員導覽，完成後才顯�
     await page.close();
   }
 });
+
+test("手機文字放大 25% 後訪客、會員及管理員仍能使用導覽，不出現橫向溢出", async () => {
+  for (const roles of [null, ["patient"], ["admin"]]) for (const width of [320, 390]) {
+    const { page, errors } = await fixture(roles, width);
+    try {
+      await page.goto(preview.origin + "/pricing");
+      const nav = page.getByRole("navigation", { name: "主要導覽", exact: true });
+      await nav.getByRole("link", { name: roles?.includes("admin") ? "管理後台" : "我的預約", exact: true }).waitFor();
+      await page.evaluate(() => document.documentElement.style.fontSize = "20px");
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      if (roles?.includes("admin")) await nav.getByRole("button", { name: "切換主題", exact: true }).waitFor();
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  }
+});

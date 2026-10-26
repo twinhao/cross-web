@@ -96,12 +96,28 @@ export const FALLBACK_TAXONOMY: ServiceTaxonomy = {
   ],
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+function isServiceTaxonomy(value: unknown): value is ServiceTaxonomy {
+  if (!isRecord(value) || !Array.isArray(value.facility_types) || !value.facility_types.length ||
+      !Array.isArray(value.payment_types) || !value.payment_types.length) return false;
+  return value.facility_types.every((type) => isRecord(type) &&
+    typeof type.value === "string" && ["healthcare", "aesthetic", "beauty", "other"].includes(type.value) &&
+    typeof type.label === "string" && Array.isArray(type.categories) &&
+    type.categories.every((category) => isRecord(category) &&
+      typeof category.code === "string" && typeof category.label === "string")) &&
+    value.payment_types.every((type) => isRecord(type) &&
+      typeof type.value === "string" && ["nhi", "self_pay", "both"].includes(type.value) && typeof type.label === "string");
+}
+
 export const serviceCategoriesApi = {
   /** 取得服務分類字彙；失敗時回 fallback，確保 UI 永遠有資料 */
   get: async (opts?: { fetch?: typeof globalThis.fetch }): Promise<ServiceTaxonomy> => {
     try {
       // server 端 load 傳入 SvelteKit 的 fetch（見 client.ts）
-      return await api.get<ServiceTaxonomy>("/api/v1/service-categories", opts);
+      const result = await api.get<unknown>("/api/v1/service-categories", opts);
+      return isServiceTaxonomy(result) ? result : FALLBACK_TAXONOMY;
     } catch (e) {
       // 與舊版相同：任何錯誤都降級；唯獨 server 端漏傳 fetch 是程式錯誤，必須穿透（見 client.ts）
       if (e instanceof MissingFetchError) throw e;

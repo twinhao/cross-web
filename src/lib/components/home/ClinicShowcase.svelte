@@ -23,10 +23,10 @@
   </p>
   <Tabs.Root value="storefront" class="mt-5 sm:mt-7">
     <Tabs.List class="grid h-auto w-full grid-cols-2 sm:w-fit">
-      <Tabs.Trigger disabled={!interactive} value="storefront" class="min-h-11">
-        客人看到的門面
-      </Tabs.Trigger><Tabs.Trigger disabled={!interactive} value="workspace" class="min-h-11">
-        團隊使用的工作台
+      <Tabs.Trigger disabled={!interactive} value="storefront" aria-label="客人看到的門面" class="min-h-11">
+        <span class="sm:hidden">院所門面</span><span class="hidden sm:inline">客人看到的門面</span>
+      </Tabs.Trigger><Tabs.Trigger disabled={!interactive} value="workspace" aria-label="團隊使用的工作台" class="min-h-11">
+        <span class="sm:hidden">管理工作台</span><span class="hidden sm:inline">團隊使用的工作台</span>
       </Tabs.Trigger>
     </Tabs.List>
     <Tabs.Content value="storefront" class="mt-5">

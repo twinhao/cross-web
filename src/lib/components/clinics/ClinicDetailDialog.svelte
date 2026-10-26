@@ -4,6 +4,7 @@
 	import Info from "@lucide/svelte/icons/info";
 	import MapPin from "@lucide/svelte/icons/map-pin";
 	import Navigation from "@lucide/svelte/icons/navigation";
+	import { formatBusinessHours } from "#lib/business-hours.ts";
 	import Phone from "@lucide/svelte/icons/phone";
 	import Star from "@lucide/svelte/icons/star";
 	import User from "@lucide/svelte/icons/user";
@@ -101,7 +102,7 @@
 				{#if clinic.business_hours && clinic.business_hours.length > 0}
 					<div class="space-y-2">
 						<h4 class="text-sm font-medium text-foreground">門診時間</h4>
-						<div class="grid grid-cols-2 gap-1.5 text-sm">
+						<div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
 							{#each clinic.business_hours as hours, i (i)}
 								<div class="contents">
 									<div class="flex items-center gap-2 text-muted-foreground">
@@ -109,7 +110,7 @@
 										<span>{hours.day}</span>
 									</div>
 									<span class={hours.is_closed ? "text-muted-foreground" : "text-foreground"}>
-										{hours.is_closed ? "休診" : `${hours.open} - ${hours.close}`}
+										{hours.is_closed ? "休診" : formatBusinessHours(hours)}
 									</span>
 								</div>
 							{/each}
@@ -183,24 +184,24 @@
                 {#if !clinic.services?.length && clinic.service_names?.length}<section class="space-y-2"><h4 class="text-sm font-medium">服務項目</h4><ul class="space-y-1.5 text-sm text-muted-foreground">{#each clinic.service_names.slice(0, 4) as name, i (i)}<li>{name}</li>{/each}</ul><p class="text-xs text-muted-foreground">完整服務與時長請見院所介紹。</p></section>{/if}
 
 				<!-- 操作按鈕（圖示與文字間不留空白，與舊版 JSX 輸出相同） -->
-				<div class="flex gap-2 pt-2">
+				<div class={clinic.address ? "grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2 pt-2 sm:flex" : "grid grid-cols-1 gap-2 pt-2 sm:flex"}>
 					{#if clinic.online_booking_enabled === true}<Button
 						href={`/booking/${clinic.id}`}
-						class="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-						><Calendar class="h-4 w-4 mr-2" />查看可約時段</Button>
-					{:else if clinic.phone_booking_enabled && clinic.phone}<Button href={`tel:${clinic.phone}`} class="min-h-11 flex-1"><Phone class="size-4" />電話預約</Button>
-					{:else}<p class="flex flex-1 items-center text-sm text-muted-foreground">{clinic.online_booking_enabled === false ? "目前提供現場預約" : "預約方式請見院所介紹"}</p>{/if}
+						class="col-span-full min-h-11 min-w-0 flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+						><Calendar class="size-4" />查看可約時段</Button>
+					{:else if clinic.phone_booking_enabled && clinic.phone}<Button href={`tel:${clinic.phone}`} class="col-span-full min-h-11 min-w-0 flex-1"><Phone class="size-4" />電話預約</Button>
+					{:else}<p class="col-span-full flex min-h-11 flex-1 items-center text-sm text-muted-foreground">{clinic.online_booking_enabled === false ? "目前提供現場預約" : "預約方式請見院所介紹"}</p>{/if}
 					<Button
 						href={`/clinic/${clinic.id}`}
-						class="flex-1 bg-card text-primary border border-primary/40 hover:bg-accent/50"
-						><Info class="h-4 w-4 mr-2" />詳細介紹</Button
+						class="min-h-11 min-w-0 flex-1 bg-card text-primary border border-primary/40 hover:bg-accent/50"
+						><Info class="size-4" />詳細介紹</Button
 					>
 					{#if clinic.address}
 						<Button
 							href={`https://maps.google.com/?q=${encodeURIComponent(clinic.address)}`}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="bg-card text-primary border border-border hover:bg-accent/50 px-3"
+							class="min-h-11 min-w-11 bg-card text-primary border border-border hover:bg-accent/50 px-3"
 							title="導航前往"
 						>
 							<Navigation class="h-4 w-4" />

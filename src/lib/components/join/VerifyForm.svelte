@@ -146,7 +146,7 @@
 				<p class="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
 			{/if}
 
-			<Button type="submit" class="w-full" disabled={isSubmitting}>
+			<Button type="submit" class="min-h-11 w-full md:min-h-0" disabled={isSubmitting}>
 				{#if isSubmitting}<Loader2 class="size-4 animate-spin" />{/if}
 				{isSubmitting ? "處理中…" : needsPassword ? "設定密碼並完成驗證" : "完成信箱驗證"}
 			</Button>

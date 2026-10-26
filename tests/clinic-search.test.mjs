@@ -82,18 +82,18 @@ test("付款方式只在看診大類生效：健保命中 nhi+both、自費命�
   assert.deepEqual(ids(filterAndSortClinics(list, { ...ALL, paymentType: "self_pay" }, "default", {})), ids(list));
 });
 
-test("排序：精選一律置頂；default 其餘維持後端順序；rating 由高到低（無評分最後）；name 依 zh-Hant", () => {
+test("排序：預設精選置頂；明確選評分或名稱時尊重該排序（無評分最後）", () => {
   const a = clinic({ clinic_name: "乙", rating: 4.1 });
   const b = clinic({ clinic_name: "甲", rating: undefined });
   const f = clinic({ clinic_name: "丙", rating: 3, is_featured: true });
   const c = clinic({ clinic_name: "丁", rating: 4.9 });
   const list = [a, b, f, c];
   assert.deepEqual(ids(filterAndSortClinics(list, ALL, "default", {})), [f.id, a.id, b.id, c.id]);
-  assert.deepEqual(ids(filterAndSortClinics(list, ALL, "rating", {})), [f.id, c.id, a.id, b.id]);
-  const byName = [a, b, c].map((x) => x.clinic_name).sort((x, y) => x.localeCompare(y, "zh-Hant"));
+  assert.deepEqual(ids(filterAndSortClinics(list, ALL, "rating", {})), [c.id, a.id, f.id, b.id]);
+  const byName = [a, b, f, c].map((x) => x.clinic_name).sort((x, y) => x.localeCompare(y, "zh-Hant"));
   assert.deepEqual(
     filterAndSortClinics(list, ALL, "name", {}).map((x) => x.clinic_name),
-    ["丙", ...byName],
+    byName,
   );
   assert.deepEqual(ids(list), [a.id, b.id, f.id, c.id], "不改動輸入陣列");
 });

@@ -38,7 +38,7 @@ export interface BackendClinic {
   longitude?: number | null;
   rating?: number | null;
   review_count?: number | null;
-  business_hours?: Record<string, { open: string; close: string }> | null;
+  business_hours?: Record<string, { open: string; close: string; breaks?: { start: string; end: string }[] }> | null;
   members?: BackendStaff[];
   is_featured?: boolean;
   online_booking_enabled?: boolean;
@@ -60,7 +60,7 @@ const DAY_NAMES: Record<string, string> = {
 
 // 轉換營業時間格式（物件 -> 陣列）
 function transformBusinessHours(
-  hours: Record<string, { open: string; close: string }> | null | undefined
+  hours: Record<string, { open: string; close: string; breaks?: { start: string; end: string }[] }> | null | undefined
 ): BusinessHours[] | undefined {
   if (!hours) return undefined;
 
@@ -73,6 +73,7 @@ function transformBusinessHours(
       open: hours[day].open,
       close: hours[day].close,
       is_closed: false,
+      ...(hours[day].breaks?.length ? { breaks: hours[day].breaks.map((rest) => ({ ...rest })) } : {}),
     }));
 }
 

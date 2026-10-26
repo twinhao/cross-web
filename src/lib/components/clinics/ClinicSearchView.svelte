@@ -81,18 +81,18 @@
 			<SelectTrigger
 				disabled={!interactive}
 				size="sm"
-				class="w-[132px] rounded-full border-transparent bg-card ring-1 ring-border/60"
+				class="w-[132px] rounded-full data-[size=sm]:h-11 md:data-[size=sm]:h-8 border-transparent bg-card ring-1 ring-border/60"
 				aria-label="排序方式"
 			>
 				<SelectValue />
 			</SelectTrigger>
-			<SelectContent>
+			<SelectContent align="end">
 				{#each SORT_OPTIONS as opt (opt.value)}
 					<!-- 舊版 Radix 以 focus 標示游標項目（focus:bg-accent focus:text-primary）；Bits UI 改用 data-highlighted -->
 					<SelectItem
 						value={opt.value}
 						label={opt.label}
-						class="data-highlighted:bg-accent data-highlighted:text-primary"
+						class="min-h-11 md:min-h-9 data-highlighted:bg-accent data-highlighted:text-primary"
 					/>
 				{/each}
 			</SelectContent>

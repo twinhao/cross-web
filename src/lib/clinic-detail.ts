@@ -8,6 +8,7 @@ import {
   serviceCategoriesApi,
   type ServiceTaxonomy,
 } from "./api/service-categories.ts";
+import { openingPeriods } from "./business-hours.ts";
 import { isDemoClinic } from "./clinic-discovery.ts";
 import { deriveFacilityType, parseCityFromAddress } from "./constants/clinic-constants.ts";
 import type { SeoProps } from "./components/Seo.svelte";
@@ -74,6 +75,7 @@ export function transformClinicData(found: any): Clinic {
           open: found.business_hours[day].open,
           close: found.business_hours[day].close,
           is_closed: false,
+          ...(found.business_hours[day].breaks?.length ? { breaks: found.business_hours[day].breaks.map((rest: { start: string; end: string }) => ({ ...rest })) } : {}),
         }))
     : undefined;
 
@@ -413,12 +415,12 @@ export function buildClinicJsonLd(
 
   const openingHours = (clinic.business_hours ?? [])
     .filter((h) => SCHEMA_DAY[h.day] && h.open && h.close)
-    .map((h) => ({
+    .flatMap((h) => openingPeriods(h).map((period) => ({
       "@type": "OpeningHoursSpecification",
       dayOfWeek: SCHEMA_DAY[h.day],
-      opens: h.open,
-      closes: h.close,
-    }));
+      opens: period.start,
+      closes: period.end,
+    })));
 
   const specialties = clinicCategoryLabels(clinic, tax);
 

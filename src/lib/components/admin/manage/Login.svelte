@@ -67,7 +67,7 @@
             required
           />
         </div>
-      </Field.Set><Button type="submit" class="w-full" disabled={busy}>
+      </Field.Set><Button type="submit" class="min-h-11 w-full md:min-h-0" disabled={busy}>
         {busy ? "登入中…" : "登入"}
       </Button>
     </form>

@@ -94,7 +94,7 @@ test("診所詳情對話框：重複科別、營業時間、人員、服務都�
   assert.ok(clinicDialog, "找不到診所詳情對話框");
   const n = (t) => clinicDialog.split(t).length - 1;
   assert.equal(n("家醫科"), 2);
-  assert.equal(n("09:00 - 12:00"), 2);
+  assert.equal(n("09:00–12:00"), 2);
   assert.equal(n("重複醫師"), 2);
   assert.equal(n("重複服務"), 2);
 });

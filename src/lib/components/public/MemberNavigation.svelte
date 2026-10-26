@@ -22,9 +22,9 @@
 					{href}
 					aria-current={active ? "page" : undefined}
 					class={cn(
-						"inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors sm:px-5",
+						"inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-1 text-sm font-medium transition-colors sm:px-5",
 						active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-card hover:text-primary",
-					)}><Icon class="hidden size-4 min-[370px]:block" />{label}</a
+					)}><Icon class="hidden size-4 sm:block" />{label}</a
 				>
 			{/each}
 		</nav>

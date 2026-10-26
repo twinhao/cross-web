@@ -5,25 +5,6 @@
 	import Store from "@lucide/svelte/icons/store";
 	import type { FacilityType } from "#lib/types/clinic.ts";
 
-	const WEEKDAY_ZH: Record<string, string> = {
-		Sun: "週日",
-		Mon: "週一",
-		Tue: "週二",
-		Wed: "週三",
-		Thu: "週四",
-		Fri: "週五",
-		Sat: "週六",
-	};
-
-	// 一律以台北時區判定今天星期幾。若直接用 new Date().getDay()，SSR 在 UTC、
-	// 瀏覽器在 Asia/Taipei，跨日時段會算出不同答案而造成 hydration 不符。
-	function taipeiWeekday(): string {
-		const short = new Intl.DateTimeFormat("en-US", {
-			timeZone: "Asia/Taipei",
-			weekday: "short",
-		}).format(new Date());
-		return WEEKDAY_ZH[short] ?? short;
-	}
 
 	const FACILITY_TYPE_ICONS: Record<FacilityType, typeof Stethoscope> = {
 		healthcare: Stethoscope,
@@ -59,6 +40,7 @@
 	import { useServiceTaxonomy } from "#lib/hooks/service-taxonomy.svelte.ts";
 	import type { Clinic } from "#lib/types/clinic.ts";
 	import { cn } from "#lib/utils.ts";
+	import { formatBusinessHours, taipeiWeekday } from "#lib/business-hours.ts";
 	import FavoriteButton from "./FavoriteButton.svelte";
 	import ClinicLogo from "./ClinicLogo.svelte";
 
@@ -93,7 +75,7 @@
 		const today = clinic.business_hours?.find((h) => h.day === taipeiWeekday());
 		return clinic.business_hours?.length
 			? today && !today.is_closed
-				? `今日 ${today.open}–${today.close}`
+				? `今日 ${formatBusinessHours(today)}`
 				: "今日休息"
 			: undefined;
 	});
@@ -138,8 +120,8 @@
 
 				<!-- 診所名稱 -->
 				<CardTitle class="text-lg leading-tight">
-					{#if onClick}<button type="button" onclick={onClick} class="text-left hover:text-primary"
-							>{clinic.clinic_name}</button
+					{#if onClick}<a href={`/clinic/${clinic.id}`} class="text-left leading-6 hover:text-primary"
+							>{clinic.clinic_name}</a
 						>{:else}{clinic.clinic_name}{/if}
 				</CardTitle>
 
@@ -199,10 +181,10 @@
 				</div>
 			{/if}
 		</div>
-		<p class="text-sm font-medium text-primary">{clinic.online_booking_enabled === true ? "可線上預約" : clinic.online_booking_enabled === false ? (clinic.phone_booking_enabled ? "電話／現場預約" : "現場預約") : "查看預約方式"}</p>
-		<div class="mt-auto flex items-center gap-2 border-t border-border/70 pt-4">
+		<Badge variant="secondary" class="w-fit whitespace-normal text-xs font-medium">{clinic.online_booking_enabled === true ? "可線上預約" : clinic.online_booking_enabled === false ? (clinic.phone_booking_enabled ? "電話／現場預約" : "現場預約") : "查看預約方式"}</Badge>
+		<div class="mt-auto flex flex-wrap items-center gap-2 border-t border-border/70 pt-4">
 			{#if onClick}
-				<Button href={`/clinic/${clinic.id}`} variant="outline" class="min-h-11 min-w-0 flex-1 justify-between gap-2 rounded-xl px-3 text-primary hover:text-primary">查看院所資訊 <ArrowUpRight class="size-4" /></Button>
+				<Button href={`/clinic/${clinic.id}`} variant="outline" class="min-h-11 min-w-0 flex-1 basis-32 justify-between gap-2 rounded-xl px-3 text-primary hover:text-primary">查看院所資訊 <ArrowUpRight class="size-4" /></Button>
 				<Button onclick={onClick} variant="ghost" size="sm" class="min-h-11 shrink-0 rounded-xl px-3 text-muted-foreground">快速檢視</Button>
 			{:else}
 				<span class="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary">

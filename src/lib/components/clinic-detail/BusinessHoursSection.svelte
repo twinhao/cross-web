@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { taipeiWeekday } from "#lib/business-hours.ts";
 	import Clock from "@lucide/svelte/icons/clock";
 	import type { BusinessHours } from "#lib/types/clinic.ts";
 	import { cn } from "#lib/utils.ts";
@@ -6,10 +7,7 @@
 
 	let { businessHours, class: className }: { businessHours: BusinessHours[]; class?: string } = $props();
 
-	// 同舊版：以執行環境的時區判定今天（SSR 與瀏覽器跨日不同時，hydration 會改成瀏覽器的值）
-	const today = new Date().getDay();
-	const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-	const todayName = dayNames[today];
+	const todayName = taipeiWeekday();
 </script>
 
 {#if businessHours.length > 0}
@@ -20,7 +18,7 @@
 				{@const isToday = hours.day === todayName}
 				<div
 					class={cn(
-						"flex items-center justify-between rounded-xl px-3 py-2 transition-colors",
+						"flex items-start justify-between gap-3 rounded-xl px-3 py-2 transition-colors",
 						isToday ? "bg-accent" : "hover:bg-muted",
 					)}
 				>
@@ -33,7 +31,7 @@
 							? "（今日）"
 							: ""}</span
 					>
-					<div class="text-right">
+					<div class="min-w-0 text-right">
 						<span
 							class={cn(
 								"text-sm tabular-nums",

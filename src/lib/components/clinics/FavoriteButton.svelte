@@ -65,7 +65,7 @@
 		aria-label={active ? "取消收藏" : "加入收藏"}
 		aria-pressed={active}
 		class={cn(
-			"inline-flex size-9 items-center justify-center rounded-full transition-colors disabled:opacity-60",
+			"inline-flex size-11 md:size-9 items-center justify-center rounded-full transition-colors disabled:opacity-60",
 			variant === "light"
 				? "bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md hover:bg-white/25"
 				: "bg-background/80 text-muted-foreground ring-1 ring-border/60 backdrop-blur hover:text-rose-500",
