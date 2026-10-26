@@ -6,6 +6,7 @@
   import LogOut from "@lucide/svelte/icons/log-out";
   import UserIcon from "@lucide/svelte/icons/user";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
+  import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import * as Popover from "#lib/components/ui/popover/index.ts";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
@@ -35,6 +36,7 @@
           <Button href="/join" variant="ghost" class="min-h-11 justify-start rounded-lg md:hidden" onclick={()=>open=false}>院所導入</Button>
           <Button variant="ghost" class="min-h-11 justify-start rounded-lg border-t" onclick={()=>{open=false;auth.logout("/");}}><LogOut/>登出</Button>
         </nav>
+        <div class="mt-1 flex items-center justify-between border-t px-3 pt-1 md:hidden"><span class="text-sm text-muted-foreground">外觀主題</span><ThemeToggle class="size-11" /></div>
       </Popover.Content>
     </Popover.Root>
   {/if}

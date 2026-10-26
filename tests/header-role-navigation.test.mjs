@@ -54,6 +54,18 @@ async function fits(page) {
     ),
     false,
   );
+  const viewport = page.viewportSize();
+  if (viewport.width < 768) {
+    const header = await page.locator("header").boundingBox();
+    assert.equal(header.height, viewport.width < 640 ? 65 : 81, "手機導覽固定高度，不因角色或文字換行");
+    const targets = await page.getByRole("navigation", { name: "主要導覽", exact: true })
+      .locator("a, button").evaluateAll((elements) => elements
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0)
+        .map((rect) => ({ height: rect.height, top: rect.top, bottom: rect.bottom })));
+    assert(targets.every((rect) => rect.height >= 44), "手機導覽的操作範圍至少 44px");
+    assert(targets.every((rect) => rect.top >= header.y && rect.bottom <= header.y + header.height), "導覽項目維持同一排");
+  }
 }
 
 test("平台及院所管理帳號只顯示一個管理後台入口，手機亦有完整名稱", async () => {
@@ -149,8 +161,10 @@ test("確認登入身分期間不顯示錯誤的會員導覽，完成後才顯�
       await nav.getByRole("link", { name: "管理後台", exact: true }).count(),
       0,
     );
+    assert.equal((await page.locator("header").boundingBox()).height, 65);
     release();
     await nav.getByRole("link", { name: "管理後台", exact: true }).waitFor();
+    await fits(page);
     assert.equal(
       await nav.getByRole("link", { name: "我的預約", exact: true }).count(),
       0,

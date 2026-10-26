@@ -11,17 +11,17 @@
 
 <section
   id="product-preview"
-  class="home-container scroll-mt-24 py-14 sm:py-20"
+  class="home-container scroll-mt-20 py-8 sm:scroll-mt-24 sm:py-20"
   aria-labelledby="preview-title"
 >
   <p class="home-eyebrow">院所門面與日常管理</p>
   <h2 id="preview-title" class="home-heading mt-3">
     客人容易預約，團隊清楚安排。
   </h2>
-  <p class="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
+  <p class="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:mt-4">
     對外介紹服務與專業團隊，對內集中處理預約、排班與客戶資料。下方使用虛構資料示意，不是實際院所或預約。
   </p>
-  <Tabs.Root value="storefront" class="mt-7">
+  <Tabs.Root value="storefront" class="mt-5 sm:mt-7">
     <Tabs.List class="grid h-auto w-full grid-cols-2 sm:w-fit">
       <Tabs.Trigger disabled={!interactive} value="storefront" class="min-h-11">
         客人看到的門面
@@ -31,15 +31,15 @@
     </Tabs.List>
     <Tabs.Content value="storefront" class="mt-5">
       <Card class="gap-0 py-0">
-        <CardContent class="grid gap-7 p-6 sm:p-9 lg:grid-cols-2">
+        <CardContent class="grid gap-5 p-4 sm:gap-7 sm:p-9 lg:grid-cols-2">
           <div>
             <span
               class="inline-flex rounded-full bg-accent px-3 py-1 text-xs text-primary"
             >
               虛構門面示意
             </span>
-            <Building2 class="mt-6 size-9 text-primary" />
-            <h3 class="mt-4 text-2xl font-semibold">示範美學診所</h3>
+            <Building2 class="mt-4 size-8 sm:mt-6 sm:size-9 text-primary" />
+            <h3 class="mt-3 text-xl font-semibold sm:mt-4 sm:text-2xl">示範美學診所</h3>
             <p class="mt-3 text-sm leading-7 text-muted-foreground">
               院所介紹、品牌
               Logo、專業團隊、服務與交通資訊，整合成專屬公開頁。價格可依服務設定是否公開。
@@ -55,10 +55,10 @@
               示範院所僅供體驗，不建立實際預約。
             </p>
           </div>
-          <div class="space-y-3 rounded-2xl bg-muted/50 p-5">
+          <div class="space-y-3 rounded-2xl bg-muted/50 p-3 sm:p-5">
             <p class="text-sm font-semibold">服務與預約方式</p>
             {#each [{ title: "初次諮詢", time: "30 分鐘" }, { title: "療程諮詢", time: "45 分鐘" }] as service (service.title)}<div
-                class="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card p-4"
+                class="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card p-3 sm:p-4"
               >
                 <div>
                   <p class="text-sm font-medium">{service.title}</p>
@@ -77,18 +77,18 @@
     </Tabs.Content>
     <Tabs.Content value="workspace" class="mt-5">
       <Card class="gap-0 py-0">
-        <CardContent class="grid gap-7 p-6 sm:p-9 lg:grid-cols-2">
+        <CardContent class="grid gap-5 p-4 sm:gap-7 sm:p-9 lg:grid-cols-2">
           <div>
             <span
               class="inline-flex rounded-full bg-accent px-3 py-1 text-xs text-primary"
             >
               虛構工作台示意
             </span>
-            <h3 class="mt-6 text-2xl font-semibold">從今日預約開始工作。</h3>
+            <h3 class="mt-4 text-xl font-semibold sm:mt-6 sm:text-2xl">從今日預約開始工作。</h3>
             <p class="mt-3 text-sm leading-7 text-muted-foreground">
               查看預約與處理狀態、安排人員班表；需要更新門面時，從院所設定編輯，直接查看公開頁與分享。
             </p>
-            <ul class="mt-5 space-y-3 text-sm">
+            <ul class="mt-4 space-y-3 text-sm sm:mt-5">
               {#each ["今日預約與客戶資訊", "人員、服務對應與排班", "院所介紹、服務與價格公開設定"] as text (text)}<li
                   class="flex gap-2"
                 >
@@ -96,10 +96,10 @@
                 </li>{/each}
             </ul>
           </div>
-          <div class="space-y-3 rounded-2xl bg-muted/50 p-5">
+          <div class="space-y-3 rounded-2xl bg-muted/50 p-3 sm:p-5">
             <p class="text-sm font-semibold">今日工作台 · 示意資料</p>
             {#each [{ time: "10:00", name: "示範客戶 A", service: "初次諮詢" }, { time: "14:30", name: "示範客戶 B", service: "療程諮詢" }] as appointment (appointment.time)}<div
-                class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4"
+                class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 sm:p-4"
               >
                 <div>
                   <p class="text-sm font-semibold">

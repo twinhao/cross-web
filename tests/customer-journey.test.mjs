@@ -139,7 +139,7 @@ test("手機及桌面兩端入口、登入轉向與院所示意可操作，亮�
       try {
         await page.goto(preview.origin + "/");
         await page
-          .getByRole("button", { name: "院所專區", exact: true })
+          .getByRole("button", { name: /^(院所專區|更多選單)$/, exact: true })
           .click();
         const nav = page.getByRole("navigation", { name: "院所專區導覽" });
         await nav
@@ -410,7 +410,7 @@ test("慢速載入互動程式時先停用操作，就緒後首次操作可完�
     await page.route("**/_app/immutable/**/*.js", async (route) => { await gate; await route.continue(); });
     try {
       await page.goto(preview.origin + path, { waitUntil: "commit" });
-      const control = path === "/" ? page.getByRole("button", { name: "院所專區", exact: true }) : path === "/search" ? page.getByRole("textbox", { name: "搜尋院所、療程、專業人員或地址" }) : path === "/join" ? page.getByRole("tab", { name: "團隊使用的工作台", exact: true }) : page.getByRole("button", { name: "下一步", exact: true });
+      const control = path === "/" ? page.getByRole("button", { name: /^(院所專區|更多選單)$/, exact: true }) : path === "/search" ? page.getByRole("textbox", { name: "搜尋院所、療程、專業人員或地址" }) : path === "/join" ? page.getByRole("tab", { name: "團隊使用的工作台", exact: true }) : page.getByRole("button", { name: "下一步", exact: true });
       await control.waitFor({ state: "visible" });
       assert.equal(await control.isDisabled(), true, path);
       release();
