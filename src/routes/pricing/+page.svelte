@@ -2,7 +2,6 @@
   import ArrowRight from "@lucide/svelte/icons/arrow-right";
   import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
   import MessageCircle from "@lucide/svelte/icons/message-circle";
-  import CalendarDays from "@lucide/svelte/icons/calendar-days";
   import Check from "@lucide/svelte/icons/check";
   import Seo from "#lib/components/Seo.svelte";
   import SiteFooter from "#lib/components/layout/SiteFooter.svelte";
@@ -115,38 +114,9 @@
         <h2 id="pricing-questions-title" class="home-heading">導入前，你可能想知道。</h2>
         <Accordion.Root type="single" class="mt-5">{#each questions as item (item.question)}<Accordion.Item value={item.question}><Accordion.Trigger class="min-h-14 text-left leading-7">{item.question}</Accordion.Trigger><Accordion.Content class="text-sm leading-7 text-muted-foreground">{item.answer}</Accordion.Content></Accordion.Item>{/each}</Accordion.Root>
       </section>
-      <div class="mt-10 max-w-5xl">
-        <Card class="gap-0 bg-accent/20 py-0 shadow-sm">
-          <CardContent class="p-8">
-            <CalendarDays class="size-6 text-primary" aria-hidden="true" />
-            <h2 class="mt-5 text-xl font-semibold">先確認院所的預約需求</h2>
-            <p class="mt-4 text-sm leading-7 text-muted-foreground">
-              看診、醫美諮詢與療程可能有不同的時長及人員安排。導入前先確認服務、排班與院所流程，再設定線上預約入口。
-            </p>
-            <ul class="mt-6 space-y-3 text-sm text-muted-foreground">
-              <li>確認服務內容與預約時長</li>
-              <li>整理人員、班表與休假設定</li>
-              <li>確認開通功能、費用與上線安排</li>
-            </ul>
-            <Button
-              href={clinicLineContact}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="mt-7 min-h-11 bg-[#007a35] text-white hover:bg-[#00652c]"
-            >
-              <MessageCircle aria-hidden="true" />LINE 導入諮詢 <ArrowUpRight
-                aria-hidden="true"
-              />
-              <span class="sr-only">（另開視窗）</span>
-            </Button>
-            <a
-              href="/join"
-              class="mt-6 flex items-center gap-2 text-sm font-medium text-primary"
-            >
-              了解院所導入流程 <ArrowRight class="size-4" aria-hidden="true" />
-            </a>
-          </CardContent>
-        </Card>
+      <div class="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-5 text-sm">
+        <p class="text-muted-foreground">不確定哪個方案適合院所？</p>
+        <a href={clinicLineContact} target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center gap-1.5 font-medium text-[#007a35] underline-offset-4 hover:underline dark:text-emerald-400"><MessageCircle class="size-4" aria-hidden="true" />LINE 導入諮詢 <ArrowUpRight class="size-4" aria-hidden="true" /><span class="sr-only">（另開視窗）</span></a>
       </div>
       <p class="mt-8 text-sm text-muted-foreground">
         既有訂閱的取消與退款，請參閱

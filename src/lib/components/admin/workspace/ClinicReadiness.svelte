@@ -22,8 +22,22 @@
   let scheduleCount = $state<number | null>(null);
   let slotsAvailable = $state<boolean | null>(null);
   let slotsError = $state(false);
-  let expanded = $state(false);
-  onMount(() => { expanded = !facility.is_active; });
+  let expanded = $state(true);
+  let preferredExpanded: boolean | null = null;
+  const preferenceKey = $derived(`cross:clinic-readiness:${facility.id}`);
+  onMount(() => {
+    try {
+      const saved = localStorage.getItem(preferenceKey);
+      preferredExpanded = saved === "open" ? true : saved === "closed" ? false : null;
+      if (preferredExpanded !== null) expanded = preferredExpanded;
+    } catch { /* 儲存不可用時維持自動展開規則。 */ }
+    void refresh();
+  });
+  function rememberExpansion() {
+    preferredExpanded = !expanded;
+    try { localStorage.setItem(preferenceKey, preferredExpanded ? "open" : "closed"); }
+    catch { /* 收合偏好不影響設定檢查。 */ }
+  }
   let active = true;
   onDestroy(() => {
     active = false;
@@ -103,7 +117,10 @@
     } catch {
       if (active) error = "無法取得完整設定狀態，請重試。";
     } finally {
-      if (active) busy = false;
+      if (active) {
+        busy = false;
+        expanded = preferredExpanded ?? (!!error || items.some((item) => item.done !== true));
+      }
     }
   }
   const items = $derived([
@@ -160,81 +177,68 @@
               : slotsAvailable
                 ? "已找到可預約時段；名額以客人送出時為準。"
                 : "檢查服務、人員、休假與剩餘名額後的實際結果。",
-      href: `/clinic/${facility.id}`,
+      href: slotsAvailable === false ? clinicHref(facility.id, "schedule") : `/clinic/${facility.id}`,
     },
   ]);
+  const actionLabels: Record<string, string> = {
+    "院所介紹與 Logo": "完善院所門面",
+    "公開上架狀態": "查看上架狀態",
+    "啟用服務項目": "設定服務項目",
+    "可預約人員與服務對應": "設定人員與服務",
+    "未來 30 天班表": "安排未來班表",
+    "線上預約方案": "查看開通方案",
+    "實際可預約時段": "檢查班表與限制",
+  };
+  const confirmedCount = $derived(items.filter((item) => item.done === true).length);
+  const nextStep = $derived(!busy && !error && checked ? items.find((item) => item.done === false) : undefined);
+  const status = $derived(busy ? "正在檢查上線設定" : error ? "設定狀態尚未確認" :
+    !facility.is_active ? "院所尚未公開上架" : !online ? "門面已上架，線上預約尚未開通" :
+    slotsError ? "可預約時段尚未確認" : slotsAvailable === true ? "已找到可線上預約的時段" : "線上預約仍有設定待完成");
 </script>
 
-<details
-  bind:open={expanded}
-  class="rounded-2xl border border-border bg-card p-5"
-  ontoggle={(event) => {
-    if (event.currentTarget.open && !checked && !busy) void refresh();
-  }}
->
-  <summary class="cursor-pointer text-base font-semibold">
-    院所門面與預約上線檢查
-  </summary>
-  <div class="mt-4 space-y-4">
-    <p class="text-sm leading-6 text-muted-foreground">
-      先完成公開門面，再確認線上預約。帳號開通、院所上架與可預約時段是不同狀態。
-    </p>
-    <div class="flex flex-wrap items-center gap-3">
-      <Button
-        variant="outline"
-        size="sm"
-        class="min-h-11"
-        disabled={busy}
-        onclick={refresh}
-      >
-        {busy ? "正在檢查…" : "重新檢查設定"}
-      </Button><Button
-        href={`/clinic/${facility.id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="ghost"
-        class="min-h-11"
-      >
-        查看客人看到的門面<ArrowUpRight class="size-4" />
-        <span class="sr-only">（另開視窗）</span>
-      </Button>
+<section aria-label="院所上線準備" class="rounded-2xl border border-border bg-card p-4 sm:p-5">
+  <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap">
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold" role="status">{status}</p>
+      <p class="mt-2 text-sm leading-6 text-muted-foreground">
+        {#if busy}正在核對門面、方案與排班，請稍候。
+        {:else if error}暫時無法確認完整設定，請重新檢查。
+        {:else}已確認 {confirmedCount} / {items.length} 項。門面上架與線上預約可分階段完成。{/if}
+      </p>
     </div>
-    {#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-    <ul class="grid gap-3 lg:grid-cols-2" aria-busy={busy}>
-      {#each items as item (item.title)}
-        <li class="flex items-start gap-3 rounded-xl border p-4">
-          {#if item.done}<CircleCheck
-              class="mt-0.5 size-5 shrink-0 text-primary"
-              aria-hidden="true"
-            />{:else}<CircleHelp
-              class="mt-0.5 size-5 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />{/if}
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold">
-              {item.title}
-              <span class="ml-2 text-xs font-normal text-muted-foreground">
-                {item.done === true
-                  ? "已確認"
-                  : item.done === false
-                    ? "待處理"
-                    : "待確認"}
-              </span>
-            </p>
-            <p class="mt-1 text-sm leading-6 text-muted-foreground">
-              {item.text}
-            </p>
-            <a
-              href={item.href}
-              class="mt-1 inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
-            >
-              {item.title === "實際可預約時段"
-                ? "查看預約方式"
-                : "前往查看與設定"}
-            </a>
-          </div>
-        </li>
-      {/each}
-    </ul>
+    <Button href={`/clinic/${facility.id}`} target="_blank" rel="noopener noreferrer" variant="outline" class="min-h-11 w-full sm:w-auto">
+      查看客人看到的門面<ArrowUpRight class="size-4" /><span class="sr-only">（另開視窗）</span>
+    </Button>
   </div>
-</details>
+  <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="上線設定已確認項目" aria-valuemin={0} aria-valuemax={items.length} aria-valuenow={busy ? undefined : confirmedCount} aria-valuetext={busy ? "正在檢查" : `已確認 ${confirmedCount} / ${items.length} 項`}>
+    <div class="h-full rounded-full bg-primary transition-[width]" style:width={`${confirmedCount / items.length * 100}%`}></div>
+  </div>
+  {#if nextStep}
+    <div role="group" aria-label="下一步設定" class="mt-4 flex flex-col gap-3 rounded-xl bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0"><p class="text-sm font-semibold">下一步：{nextStep.title}</p><p class="mt-1 text-sm leading-6 text-muted-foreground">{nextStep.text}</p></div>
+      <Button href={nextStep.href} class="min-h-11 shrink-0">{actionLabels[nextStep.title]}</Button>
+    </div>
+  {/if}
+  {#if error}<p role="alert" class="mt-4 text-sm text-destructive">{error}</p>{/if}
+  <div class="mt-2 flex flex-wrap items-center gap-3">
+    <Button variant="ghost" size="sm" class="min-h-11" disabled={busy} onclick={refresh}>{busy ? "正在檢查…" : "重新檢查設定"}</Button>
+  </div>
+  <details bind:open={expanded} class="mt-2 border-t pt-4">
+    <summary class="min-h-11 cursor-pointer py-3 text-sm font-semibold" onclick={rememberExpansion}>院所門面與預約上線檢查</summary>
+    <div class="mt-4 space-y-4">
+      <p class="text-sm leading-6 text-muted-foreground">先完成公開門面，再確認線上預約。帳號開通、院所上架與可預約時段是不同狀態。</p>
+      <ul class="grid gap-3 lg:grid-cols-2" aria-busy={busy}>
+        {#each items as item (item.title)}
+          <li class="flex items-start gap-3 rounded-xl border p-4">
+            {#if item.done}<CircleCheck class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />{:else}<CircleHelp class="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />{/if}
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold">{item.title}<span class="ml-2 text-xs font-normal text-muted-foreground">{item.done === true ? "已確認" : item.done === false ? "待處理" : "待確認"}</span></p>
+              <p class="mt-1 text-sm leading-6 text-muted-foreground">{item.text}</p>
+              <a href={item.href} class="mt-1 inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4">{item.title === "實際可預約時段" && slotsAvailable === true ? "查看預約方式" : actionLabels[item.title]}</a>
+            </div>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  </details>
+</section>

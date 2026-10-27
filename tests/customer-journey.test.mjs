@@ -360,7 +360,7 @@ test("院所上線清單區分方案與時段，僅查詢 API 且失敗可重試
       .filter({
         has: page.locator("summary", { hasText: "院所門面與預約上線檢查" }),
       });
-    await panel.locator("summary").click();
+    await panel.waitFor();
     await page.waitForFunction(
       () =>
         document.querySelector("details ul")?.getAttribute("aria-busy") ===
@@ -377,21 +377,20 @@ test("院所上線清單區分方案與時段，僅查詢 API 且失敗可重試
     });
     state.clinic.subscription_plan = "standard";
     await page.reload();
-    await panel.locator("summary").click();
     await page.waitForFunction(() =>
       document
         .querySelector("details ul")
         ?.textContent.includes("已找到可預約時段"),
     );
     failSlots = true;
-    await panel
+    await page.getByRole("region", { name: "院所上線準備", exact: true })
       .getByRole("button", { name: "重新檢查設定", exact: true })
       .click();
     await panel
       .getByText("時段讀取失敗，請重新檢查。", { exact: true })
       .waitFor();
     failSlots = false;
-    await panel
+    await page.getByRole("region", { name: "院所上線準備", exact: true })
       .getByRole("button", { name: "重新檢查設定", exact: true })
       .click();
     await panel
@@ -430,4 +429,57 @@ test("慢速載入互動程式時先停用操作，就緒後首次操作可完�
       assert.deepEqual(errors, []);
     } finally { release(); await page.close(); }
   }
+});
+
+test("已啟用但尚未完成服務的院所會自動展開清單，下一步直接連到服務設定", async () => {
+  for (const width of [320, 1440]) {
+    const { page, state, requests, errors } = await setupComplete(browser, preview.origin, { role: "facility_admin", width });
+    state.clinic.description = "虛構院所介紹";
+    state.clinic.logo_url = "/cross-icon.png";
+    state.services = [];
+    try {
+      await page.goto(preview.origin + "/admin/dashboard");
+      const readiness = page.getByRole("region", { name: "院所上線準備", exact: true });
+      const next = readiness.getByRole("group", { name: "下一步設定", exact: true });
+      await next.getByText("下一步：啟用服務項目", { exact: true }).waitFor();
+      assert.equal(await readiness.locator("details").evaluate((element) => element.open), true);
+      assert.ok((await readiness.getByRole("status").boundingBox()).width >= 200, "狀態說明不可被公開頁按鈕擠成窄欄");
+      const action = next.getByRole("link", { name: "設定服務項目", exact: true });
+      assert.equal(await action.getAttribute("href"), `/admin/clinics/${facilityId}?tab=services`);
+      await fits(page);
+      await readiness.screenshot({ path: `${dir}/readiness-next-${width}.png`, animations: "disabled" });
+      await readiness.locator("summary").click();
+      await page.reload();
+      await next.getByText("下一步：啟用服務項目", { exact: true }).waitFor();
+      assert.equal(await readiness.locator("details").evaluate((element) => element.open), false, "保留使用者收合偏好，下一步仍可直接操作");
+      await action.click();
+      await page.waitForURL(`**/admin/clinics/${facilityId}?tab=services`);
+      assert.deepEqual(errors, []);
+      assert.equal(requests.filter((request) => request.method !== "GET").length, 0);
+    } finally { await page.close(); }
+  }
+});
+
+test("設定齊全可收起清單，之後沒有可約時段時再次展開並指向班表", async () => {
+  const { page, state, requests, errors } = await setupComplete(browser, preview.origin, { role: "facility_admin", width: 390 });
+  state.clinic.description = "虛構院所介紹";
+  state.clinic.logo_url = "/cross-icon.png";
+  let available = true;
+  await page.route("**/api/v1/medical-facilities/*/schedules*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ id: "future", staff_id: "staff-1", schedule_date: "2030-01-01", start_time: "09:00", end_time: "12:00" }]) }));
+  await page.route("**/api/v1/booking/clinics/*/slots*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(available ? [{ date: "2030-01-01", slots: [{ id: "slot", time: "09:00", isAvailable: true }] }] : []) }));
+  try {
+    await page.goto(preview.origin + "/admin/dashboard");
+    const readiness = page.getByRole("region", { name: "院所上線準備", exact: true });
+    await page.waitForFunction(() => document.querySelector('[aria-label="上線設定已確認項目"]')?.getAttribute("aria-valuenow") === "7");
+    assert.equal(await readiness.locator("details").evaluate((element) => element.open), false);
+    assert.equal(await readiness.getByRole("group", { name: "下一步設定", exact: true }).count(), 0);
+    available = false;
+    await page.reload();
+    const next = readiness.getByRole("group", { name: "下一步設定", exact: true });
+    await next.getByText("下一步：實際可預約時段", { exact: true }).waitFor();
+    assert.equal(await readiness.locator("details").evaluate((element) => element.open), true);
+    assert.equal(await next.getByRole("link", { name: "檢查班表與限制", exact: true }).getAttribute("href"), `/admin/clinics/${facilityId}?tab=schedule`);
+    assert.deepEqual(errors, []);
+    assert.equal(requests.filter((request) => request.method !== "GET").length, 0);
+  } finally { await page.close(); }
 });
