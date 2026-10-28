@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { imageCredits } from "#lib/demo/data.ts";
   let interactive = $state(false);
   onMount(() => { interactive = true; });
   import { Card, CardContent } from "#lib/components/ui/card/index.ts";
@@ -37,7 +38,7 @@
             >
               虛構門面示意
             </span>
-            <img src="/demo/interior-6899538.jpg" alt="澄光示範院所的素材空間照片" width="600" height="400" loading="lazy" class="mt-4 aspect-[3/2] w-full rounded-xl object-cover sm:mt-6" />
+            <img src={`/demo/interior-${imageCredits[0].id}.jpg`} alt="澄光示範院所的素材空間照片" width="600" height="400" loading="lazy" class="mt-4 aspect-[3/2] w-full rounded-xl object-cover sm:mt-6" />
             <h3 class="mt-3 text-xl font-semibold sm:mt-4 sm:text-2xl">澄光美學診所｜示範</h3>
             <p class="mt-3 text-sm leading-7 text-muted-foreground">
               院所介紹、品牌

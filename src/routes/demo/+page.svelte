@@ -73,7 +73,7 @@
         {#each tabs as tab (tab.view)}<a href={tab.href} aria-current={view === tab.view || view === "success" && tab.view === "booking" ? "page" : undefined} class="flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors aria-[current=page]:bg-card aria-[current=page]:text-primary aria-[current=page]:shadow-sm">{tab.label}</a>{/each}
       </nav>
     </div>
-    <p class="mx-auto mt-2 max-w-screen-2xl text-xs leading-5 text-muted-foreground">僅供體驗，不提供醫療服務、不發送通知、不收費。資料只留在本分頁，重新整理即重置；請勿輸入真實個資。</p>
+    <p class="mx-auto mt-2 max-w-screen-2xl text-xs leading-5 text-muted-foreground">僅供體驗，醫師照片為 AI 生成，不提供醫療服務、不發送通知、不收費。資料只留在本分頁，重新整理即重置；請勿輸入真實個資。</p>
   </header>
   <div bind:this={scrollArea} class="demo-scroll relative min-h-0 overflow-y-auto overscroll-contain">
     {#key revision}
@@ -94,7 +94,7 @@
         </main>
       {:else if clinicDetail?.clinic}
         <main><ClinicDetailView renderSeo={false} data={{ ...clinicDetail, clinic: clinicDetail.clinic, clinicId: DEMO_ID, isDemo: true, seo: buildClinicSeo(clinicDetail.clinic, DEMO_ID, clinicDetail.taxonomy) }} /></main>
-        <section class="home-container pb-32 pt-6 text-xs leading-6 text-muted-foreground" aria-label="示範照片來源"><h2 class="font-semibold text-foreground">照片為授權素材，非實際院所</h2><p>攝影：Max Vakhtbovych／Pexels。僅示意環境，不代表攝影師或照片中的場所參與 Cross。</p><div class="mt-2 flex flex-wrap gap-x-4">{#each imageCredits as credit (credit.id)}<a class="inline-flex min-h-11 items-center underline underline-offset-4" href={credit.page} target="_blank" rel="noopener noreferrer">照片 {credit.id}<span class="sr-only">（另開視窗）</span></a>{/each}<a class="inline-flex min-h-11 items-center underline underline-offset-4" href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">Pexels 授權<span class="sr-only">（另開視窗）</span></a></div></section>
+        <section class="home-container pb-32 pt-6 text-xs leading-6 text-muted-foreground" aria-label="示範照片來源"><h2 class="font-semibold text-foreground">空間素材與虛構醫師人像</h2><p>空間照片來自 Pexels，醫師人像由 AI 生成，均僅供示範，不代表實際院所、醫師或來源場所參與 Cross。</p><div class="mt-2 flex flex-wrap gap-x-4">{#each imageCredits as credit (credit.id)}<a class="inline-flex min-h-11 items-center underline underline-offset-4" href={credit.page} target="_blank" rel="noopener noreferrer">{credit.author} · 照片 {credit.id}<span class="sr-only">（另開視窗）</span></a>{/each}<a class="inline-flex min-h-11 items-center underline underline-offset-4" href="https://www.pexels.com/license/" target="_blank" rel="noopener noreferrer">Pexels 授權<span class="sr-only">（另開視窗）</span></a></div></section>
       {:else}<main class="home-container py-12"><p role="status">{loadError || "準備示範院所中…"}</p></main>{/if}
     {/key}
   </div>

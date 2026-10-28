@@ -39,7 +39,20 @@ test("示範門面與三視角在手機、平板、桌面亮暗色可操作，�
       assert.match(await page.locator('meta[name="robots"]').getAttribute("content"), /noindex/);
       await page.locator('[aria-label="院所環境照片"] img').first().evaluate(image => image.decode());
       await page.getByRole("button", { name: "放大澄光美學診所｜示範環境照片", exact: true }).click();
-      await page.getByRole("button", { name: "下一張", exact: true }).click(); await page.getByRole("button", { name: "關閉相簿", exact: true }).click();
+      for (let photo = 0; photo < 3; photo++) {
+        await page.getByRole("dialog").locator("figure img").evaluate(image => image.decode());
+        if (photo < 2) await page.getByRole("button", { name: "下一張", exact: true }).click();
+      }
+      await page.getByRole("button", { name: "關閉相簿", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "hidden" });
+      const doctor = page.getByRole("button", { name: "查看 林醫師（示範） 詳細資料", exact: true });
+      await doctor.scrollIntoViewIfNeeded();
+      await doctor.locator("img").evaluate(image => image.decode());
+      await doctor.click();
+      await page.getByRole("dialog").getByRole("img", { name: "林醫師（示範）", exact: true }).evaluate(image => image.decode());
+      await page.getByRole("dialog").getByText("照片為 AI 生成的虛構人像，非真實醫師", { exact: true }).waitFor();
+      await page.screenshot({ path: `${dir}/doctor-${width}-${dark}.png`, animations: "disabled" });
+      await page.keyboard.press("Escape");
       await page.getByRole("dialog").waitFor({ state: "hidden" });
       await page.locator(".demo-scroll").evaluate(element => element.scrollTop = 0);
       await page.screenshot({ path: `${dir}/clinic-${width}-${dark}.png`, animations: "disabled" });
@@ -60,6 +73,8 @@ test("完成示範預約後能在後台找到同一筆資料；重置需確認�
       await page.goto(preview.origin + "/demo?mode=booking");
       await page.getByRole("button", { name: /初次肌膚諮詢/ }).click();
       await page.getByRole("button", { name: "選擇預約時間", exact: true }).click();
+      await page.getByRole("button", { name: /林醫師（示範）/ }).locator("img").evaluate(image => image.decode());
+      await page.screenshot({ path: `${dir}/booking-doctor-${width}.png`, animations: "disabled" });
       await page.getByRole("button", { name: /不指定人員|不指定/ }).first().click();
       await page.locator(`[data-value="${demoDay(1)}"][role="button"]`).click();
       await page.getByRole("button", { name: "09:00", exact: true }).click();
@@ -99,6 +114,7 @@ test("院所後台各功能可載入，新增服務會反映到示範門面，�
       if (tab === "queue") await page.getByRole("heading", { name: "林醫師（示範）", exact: true }).waitFor();
       if (tab === "patients") await page.getByRole("button", { name: "查看陳小晴（示範）的客戶檔案", exact: true }).first().waitFor();
       if (tab === "services") await page.getByText("初次肌膚諮詢", { exact: true }).waitFor();
+      if (tab === "personnel") await page.getByRole("img", { name: "林醫師（示範）", exact: true }).evaluate(image => image.decode());
       if (tab === "announcements") await page.getByText("歡迎體驗完整預約流程", { exact: false }).first().waitFor();
       if (tab === "subscription") await page.getByRole("heading", { name: "訂閱與付款狀態", exact: true }).waitFor();
       assert.doesNotMatch(await page.locator(".cross-admin").innerText(), /此操作不提供示範|無法載入|載入失敗|發生錯誤/);

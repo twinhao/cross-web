@@ -16,7 +16,7 @@
 
 ## 圖片
 
-三張 Max Vakhtbovych 的 Pexels 授權照片放在 `static/demo/`，來源與授權紀錄在 `static/demo/PHOTO-CREDITS.md`，前台另顯示素材說明與來源。人物以虛構姓名及元件頭像顯示，不冒用醫師肖像、執照或真實履歷。
+三張 Rasul Abdurahimov、Tugce Erten Barrett 的 Pexels 授權空間照片放在 `static/demo/`，來源與授權紀錄在 `static/demo/PHOTO-CREDITS.md`，前台另顯示素材說明與來源。示範醫師使用 AI 生成的虛構人像，同步顯示於院所團隊、預約與後台；導覽、院所介紹與醫師詳情皆明確標註，不冒用真實醫師肖像、執照或履歷。
 
 ## 驗證
 

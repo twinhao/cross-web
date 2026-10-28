@@ -5,9 +5,9 @@ import type { User } from "../types/auth.ts";
 export const DEMO_ID = DEMO_CLINIC_ID;
 export type DemoRow = { id: string; [key: string]: unknown };
 export const imageCredits = [
-  { id: "6899538", caption: "自然採光與舒適休憩空間（素材示意）", page: "https://www.pexels.com/photo/modern-workplace-of-cosmetology-salon-with-couch-6899538/" },
-  { id: "6899542", caption: "獨立諮詢與保養空間（素材示意）", page: "https://www.pexels.com/photo/stylish-interior-of-modern-beauty-salon-6899542/" },
-  { id: "6899554", caption: "細緻的環境與設備配置（素材示意）", page: "https://www.pexels.com/photo/table-for-beauty-procedure-in-clinic-6899554/" },
+  { id: "17640379", caption: "暖白接待與休憩空間（素材示意）", author: "Rasul Abdurahimov", page: "https://www.pexels.com/photo/white-couch-and-sofas-in-room-17640379/" },
+  { id: "17640381", caption: "自然採光與綠意等候區（素材示意）", author: "Rasul Abdurahimov", page: "https://www.pexels.com/photo/waiting-room-in-spa-17640381/" },
+  { id: "11774389", caption: "暖色獨立療程空間（素材示意）", author: "Tugce Erten Barrett", page: "https://www.pexels.com/photo/interior-design-of-a-massage-room-11774389/" },
 ];
 export function demoDay(offset = 0): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + offset * 86400000));
@@ -16,7 +16,7 @@ export function createDemoData() {
   const created = new Date().toISOString();
   const facility: MedicalFacility = {
     id: DEMO_ID, name: "澄光美學診所｜示範", phone: null, address: "臺北市信義區（虛構地點，請勿前往）",
-    description: "把時間留給自己，從一次好好聊聊開始。\n澄光是 Cross 的虛構示範診所，展示諮詢、療程預約與團隊協作。您可以瀏覽服務、挑選時間，或切換到院所後台，親自體驗每天的工作流程。\n本頁照片為授權素材，非實際院所；團隊、服務、費用與預約均為示範資料，不提供醫療服務。",
+    description: "把時間留給自己，從一次好好聊聊開始。\n澄光是 Cross 的虛構示範診所，展示諮詢、療程預約與團隊協作。您可以瀏覽服務、挑選時間，或切換到院所後台，親自體驗每天的工作流程。\n空間照片為授權素材；醫師照片為 AI 生成的虛構人像，均非實際院所或醫師。團隊、服務、費用與預約均為示範資料，不提供醫療服務。",
     latitude: null, longitude: null, logo_url: "/demo/logo.svg", service_categories: ["aes_laser", "aes_skin"],
     payment_type: "self_pay", facility_type: "aesthetic",
     business_hours: Object.fromEntries(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => [day, { open: "09:00", close: "18:00", breaks: [{ start: "12:00", end: "13:00" }] }])),
@@ -27,9 +27,9 @@ export function createDemoData() {
     created_at: created, updated_at: null,
   };
   const staff: DemoRow[] = [
-    { id: "demo-doctor", name: "林醫師（示範）", role: "doctor", department: "皮膚諮詢", main_specialties: ["初次諮詢", "肌膚評估"], education: ["虛構學經歷，僅供版面展示"], experience: ["示範專業介紹，不代表真實執業資格"] },
+    { id: "demo-doctor", name: "林醫師（示範）", role: "doctor", department: "皮膚諮詢", main_specialties: ["初次諮詢", "肌膚評估"], education: ["虛構學經歷，僅供版面展示"], experience: ["照片為 AI 生成的虛構人像，非真實醫師", "示範專業介紹，不代表真實執業資格"] },
     { id: "demo-therapist", name: "陳諮詢師（示範）", role: "therapist", department: "療程諮詢", main_specialties: ["療程流程說明", "預約安排"], education: [], experience: ["虛構團隊成員，僅供功能展示"] },
-  ].map(row => ({ ...row, facility_id: DEMO_ID, is_active: true, is_public_visible: true, is_bookable: true, avatar_url: null, created_at: created, updated_at: null }));
+  ].map(row => ({ ...row, facility_id: DEMO_ID, is_active: true, is_public_visible: true, is_bookable: true, avatar_url: row.id === "demo-doctor" ? "/demo/doctor-fictional-v1.jpg" : null, created_at: created, updated_at: null }));
   const services: DemoRow[] = [
     { id: "demo-consult", service_name: "初次肌膚諮詢", description: "認識需求、說明諮詢流程與後續安排。這是示範服務，不提供診斷或醫療建議。", duration_minutes: 30, price: 500, show_price: true },
     { id: "demo-treatment", service_name: "光療療程諮詢", description: "展示需預留較長時間的療程安排，並示範不對外公開價格。實際內容及費用須由真實院所另行確認。", duration_minutes: 60, price: 3000, show_price: false },
