@@ -38,6 +38,8 @@
   import Modal from "../manage/Modal.svelte";
   import Feedback from "../manage/Feedback.svelte";
   import ShareClinicDialog from "#lib/components/clinics/ShareClinicDialog.svelte";
+  import { inDemoContext } from "#lib/demo/context.ts";
+  const demoSession = inDemoContext();
   let { name, facilityId }: { name: string; facilityId: string } = $props();
   const auth = getAuth();
   const system = $derived(isSystemAdmin(auth.user));
@@ -68,10 +70,10 @@
         : PANEL_LABELS[tab],
   );
   const todayHref = $derived(
-    system ? clinicHref(facilityId, "today") : "/admin/dashboard",
+    system || demoSession ? clinicHref(facilityId, "today") : "/admin/dashboard",
   );
   const subscriptionHref = $derived(
-    system ? clinicHref(facilityId, "subscription") : "/admin/subscription",
+    system || demoSession ? clinicHref(facilityId, "subscription") : "/admin/subscription",
   );
   const navigation = $derived([
     { key: "today", label: "今日工作台", href: todayHref },
@@ -169,7 +171,8 @@
   }
   function hrefFor(key: string) {
     const url = new SvelteURL(page.url.href);
-    url.pathname = `/admin/clinics/${facilityId}`;
+    url.pathname = demoSession ? "/demo" : `/admin/clinics/${facilityId}`;
+    if (demoSession) url.searchParams.set("mode", "admin");
     url.searchParams.set("tab", key);
     url.searchParams.delete("appointment");
     url.searchParams.delete("new");
@@ -229,7 +232,7 @@
         <Share2 class="size-4" />
         <span class="hidden sm:inline">分享預約頁</span>
       </Button><Button
-        href={"/clinic/" + facilityId}
+        href={demoSession ? "/demo" : "/clinic/" + facilityId}
         target="_blank"
         rel="noopener noreferrer"
         size="sm"

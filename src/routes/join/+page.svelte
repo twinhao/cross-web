@@ -7,7 +7,6 @@
   import PublicFrame from "#lib/components/public/PublicFrame.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import { clinicLineContact } from "#lib/contact.ts";
-  import { DEMO_CLINIC_ID } from "#lib/clinic-discovery.ts";
 
   let { data } = $props();
   const steps = [
@@ -43,7 +42,7 @@
         </p>
         <div class="mt-5 grid grid-cols-2 gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3">
           <Button href="/join/apply" size="lg" class="min-h-11 w-full gap-1.5 px-3 sm:w-auto sm:px-6 [&_svg]:size-4">申請院所導入 <ArrowRight aria-hidden="true" /></Button>
-          <Button href={`/booking/${DEMO_CLINIC_ID}`} size="lg" variant="outline" class="min-h-11 w-full gap-1.5 px-3 sm:w-auto sm:px-6 [&_svg]:size-4">體驗示範預約 <ArrowRight aria-hidden="true" /></Button>
+          <Button href="/demo?mode=booking" size="lg" variant="outline" class="min-h-11 w-full gap-1.5 px-3 sm:w-auto sm:px-6 [&_svg]:size-4">體驗示範預約 <ArrowRight aria-hidden="true" /></Button>
         </div>
         <p class="mt-3 text-xs leading-6 text-muted-foreground">示範使用虛構資料，不建立實際預約。</p>
         <div class="mt-2 flex items-center text-sm sm:mt-5">

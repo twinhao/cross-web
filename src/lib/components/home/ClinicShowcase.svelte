@@ -5,8 +5,7 @@
   import { Card, CardContent } from "#lib/components/ui/card/index.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
   import * as Tabs from "#lib/components/ui/tabs/index.ts";
-  import { CalendarDays, Building2, CircleCheck } from "@lucide/svelte";
-  import { DEMO_CLINIC_ID } from "#lib/clinic-discovery.ts";
+  import { CalendarDays, CircleCheck } from "@lucide/svelte";
 </script>
 
 <section
@@ -38,14 +37,14 @@
             >
               虛構門面示意
             </span>
-            <Building2 class="mt-4 size-8 sm:mt-6 sm:size-9 text-primary" />
-            <h3 class="mt-3 text-xl font-semibold sm:mt-4 sm:text-2xl">示範美學診所</h3>
+            <img src="/demo/interior-6899538.jpg" alt="澄光示範院所的素材空間照片" width="600" height="400" loading="lazy" class="mt-4 aspect-[3/2] w-full rounded-xl object-cover sm:mt-6" />
+            <h3 class="mt-3 text-xl font-semibold sm:mt-4 sm:text-2xl">澄光美學診所｜示範</h3>
             <p class="mt-3 text-sm leading-7 text-muted-foreground">
               院所介紹、品牌
               Logo、專業團隊、服務與交通資訊，整合成專屬公開頁。價格可依服務設定是否公開。
             </p>
             <Button
-              href={`/clinic/${DEMO_CLINIC_ID}`}
+              href="/demo"
               variant="outline"
               class="mt-5 min-h-11"
             >
@@ -95,6 +94,7 @@
                   <CircleCheck class="size-4 shrink-0 text-primary" />{text}
                 </li>{/each}
             </ul>
+            <Button href="/demo?mode=admin&tab=today" variant="outline" class="mt-5 min-h-11">親自操作示範後台</Button>
           </div>
           <div class="space-y-3 rounded-2xl bg-muted/50 p-3 sm:p-5">
             <p class="text-sm font-semibold">今日工作台 · 示意資料</p>

@@ -5,11 +5,13 @@
 	import { Button } from "#lib/components/ui/button/index.js";
 	import type { Clinic } from "#lib/types/clinic.ts";
 	import SectionCard from "./SectionCard.svelte";
+	import { inDemoContext } from "#lib/demo/context.ts";
+	const demoSession = inDemoContext();
 
 	let { clinic, class: className }: { clinic: Clinic; class?: string } = $props();
 
 	const mapsUrl = $derived(
-		clinic.address ? `https://maps.google.com/?q=${encodeURIComponent(clinic.address)}` : null,
+		!demoSession && clinic.address ? `https://maps.google.com/?q=${encodeURIComponent(clinic.address)}` : null,
 	);
 </script>
 

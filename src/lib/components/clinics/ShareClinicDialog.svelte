@@ -15,6 +15,8 @@
 		DialogTitle,
 	} from "#lib/components/ui/dialog/index.js";
 	import { Input } from "#lib/components/ui/input/index.js";
+	import { inDemoContext } from "#lib/demo/context.ts";
+	const demoSession = inDemoContext();
 
 	// 民眾端正式網域（與 layout metadataBase 一致）
 	const SITE_URL = "https://cross.twinhao.com";
@@ -32,7 +34,7 @@
 	} = $props();
 
 	// 短網址：/c/{UUID 前 8 碼} → 自動轉到完整診所頁（見 routes/c/[code]）
-	const url = $derived(`${SITE_URL}/c/${clinicId.slice(0, 8)}`);
+	const url = $derived(demoSession ? `${SITE_URL}/demo` : `${SITE_URL}/c/${clinicId.slice(0, 8)}`);
 	let qrDataUrl = $state("");
 	let copied = $state(false);
 	let canNativeShare = $state(false);

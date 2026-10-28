@@ -75,6 +75,8 @@ class Favorites {
 export type { Favorites };
 
 const favorites = new Favorites();
+const demoFavorites = new Favorites();
+export function resetDemoFavorites(): void { demoFavorites.reset(); }
 
 /** 重置收藏快取（避免殘留他人收藏） */
 export function resetFavoritesCache(): void {
@@ -88,10 +90,11 @@ export function resetFavoritesCache(): void {
  * @returns 全站共用的收藏實例（isFavorite／toggleFavorite／ready）
  */
 export function useFavorites(enabled: () => boolean = () => true): Favorites {
+	const store = typeof window !== "undefined" && /^\/demo\/?$/.test(window.location?.pathname ?? "") ? demoFavorites : favorites;
 	$effect(() => {
-		if (enabled()) untrack(() => void favorites.ensureLoaded());
+		if (enabled()) untrack(() => void store.ensureLoaded());
 	});
-	return favorites;
+	return store;
 }
 
 /**

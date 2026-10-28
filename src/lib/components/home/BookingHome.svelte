@@ -242,7 +242,7 @@
             </Button>
             <Button href="/admin/login" variant="ghost" size="lg">已有帳號？院所登入</Button>
           </div>
-          <a href="/join#product-preview" class="mt-4 inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4">先看看院所門面與管理方式 →</a>
+          <a href="/demo" class="mt-4 inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4">體驗示範診所與管理後台 →</a>
           <p class="mt-4 text-xs leading-6 text-muted-foreground">
             實際開通功能依院所方案與設定提供。
           </p>

@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 完整示範院所入口 `/demo`，使用獨立身分與分頁記憶體 API，禁止回退到正式後端；`mode` 為示範視角，`view` 保留給後台日曆。切換視角不能重置資料，只有明確重置或重新整理才還原。詳見 `docs/demo-experience.md`。
+
 - 民眾預約為三階段：選服務 → 選人員與日期時段 → 確認對象、備註與同意。`BookingFlow.svelte` 在第 2、3 步取得及重新核對名額，草稿還原至第 3 步後仍須核對可約時段，最終交易由後端驗證。
 - `BookingSummary.svelte` 共用桌面側欄與手機確認摘要，費用一律通過 `getServicePriceBadge`，不得忽略 `show_price=false`。
 - 姓名開啟帳戶選單；`/member` 專注預約，`/member/profile` 管理個人資料與帳號。新會員頁須沿用 `requireMember`，不讓院所／管理員帳號進入民眾帳戶頁。

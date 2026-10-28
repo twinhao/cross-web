@@ -20,6 +20,7 @@
 	} from "#lib/booking/booking-flow.ts";
 	import { availableSlotForSelection } from "#lib/booking-draft.ts";
 	import { isDemoClinic } from "#lib/clinic-discovery.ts";
+	import { inDemoContext } from "#lib/demo/context.ts";
 
 	import PatientSelector from "#lib/components/patient/PatientSelector.svelte";
 	import type { ClinicConfig, DoctorOption, ServiceOption } from "#lib/types/booking.ts";
@@ -54,6 +55,7 @@
 	} = $props();
 
 	const auth = getAuth();
+	const demoSession = inDemoContext();
 	const store = setBookingStore();
 
 	// 個別欄位以 $derived 取出：reducer 對沒變的欄位保留同一個參照，只有真的換了才觸發下游（同舊版 React 依賴比對）
@@ -68,7 +70,7 @@
 	let submitError = $state<string | null>(null);
 
 	let selectedPatient = $state.raw<MemberPatientRead | null>(null);
-	const isDemo = $derived(isDemoClinic(clinicId));
+	const isDemo = $derived(isDemoClinic(clinicId) && !demoSession);
   $effect(()=>{void auth.user?.id;selectedPatient=null;});
 
 	const sessionStore = () => sessionStorage;
@@ -137,7 +139,7 @@
 	);
 
 	// 下一步按鈕文字
-	const nextButtonLabel = $derived(nextButtonLabelFor(currentStep, auth.isAuthenticated, isDemo));
+	const nextButtonLabel = $derived(demoSession && currentStep === 3 ? "完成示範預約" : nextButtonLabelFor(currentStep, auth.isAuthenticated, isDemo));
 
 	// sticky 按鈕上方的選取摘要提示
 	const submitHint = $derived(submitHintFor(selection, currentStep));
@@ -174,7 +176,7 @@
 				});
 
 				// 導向成功頁（舊版 router.push 不等待導航完成，送出鈕隨即恢復）
-				goto(bookingSuccessPath(clinicId, response.id, response.booking_number));
+				goto(demoSession ? `/demo?mode=success&booking=${encodeURIComponent(response.id)}` : bookingSuccessPath(clinicId, response.id, response.booking_number));
 			} catch (error) {
 				console.error("Booking failed:", error);
 				const status = error && typeof error === "object" && "status" in error ? error.status : null;

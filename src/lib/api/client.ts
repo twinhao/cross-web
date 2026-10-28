@@ -92,6 +92,15 @@ async function request<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
+  // 示範頁的所有 API 都在分頁記憶體處理；不附帶 token、不允許未實作端點回退正式 API。
+  if (typeof window !== "undefined" && /^\/demo\/?$/.test(window.location?.pathname ?? "")) {
+    const { getDemoSession, DemoError } = await import("../demo/session.ts");
+    try { return await getDemoSession().request(endpoint, options) as T; }
+    catch (error) {
+      if (error instanceof DemoError) throw new ApiError(error.status, "Demo", { detail: error.message });
+      throw error;
+    }
+  }
   // server 端沒傳 SvelteKit 的 fetch：相對路徑必定打不到代理。丟 MissingFetchError（非 ApiError），
   // 讓 serviceCategoriesApi.get / getAllClinics 的 fallback 不會把漏傳靜默吞掉
   if (typeof window === "undefined" && !options.fetch) {

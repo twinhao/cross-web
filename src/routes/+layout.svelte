@@ -1,9 +1,9 @@
 <script lang="ts">
 	import "../app.css";
-	import { onMount } from "svelte";
+	import { onDestroy } from "svelte";
 	import { ModeWatcher } from "mode-watcher";
 	import { browser } from "$app/env";
-	import { beforeNavigate } from "$app/navigation";
+	import { beforeNavigate, afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
 	import { NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } from "$app/env/public";
 	import { setAuth } from "#lib/auth/auth.svelte.ts";
@@ -16,7 +16,16 @@
 	let { children } = $props();
 
 	const auth = setAuth();
-	onMount(() => auth.init());
+	// 示範頁使用獨立 context；不讀取或改動真實帳號，離開後才初始化真實登入狀態。
+	let authStarted = false;
+	let cleanupAuth: (() => void) | undefined;
+	afterNavigate(() => {
+		if (!authStarted && !/^\/demo\/?$/.test(page.url.pathname)) {
+			authStarted = true;
+			cleanupAuth = auth.init();
+		}
+	});
+	onDestroy(() => cleanupAuth?.());
 
 	// 使用者身分變動（登入 / 登出 / 換帳號）即重置模組級收藏快取，
 	// 避免上一位使用者的收藏狀態殘留到下一位（跨帳號資料外洩）。對應舊版 AuthProvider 的 useEffect [user?.id]。

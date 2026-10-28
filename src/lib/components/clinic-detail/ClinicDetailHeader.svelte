@@ -14,13 +14,15 @@
 	import { FACILITY_TYPE_LABELS, HOSPITAL_LEVELS, PAYMENT_TYPES } from "#lib/constants/clinic-constants.ts";
 	import type { Clinic } from "#lib/types/clinic.ts";
 	import { cn } from "#lib/utils.ts";
+	import { inDemoContext } from "#lib/demo/context.ts";
+	const demoSession = inDemoContext();
 
 	let { clinic, class: className }: { clinic: Clinic; class?: string } = $props();
 
 	let shareOpen = $state(false);
 	const canCall = $derived(clinic.phone_booking_enabled && !!clinic.phone);
 	const bookingLabel = $derived(clinic.online_booking_enabled ? "查看可約時段" : canCall ? "電話預約" : "查看到訪方式");
-	const bookingHref = $derived(clinic.online_booking_enabled ? `/booking/${clinic.id}` : canCall ? `tel:${clinic.phone}` : "#contact");
+	const bookingHref = $derived(demoSession ? "/demo?view=booking" : clinic.online_booking_enabled ? `/booking/${clinic.id}` : canCall ? `tel:${clinic.phone}` : "#contact");
 </script>
 
 <section class={cn("border-b border-border/60 bg-card", className)}>

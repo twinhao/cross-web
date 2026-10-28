@@ -11,6 +11,8 @@
   } from "#lib/admin/workspace.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
   import type { MedicalFacility } from "#lib/types/clinic.ts";
+  import { inDemoContext } from "#lib/demo/context.ts";
+  const demoSession = inDemoContext();
   let {
     facility,
     subscriptionHref,
@@ -177,7 +179,7 @@
               : slotsAvailable
                 ? "已找到可預約時段；名額以客人送出時為準。"
                 : "檢查服務、人員、休假與剩餘名額後的實際結果。",
-      href: slotsAvailable === false ? clinicHref(facility.id, "schedule") : `/clinic/${facility.id}`,
+      href: slotsAvailable === false ? clinicHref(facility.id, "schedule") : demoSession ? "/demo" : `/clinic/${facility.id}`,
     },
   ]);
   const actionLabels: Record<string, string> = {
@@ -206,7 +208,7 @@
         {:else}已確認 {confirmedCount} / {items.length} 項。門面上架與線上預約可分階段完成。{/if}
       </p>
     </div>
-    <Button href={`/clinic/${facility.id}`} target="_blank" rel="noopener noreferrer" variant="outline" class="min-h-11 w-full sm:w-auto">
+    <Button href={demoSession ? "/demo" : `/clinic/${facility.id}`} target="_blank" rel="noopener noreferrer" variant="outline" class="min-h-11 w-full sm:w-auto">
       查看客人看到的門面<ArrowUpRight class="size-4" /><span class="sr-only">（另開視窗）</span>
     </Button>
   </div>
