@@ -41,13 +41,14 @@
 			siteName?: string;
 			locale?: string;
 		};
-		/** 對應舊版頁面 metadata.twitter：給了就整組取代全站 twitter；card 預設 summary，title、description 退回 og 的值 */
+		/** 對應舊版頁面 metadata.twitter：給了就整組取代全站 twitter；card 預設 summary_large_image，title、description 退回 og 的值 */
 		twitter?: { card?: string; title?: string; description?: string };
 	}
 </script>
 
 <script lang="ts">
 	import { jsonLdScript } from "#lib/seo/serialize-json-ld.ts";
+	import { SITE_SHARE_IMAGE } from "#lib/seo/social.ts";
 
 	/**
 	 * 每頁可覆寫的 <head> 標籤（對應舊 Next metadata 合併後的輸出）。
@@ -93,7 +94,7 @@
 				},
 	);
 	const tw = $derived({
-		card: twitter?.card ?? "summary",
+		card: twitter?.card ?? "summary_large_image",
 		title: twitter ? (twitter.title ?? og.title) : SITE_TITLE,
 		description: twitter ? (twitter.description ?? og.description) : SITE_DESC,
 	});
@@ -105,7 +106,7 @@
 					(openGraph
 						? undefined
 						: {
-								url: `${SITE_URL}/og.png`,
+								url: `${SITE_URL}${SITE_SHARE_IMAGE}`,
 								alt: "Cross — 線上預約與院所管理",
 								type: "image/png",
 								width: 1200,

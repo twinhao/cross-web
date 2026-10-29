@@ -74,10 +74,10 @@ for (const [path, body] of [
     assert.match(head, /<meta property="og:title" content="Cross \| 線上預約與院所管理平台"/);
     assert.match(head, /<meta property="og:url" content="https:\/\/cross\.twinhao\.com"/);
     // 分享圖網址固定用正式網域（舊版 metadataBase），不是本機 preview 的來源
-    assert.match(head, /<meta property="og:image" content="https:\/\/cross\.twinhao\.com\/og\.png"/);
+    assert.match(head, /<meta property="og:image" content="https:\/\/cross\.twinhao\.com\/social\/cross-overview-20261029\.png"/);
     assert.match(head, /<meta property="og:image:width" content="1200"/);
     assert.match(head, /<meta property="og:image:height" content="630"/);
-    assert.match(head, /<meta name="twitter:card" content="summary"/);
+    assert.match(head, /<meta name="twitter:card" content="summary_large_image"/);
     assert.match(head, /application\/ld\+json/);
     assert.match(html.slice(end), body);
     assert.doesNotMatch(html, /<footer/, "預約流程的外框沒有 footer（舊版 app/booking/layout.tsx）");

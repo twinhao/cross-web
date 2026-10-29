@@ -17,6 +17,10 @@ const code = compile(source, { generate: "server", filename: "Seo.svelte" })
   .replace(
     /(["'])\#lib\/seo\/serialize-json-ld\.ts\1/,
     JSON.stringify(new URL("../src/lib/seo/serialize-json-ld.ts", import.meta.url).href),
+  )
+  .replace(
+    /(["'])#lib\/seo\/social\.ts\1/,
+    JSON.stringify(new URL("../src/lib/seo/social.ts", import.meta.url).href),
   );
 const { default: Seo } = await import(stub(code));
 
@@ -34,6 +38,22 @@ function headLines(props) {
 }
 const lines = (text) => text.trim().split("\n").map((l) => l.trim());
 
+test("院所導入的實際 load 提供專屬分享標題、大圖卡與可讀取的版本圖片", async () => {
+  const { load } = await import("../src/routes/join/+page.ts");
+  const { seo } = load({ setHeaders() {} });
+  const head = headLines(seo);
+  assert.ok(head.includes("og:title=預約有條理，服務更從容。｜Cross 院所導入"));
+  assert.ok(head.includes("og:url=https://cross.twinhao.com/join"));
+  assert.ok(head.includes("twitter:card=summary_large_image"));
+  assert.ok(head.includes(`og:image=${seo.image.url}`));
+  assert.ok(head.includes(`twitter:image=${seo.image.url}`));
+  const path = new URL(seo.image.url).pathname;
+  const png = readFileSync(new URL(`../static${path}`, import.meta.url));
+  assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+  assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630]);
+  assert.ok(png.length < 1_000_000, "社群分享圖不應過大");
+});
+
 // metadata 結構沿用原正式版；全站品牌文案依 2026-10-23 預約優先定位更新。
 // og:image / twitter:image 的網址依 R6 只要求存在（舊版是 /opengraph-image，新版是 og.png）。
 const ROBOTS = `
@@ -42,7 +62,7 @@ const ROBOTS = `
 const ROOT_KEYWORDS =
   "keywords=線上預約,線上掛號,看診預約,診所預約,醫美諮詢,療程預約,院所管理,排班管理,台灣診所,Cross";
 const ROOT_TWITTER = `
-  twitter:card=summary
+  twitter:card=summary_large_image
   twitter:title=Cross | 線上預約與院所管理平台
   twitter:description=線上預約看診、醫美諮詢與療程，查詢院所服務及可預約時段。Cross 協助院所集中管理預約、人員排班與候診叫號。`;
 
@@ -59,13 +79,13 @@ test("沒給 openGraph / twitter：輸出全站 og、twitter 與預設分享圖�
       og:url=https://cross.twinhao.com
       og:site_name=Cross
       og:locale=zh_TW
-      og:image=${ORIGIN}/og.png
+      og:image=${ORIGIN}/social/cross-overview-20261029.png
       og:image:type=image/png
       og:image:width=1200
       og:image:height=630
       og:image:alt=Cross — 線上預約與院所管理
       og:type=website${ROOT_TWITTER}
-      twitter:image=${ORIGIN}/og.png
+      twitter:image=${ORIGIN}/social/cross-overview-20261029.png
       twitter:image:alt=Cross — 線上預約與院所管理
       twitter:image:type=image/png
       twitter:image:width=1200
@@ -229,8 +249,8 @@ test("og:image / twitter:image 一律以 https://cross.twinhao.com/ 開頭，不
   assert.deepEqual(
     images.map((m) => [m[1], m[2]]),
     [
-      ["og:image", "https://cross.twinhao.com/og.png"],
-      ["twitter:image", "https://cross.twinhao.com/og.png"],
+      ["og:image", "https://cross.twinhao.com/social/cross-overview-20261029.png"],
+      ["twitter:image", "https://cross.twinhao.com/social/cross-overview-20261029.png"],
     ],
   );
   assert.ok(!head.includes(REQUEST_ORIGIN), "不得出現請求來源");
