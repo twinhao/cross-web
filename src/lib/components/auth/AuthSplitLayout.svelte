@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Check from "@lucide/svelte/icons/check";
 	import type { Snippet } from "svelte";
+	import { BRAND_ICON } from "#lib/brand.ts";
 
 	/**
 	 * 登入頁共用 split-screen 版型（移植自舊版 components/auth/auth-split-layout.tsx）
@@ -44,7 +45,7 @@
 			<div class="absolute inset-0 bg-gradient-to-t from-[#102647] via-[#102647]/15 to-[#102647]/35"></div>
 			<a href="/" class="relative flex w-fit items-center gap-3 text-xl font-semibold"
 				><img
-					src="/cross-icon.png"
+					src={BRAND_ICON}
 					alt=""
 					width="36"
 					height="36"
@@ -88,7 +89,7 @@
 			<a href="/" class="relative inline-flex items-center gap-2.5" aria-label="返回首頁">
 				<span class="flex size-9 items-center justify-center rounded-xl bg-white/95 p-1">
 					<img
-						src="/cross-icon.png"
+					src={BRAND_ICON}
 						alt="Cross"
 						width="28"
 						height="28"

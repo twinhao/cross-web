@@ -7,6 +7,7 @@
 	import { page } from "$app/state";
 	import { canAccessAdmin } from "#lib/auth/roles.ts";
 	import { isAppointmentPage } from "#lib/member/navigation.ts";
+	import { BRAND_ICON } from "#lib/brand.ts";
 
 	let { home = false, compact = false }: { home?: boolean; compact?: boolean } = $props();
 	const auth = getAuth();
@@ -18,7 +19,7 @@
 		class="home-container @container flex h-16 flex-nowrap items-center justify-between gap-2 sm:h-20"
 	>
 		<a href="/" class="flex shrink-0 items-center gap-2.5" aria-label="Cross 首頁">
-			<img src="/cross-icon.png" alt="" width="32" height="32" class="size-8 rounded-lg" />
+			<img src={BRAND_ICON} alt="" width="32" height="32" class="size-8 rounded-lg" />
 			<span class={isAdmin ? "hidden text-lg font-semibold tracking-tight @min-[28rem]:inline" : "hidden text-lg font-semibold tracking-tight @min-[20rem]:inline"}>Cross</span>
 		</a>
 		<nav aria-label="主要導覽" class="flex items-center gap-1 sm:gap-2">

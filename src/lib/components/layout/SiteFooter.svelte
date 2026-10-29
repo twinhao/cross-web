@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { BRAND_ICON } from "#lib/brand.ts";
 	import ArrowUpRight from "@lucide/svelte/icons/arrow-up-right";
 	import { getAuth } from "#lib/auth/auth.svelte.ts";
 	import { canAccessAdmin, getAdminHomePath } from "#lib/auth/roles.ts";
@@ -68,7 +69,7 @@
 			<div class="space-y-5">
 				<a href="/" class="inline-flex items-center gap-2.5">
 					<img
-						src="/cross-icon.png"
+						src={BRAND_ICON}
 						alt="Cross"
 						width="36"
 						height="36"

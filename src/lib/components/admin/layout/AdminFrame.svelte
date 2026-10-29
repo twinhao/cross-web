@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { BRAND_ICON } from "#lib/brand.ts";
   import { onMount, type Snippet } from "svelte";
   import { afterNavigate } from "$app/navigation";
   import {
@@ -145,7 +146,7 @@
         <span
           class="grid size-10 shrink-0 place-items-center rounded-xl border border-sidebar-border bg-background"
         >
-          <img src="/cross-icon.png" width="28" height="28" alt="" />
+          <img src={BRAND_ICON} width="28" height="28" alt="" />
         </span>
         <span class={compact ? "sr-only" : "min-w-0"}>
           <strong class="text-lg tracking-tight text-foreground">Cross</strong>

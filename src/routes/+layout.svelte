@@ -12,6 +12,7 @@
 	import { resetFavoritesOnUserChange } from "#lib/hooks/favorites.svelte.ts";
 	import { createSmoothScrollPause } from "#lib/navigation/smooth-scroll.ts";
 	import { jsonLdScript } from "#lib/seo/serialize-json-ld.ts";
+	import { BRAND_ICON, BRAND_FAVICON, BRAND_APPLE_ICON } from "#lib/brand.ts";
 
 	let { children } = $props();
 
@@ -65,9 +66,9 @@
 	{#if NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}
 		<meta name="google-site-verification" content={NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION} />
 	{/if}
-	<link rel="icon" href="/favicon.ico" sizes="64x64" type="image/x-icon" />
-	<link rel="icon" href="/icon.png" sizes="512x512" type="image/png" />
-	<link rel="apple-touch-icon" href="/apple-icon.png" sizes="180x180" type="image/png" />
+	<link rel="icon" href={BRAND_FAVICON} sizes="16x16 32x32 48x48 64x64" type="image/x-icon" />
+	<link rel="icon" href={BRAND_ICON} sizes="512x512" type="image/png" />
+	<link rel="apple-touch-icon" href={BRAND_APPLE_ICON} sizes="180x180" type="image/png" />
 	<!-- 頁面 load 丟出的錯誤（如找不到院所的 404）不輸出：舊版 notFound() 回應的伺服器 HTML 沒有這段；
 	     找不到路由（route.id 為 null）的 404 舊版有輸出，照舊 -->
 	<!-- 舊版文件設定 dynamicParams=false，未知 slug 等同找不到路由，仍保留全站結構化資料。 -->
