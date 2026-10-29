@@ -10,13 +10,13 @@
 node scripts/export-ios-icons.mjs
 ```
 
-腳本直接使用 Icon Composer 內的 ictool，依 iOS／Default 外觀匯出；不是從舊 PNG 放大或重新繪製。再以 Xcode 隨附的 pngcrush 轉為標準 8-bit PNG，保留圖案與色彩描述，避免 16-bit PNG 在 ICO 讀取器中的相容問題。
+腳本直接使用 Icon Composer 內的 ictool，依 iOS／Default 外觀匯出；不是從舊 PNG 放大或重新繪製。再以 Sharp 正確解碼並轉為 sRGB／8-bit PNG，避免 16-bit PNG 在 ICO 讀取器中的相容問題。Sharp 僅為本機匯出所需的開發依賴，正式網站只讀取靜態圖示。
 
 - 512×512：瀏覽器 PNG 圖示與頁首、頁尾、登入、後台品牌標誌。
 - 180×180：apple-touch-icon。
 - 16／32／48／64：ICO 內嵌的四個原生匯出尺寸。
 
-圖示路徑集中於 `src/lib/brand.ts`，使用有版本的 `/icons/` 網址；舊 favicon.ico、icon.png、apple-icon.png、cross-icon.png 同步新圖以保留相容性。未加入 PWA 或 Service Worker。
+圖示路徑集中於 `src/lib/brand.ts`，使用有版本的 `/icons/` 網址，最終為 20261029-v2；舊 favicon.ico、icon.png、apple-icon.png、cross-icon.png 及第一版網址同步正確新圖以保留相容性。未加入 PWA 或 Service Worker。
 
 輸出檔已提交，網站建置與正式伺服器不需要 Xcode，也不讀取 iOS 專案。日後更新圖示時應一併調整輸出檔名版本與 `brand.ts`。
 

@@ -5,10 +5,10 @@ import { mkdir, mkdtemp, readFile, writeFile, copyFile, rm } from "node:fs/promi
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 const developer = execFileSync("xcode-select", ["-p"], { encoding: "utf8" }).trim();
 const exporter = resolve(developer, "../Applications/Icon Composer.app/Contents/Executables/ictool");
-const pngcrush = join(developer, "usr/bin/pngcrush");
 const source = fileURLToPath(new URL("../../Cross-Patient/Cross-Patient/CrossIcon.icon", import.meta.url));
 const output = fileURLToPath(new URL("../static/icons/", import.meta.url));
 const work = await mkdtemp(join(tmpdir(), "cross-web-icons-"));
@@ -19,8 +19,8 @@ try {
     execFileSync(exporter, [source, "--export-image", "--output-file", join(work, `${size}-native.png`),
       "--platform", "iOS", "--rendition", "Default", "--width", String(size), "--height", String(size), "--scale", "1"],
     { stdio: "pipe" });
-    // Apple 原生匯出為 16-bit；改用標準 8-bit PNG，ICO 內嵌圖也能相容一般瀏覽器。
-    execFileSync(pngcrush, ["-q", "-bit_depth", "8", join(work, `${size}-native.png`), join(work, `${size}.png`)], { stdio: "pipe" });
+    // 正確解碼 Apple 16-bit PNG，再轉成 sRGB／8-bit，避免只改標頭造成像素資料損壞。
+    await sharp(join(work, `${size}-native.png`)).toColourspace("srgb").png().toFile(join(work, `${size}.png`));
   }
   // ICO 包含四個 Apple 工具原生匯出的 PNG，讓瀏覽器依顯示密度選擇適當尺寸。
   const sizes = [16, 32, 48, 64];
@@ -40,6 +40,9 @@ try {
   await writeFile(join(output, "cross-20261029.ico"), ico);
   await copyFile(join(work, "512.png"), join(output, "cross-512-20261029.png"));
   await copyFile(join(work, "180.png"), join(output, "apple-touch-20261029.png"));
+  await writeFile(join(output, "cross-20261029-v2.ico"), ico);
+  await copyFile(join(work, "512.png"), join(output, "cross-512-20261029-v2.png"));
+  await copyFile(join(work, "180.png"), join(output, "apple-touch-20261029-v2.png"));
   // 舊網址同步更新，保留書籤、既有頁面與測試樣本的相容性。
   const legacy = fileURLToPath(new URL("../static/", import.meta.url));
   await writeFile(join(legacy, "favicon.ico"), ico);

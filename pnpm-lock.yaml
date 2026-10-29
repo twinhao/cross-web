@@ -81,6 +81,9 @@ importers:
       shadcn-svelte:
         specifier: 1.7.1
         version: 1.7.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@26.6.5)
       svelte:
         specifier: ^5.57.3
         version: 5.57.3(@typescript-eslint/types@8.72.1)
