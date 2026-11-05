@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { beforeNavigate, afterNavigate, goto } from "$app/navigation";
+  import { onMount } from "svelte";
+  import { beforeNavigate, goto } from "$app/navigation";
   import { page } from "$app/state";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { setAuth } from "#lib/auth/auth.svelte.ts";
@@ -15,7 +16,7 @@
   import Seo from "#lib/components/Seo.svelte";
   import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
-  import { CircleCheck, RotateCcw, ArrowRight, ArrowLeft } from "@lucide/svelte";
+  import { CircleCheck, CircleHelp, RotateCcw, ArrowRight, ArrowLeft } from "@lucide/svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
   import { resetDemoFavorites } from "#lib/hooks/favorites.svelte.ts";
 
@@ -24,8 +25,24 @@
   auth.isLoading = false;
   const session = getDemoSession();
   const view = $derived(["clinic", "booking", "admin", "success"].includes(page.url.searchParams.get("mode") ?? "") ? page.url.searchParams.get("mode")! : "clinic");
-  let revision = $state(0), resetOpen = $state(false);
-  let scrollArea: HTMLDivElement;
+  let revision = $state(0), resetOpen = $state(false), helpOpen = $state(false);
+  let demoHeader: HTMLElement;
+  let headerHeight = $state(128);
+  onMount(() => {
+    const root = document.documentElement;
+    const previousTop = root.style.scrollPaddingTop, previousBottom = root.style.scrollPaddingBottom;
+    const observer = new ResizeObserver(() => {
+      headerHeight = demoHeader.getBoundingClientRect().height;
+      root.style.scrollPaddingTop = `${headerHeight + 80}px`;
+      root.style.scrollPaddingBottom = "96px";
+    });
+    observer.observe(demoHeader);
+    return () => {
+      observer.disconnect();
+      root.style.scrollPaddingTop = previousTop;
+      root.style.scrollPaddingBottom = previousBottom;
+    };
+  });
   let clinicDetail = $state.raw<ClinicDetail | null>(null);
   let bookingResult = $state.raw<BookingPageResult | null>(null);
   let loadError = $state("");
@@ -59,23 +76,22 @@
     else if (target.pathname === `/booking/${DEMO_ID}`) destination = "/demo?mode=booking";
     if (destination) { navigation.cancel(); void goto(destination); }
   });
-  afterNavigate(() => { scrollArea?.scrollTo({ top: 0 }); });
   function reset() { session.reset(); resetDemoFavorites(); revision++; resetOpen = false; void goto("/demo"); }
 </script>
 
 <Seo title="澄光美學診所｜Cross 完整示範" description="虛構院所門面、完整預約體驗與院所後台操作。所有操作只在本分頁示範，不會建立真實預約或發送通知。" canonical="/demo" noindex />
-<div class="demo-shell grid h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background text-foreground">
-  <header class="relative z-50 border-b bg-card px-4 py-3 sm:px-6" aria-label="示範體驗導覽">
-    <div class="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <div class="flex min-w-0 items-center gap-2"><a href="/" aria-label="離開示範，回 Cross 首頁" class="inline-flex min-h-11 items-center gap-2 font-semibold"><ArrowLeft class="size-4" />Cross</a><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">虛構示範</span></div>
-      <div class="flex items-center gap-1"><ThemeToggle /><Button variant="ghost" size="sm" class="min-h-11" onclick={() => resetOpen = true}><RotateCcw class="size-4" />重置</Button></div>
+<div class="demo-shell min-h-dvh bg-background text-foreground" style={`--demo-header-height: ${headerHeight}px`}>
+  <header bind:this={demoHeader} class="sticky top-0 z-30 border-b bg-card px-4 py-2 sm:px-6" aria-label="示範體驗導覽">
+    <div class="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-2 gap-y-2">
+      <div class="flex min-w-0 items-center gap-2"><a href="/" aria-label="離開示範，回 Cross 首頁" class="inline-flex min-h-11 items-center gap-2 font-semibold"><ArrowLeft class="size-4" /><span class="hidden min-[360px]:inline">Cross</span></a><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">虛構示範</span></div>
+      <div class="flex items-center gap-1"><Button variant="ghost" size="icon" class="size-11" aria-label="示範說明" onclick={() => helpOpen = true}><CircleHelp class="size-4" /></Button><ThemeToggle /><Button variant="ghost" size="sm" class="min-h-11 min-w-11 px-2 sm:px-3" aria-label="重置" onclick={() => resetOpen = true}><RotateCcw class="size-4" /><span class="hidden sm:inline">重置</span></Button></div>
       <nav aria-label="切換示範視角" class="order-3 grid w-full grid-cols-3 gap-1 rounded-xl bg-muted p-1 sm:order-none sm:w-auto sm:min-w-80">
         {#each tabs as tab (tab.view)}<a href={tab.href} aria-current={view === tab.view || view === "success" && tab.view === "booking" ? "page" : undefined} class="flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors aria-[current=page]:bg-card aria-[current=page]:text-primary aria-[current=page]:shadow-sm">{tab.label}</a>{/each}
       </nav>
     </div>
-    <p class="mx-auto mt-2 max-w-screen-2xl text-xs leading-5 text-muted-foreground">僅供體驗，醫師照片為 AI 生成，不提供醫療服務、不發送通知、不收費。資料只留在本分頁，重新整理即重置；請勿輸入真實個資。</p>
+    <p class="mx-auto mt-1 max-w-screen-2xl text-[11px] leading-5 text-muted-foreground">虛構院所與 AI 人像・不收費、不通知，請勿輸入真實個資。</p>
   </header>
-  <div bind:this={scrollArea} class="demo-scroll relative min-h-0 overflow-y-auto overscroll-contain">
+  <div class="demo-scroll relative">
     {#key revision}
       {#if view === "admin"}
         <Workspace name="clinic" facilityId={DEMO_ID} />
@@ -99,9 +115,18 @@
     {/key}
   </div>
 </div>
+<Dialog.Dialog bind:open={helpOpen}><Dialog.DialogContent><Dialog.DialogHeader><Dialog.DialogTitle>關於這次示範</Dialog.DialogTitle><Dialog.DialogDescription>院所、客戶及預約皆為虛構資料；醫師人像由 AI 生成，不提供醫療服務。</Dialog.DialogDescription></Dialog.DialogHeader><p class="text-sm leading-7 text-muted-foreground">可以先從民眾預約開始，再到後台查看同一筆預約。操作只留在本分頁，不發送通知、不收費；切換視角保留資料，重新整理或確認重置後還原。請勿輸入真實個資。</p><Button class="min-h-11" onclick={() => helpOpen = false}>繼續體驗</Button></Dialog.DialogContent></Dialog.Dialog>
 <Dialog.Dialog bind:open={resetOpen}><Dialog.DialogContent><Dialog.DialogHeader><Dialog.DialogTitle>重置這次示範？</Dialog.DialogTitle><Dialog.DialogDescription>會清除本分頁的示範預約與編輯，回到最初資料；不影響正式資料。</Dialog.DialogDescription></Dialog.DialogHeader><div class="flex flex-wrap justify-end gap-3"><Button variant="outline" class="min-h-11" onclick={() => resetOpen = false}>保留示範資料</Button><Button class="min-h-11" onclick={reset}>確認重置</Button></div></Dialog.DialogContent></Dialog.Dialog>
 
 <style>
-  .demo-scroll { container-type: size; }
-  .demo-scroll :global(aside[id$="-desktop-sidebar"]) { height: 100cqh; }
+  .demo-scroll { min-height: calc(100dvh - var(--demo-header-height)); }
+  .demo-scroll :global(.cross-admin),
+  .demo-scroll :global(.cross-admin > .flex) { min-height: calc(100dvh - var(--demo-header-height)); }
+  .demo-scroll :global(aside[id$="-desktop-sidebar"]) { top: var(--demo-header-height); height: calc(100dvh - var(--demo-header-height)); }
+  .demo-scroll :global(.cross-admin > div > div > header),
+  .demo-scroll :global([aria-label="預約進度"]) { top: var(--demo-header-height); }
+  .demo-scroll :global([aria-label="預約摘要"]),
+  .demo-scroll :global([class~="lg:sticky"]) { top: calc(var(--demo-header-height) + 5rem); }
+  .demo-scroll :global(.scroll-mt-44),
+  .demo-scroll :global(:is(#services, #team, #photos, #contact)) { scroll-margin-top: 1rem; }
 </style>

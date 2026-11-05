@@ -41,3 +41,45 @@ test("示範門面反映後台服務調整，圖片只允許分頁內的安全�
   await assert.rejects(session.request(adminBase + "/photos", { method: "POST", body: data }), error => error.status === 422);
   assert.ok(session.snapshot().schedules.some(row => row.schedule_date === demoDay(29)));
 });
+
+test("示範報到更新原預約且可重送；叫下一號結束原服務，不新增錯誤預約", async () => {
+  const session = createDemoSession();
+  const path = adminBase + "/appointments/demo-appointment-0/check-in";
+  const count = session.snapshot().appointments.length;
+  const first = await session.request(path, post({}));
+  assert.equal(first.status, "checked_in");
+  assert.equal((await session.request(path, post({}))).check_in_time, first.check_in_time);
+  assert.equal(session.snapshot().appointments.length, count);
+  await assert.rejects(session.request(path), error => error.status === 405);
+  await assert.rejects(session.request(adminBase + "/appointments/demo-appointment-0/unknown", post({})), error => error.status === 403);
+  await session.request(adminBase + "/queue/call-next", post({ date: demoDay(), staff_id: "demo-doctor" }));
+  const rows = session.snapshot().appointments;
+  assert.equal(rows.find(row => row.id === "demo-appointment-0").status, "in_progress");
+  assert.equal(rows.find(row => row.id === "demo-appointment-2").status, "completed");
+  await assert.rejects(session.request(path, post({})), error => error.status === 409);
+});
+
+test("示範常用時段可讀取儲存及重置，不改動既有班表", async () => {
+  const session = createDemoSession();
+  const schedules = session.snapshot().schedules;
+  const settings = await session.request(adminBase + "/settings");
+  settings.schedule_presets.morning.start = "09:30";
+  const updated = await session.request(adminBase + "/settings", { method: "PATCH", body: JSON.stringify({ schedule_presets: settings.schedule_presets }) });
+  assert.equal(updated.schedule_presets.morning.start, "09:30");
+  assert.equal((await session.request(adminBase + "/settings")).schedule_presets.morning.start, "09:30");
+  assert.deepEqual(session.snapshot().schedules, schedules);
+  await assert.rejects(session.request(adminBase + "/settings", { method: "PATCH", body: JSON.stringify({ schedule_presets: {} }) }), error => error.status === 422);
+  session.reset();
+  assert.equal((await session.request(adminBase + "/settings")).schedule_presets.morning.start, "09:00");
+});
+
+test("示範客戶搜尋、停用篩選及分頁實際影響名單", async () => {
+  const session = createDemoSession();
+  assert.deepEqual((await session.request(adminBase + "/patients?q=" + encodeURIComponent("陳小晴"))).map(row => row.id), ["demo-patient-0"]);
+  assert.equal((await session.request(adminBase + "/patients?q=0900000000")).length, 3);
+  assert.deepEqual(await session.request(adminBase + "/patients?q=" + encodeURIComponent("不存在")), []);
+  assert.deepEqual((await session.request(adminBase + "/patients?limit=1&offset=1")).map(row => row.id), ["demo-patient-1"]);
+  await session.request(adminBase + "/patients/demo-patient-0", { method: "PATCH", body: JSON.stringify({ is_active: false }) });
+  assert.equal((await session.request(adminBase + "/patients")).length, 2);
+  assert.equal((await session.request(adminBase + "/patients?include_inactive=true")).length, 3);
+});

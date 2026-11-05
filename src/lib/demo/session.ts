@@ -1,5 +1,6 @@
 import { createDemoData, DEMO_ID, demoDay, type DemoRow } from "./data.ts";
 import { FALLBACK_TAXONOMY } from "../api/service-categories.ts";
+import { schedulePresets, validSchedulePresets, SESSION_KEYS, type SchedulePresets } from "../schedule-presets.ts";
 
 export class DemoError extends Error {
   status: number;
@@ -15,9 +16,10 @@ type Options = RequestInit & { params?: Record<string, string> };
 /** 僅在本分頁記憶體運作；無資料庫、認證、網路或通知能力。未實作端點一律拒絕。 */
 export function createDemoSession() {
   let state = createDemoData();
+  let presets = schedulePresets();
   const objectUrls = new Set<string>();
   const newId = () => `demo-${crypto.randomUUID()}`;
-  function reset() { for (const url of objectUrls) URL.revokeObjectURL(url); objectUrls.clear(); state = createDemoData(); }
+  function reset() { for (const url of objectUrls) URL.revokeObjectURL(url); objectUrls.clear(); state = createDemoData(); presets = schedulePresets(); }
   function upload(body: RequestInit["body"]) {
     const file = body instanceof FormData ? body.get("file") : null;
     if (!(file instanceof File) || !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type) || file.size > 5 * 1024 * 1024) throw new DemoError(422, "請選擇 5MB 內的 JPG、PNG、WebP 或 AVIF 圖片；圖片只保留在此分頁。");
@@ -113,6 +115,26 @@ export function createDemoSession() {
     }
     if (path.startsWith(base + "/")) {
       const parts = path.slice(base.length + 1).split("/"), [resource, id, child, childId] = parts;
+      if (resource === "settings" && !id) {
+        if (!["GET", "PATCH"].includes(method)) throw new DemoError(405, "請使用讀取或更新設定。");
+        if (method === "PATCH") {
+          if ("schedule_presets" in body) {
+            const value = body.schedule_presets;
+            if (value !== null) {
+              const entries = value as Partial<SchedulePresets> | undefined;
+              if (!entries || !SESSION_KEYS.every(key => typeof entries[key]?.start === "string" && typeof entries[key]?.end === "string") || !validSchedulePresets(entries as SchedulePresets)) throw new DemoError(422, "請填寫有效的常用時段。");
+            }
+            presets = schedulePresets(value as SchedulePresets | null);
+          }
+          if ("business_hours" in body) state.facility.business_hours = body.business_hours as typeof state.facility.business_hours;
+          if ("slot_duration" in body) {
+            const duration = number(body.slot_duration);
+            if (!Number.isInteger(duration) || duration < 15 || duration > 240) throw new DemoError(422, "請填寫有效的預約間隔。");
+            state.facility.slot_duration = duration;
+          }
+        }
+        return { business_hours: state.facility.business_hours, slot_duration: state.facility.slot_duration, schedule_presets: presets };
+      }
       if (resource === "photos") {
         if (method === "POST") { if (state.photos.length >= 12) throw new DemoError(422, "示範相簿最多 12 張照片。"); state.photos.push({ id: newId(), url: upload(options.body), caption: "自行上傳的示範照片" }); }
         if (method === "PATCH") { if (String(state.galleryRevision) !== text(body.revision)) throw new DemoError(409, "示範相簿已更新，請重新開啟。"); const photos = body.photos as { id: string; caption: string }[]; state.photos = photos.map(p => ({ ...state.photos.find(row => row.id === p.id)!, caption: p.caption })).filter(p => p.url); }
@@ -142,18 +164,30 @@ export function createDemoSession() {
       }
       if (resource === "patients") {
         if (id) { const person = rows(state.patients, id, method, body) as DemoRow; const list = state.appointments.filter(a => a.patient_id === id); return { ...person, stats: { total: list.length, completed: list.filter(a => a.status === "completed").length, cancelled: 0, no_show: 0, upcoming: list.filter(live).length, no_show_rate: 0, first_visit: demoDay(), last_visit: demoDay(), top_staff_name: "林醫師（示範）" }, timeline: list.map(a => ({ ...a, appointment_id: a.id, events: [] })) }; }
-        return state.patients.map(person => ({ ...person, appointment_count: state.appointments.filter(a => a.patient_id === person.id).length, no_show_count: 0, last_visit_date: demoDay() }));
+        const query = (url.searchParams.get("q") ?? "").trim().toLocaleLowerCase();
+        const offset = Math.max(0, number(url.searchParams.get("offset")) || 0);
+        const limit = Math.min(50, Math.max(1, number(url.searchParams.get("limit")) || 50));
+        return state.patients.filter(person => (url.searchParams.get("include_inactive") === "true" || person.is_active) && (!query || [person.name, person.phone, person.national_id_last4].some(value => text(value).toLocaleLowerCase().includes(query))))
+          .slice(offset, offset + limit).map(person => ({ ...person, appointment_count: state.appointments.filter(a => a.patient_id === person.id).length, no_show_count: state.appointments.filter(a => a.patient_id === person.id && a.status === "no_show").length, last_visit_date: demoDay() }));
       }
       if (resource === "appointments") {
-        if (method === "POST") return addAppointment(body, false);
-        if (id && child === "check-in") { const row = state.appointments.find(row => row.id === id); if (!row) throw new DemoError(404, "找不到示範預約。"); Object.assign(row, { status: "checked_in", check_in_time: new Date().toISOString() }); return row; }
+        if (child) {
+          if (!id || child !== "check-in") throw new DemoError(403, "此示範預約操作尚未提供。");
+          if (method !== "POST") throw new DemoError(405, "報到請使用送出操作。");
+          const row = state.appointments.find(row => row.id === id);
+          if (!row) throw new DemoError(404, "找不到示範預約。");
+          if (!["confirmed", "checked_in"].includes(text(row.status))) throw new DemoError(409, "目前狀態無法報到，請先核對預約。");
+          if (row.status === "confirmed") Object.assign(row, { status: "checked_in", check_in_time: new Date().toISOString() });
+          return row;
+        }
+        if (!id && method === "POST") return addAppointment(body, false);
         if (id) return rows(state.appointments, id, method, body);
         const start = url.searchParams.get("start_date") ?? url.searchParams.get("date") ?? "0000", end = url.searchParams.get("end_date") ?? url.searchParams.get("date") ?? "9999";
         return state.appointments.filter(a => text(a.appointment_date) >= start && text(a.appointment_date) <= end);
       }
       if (resource === "queue") {
         const date = url.searchParams.get("date") ?? (text(body.date) || demoDay());
-        if (method === "POST") { const waiting = state.appointments.find(a => a.appointment_date === date && a.status === "checked_in" && (!body.staff_id || a.staff_id === body.staff_id)); if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。"); waiting.status = "in_progress"; return { appointment: waiting, message: "已叫號（示範）" }; }
+        if (method === "POST") { const waiting = state.appointments.find(a => a.appointment_date === date && a.status === "checked_in" && (!body.staff_id || a.staff_id === body.staff_id)); if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。"); state.appointments.filter(a => a.appointment_date === date && a.staff_id === waiting.staff_id && a.status === "in_progress").forEach(a => { a.status = "completed"; }); waiting.status = "in_progress"; return { appointment: waiting, message: "已叫號（示範）" }; }
         return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: list.find(a => a.status === "in_progress")?.queue_number ?? null, waiting_count: list.filter(a => a.status === "checked_in").length, appointments: list }; }) };
       }
       if (resource === "analytics") {

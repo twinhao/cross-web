@@ -54,13 +54,62 @@ test("示範門面與三視角在手機、平板、桌面亮暗色可操作，�
       await page.screenshot({ path: `${dir}/doctor-${width}-${dark}.png`, animations: "disabled" });
       await page.keyboard.press("Escape");
       await page.getByRole("dialog").waitFor({ state: "hidden" });
-      await page.locator(".demo-scroll").evaluate(element => element.scrollTop = 0);
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
       await page.screenshot({ path: `${dir}/clinic-${width}-${dark}.png`, animations: "disabled" });
       await intact(page, errors, network);
       await page.getByRole("navigation", { name: "切換示範視角" }).getByRole("link", { name: "院所後台", exact: true }).click();
       await page.locator(".cross-admin h1").getByText("今日工作台", { exact: true }).waitFor();
       await page.getByRole("region", { name: "院所上線準備", exact: true }).getByRole("status").getByText("已找到可線上預約的時段", { exact: true }).waitFor();
       await page.screenshot({ path: `${dir}/admin-${width}-${dark}.png`, animations: "disabled" });
+      await intact(page, errors, network);
+    } finally { await page.close(); }
+  }
+});
+
+test("示範使用頁面捲動，篩選不跳回頂端；報到、搜尋與常用時段可完整操作", async () => {
+  for (const width of [390, 1440]) {
+    const { page, errors, network } = await open(width);
+    try {
+      await page.goto(preview.origin + "/demo?mode=admin&tab=appointments");
+      const first = page.locator("button").filter({ hasText: "詳情／改期" }).filter({ visible: true }).first();
+      await first.waitFor();
+      const header = await page.getByLabel("示範體驗導覽", { exact: true }).boundingBox();
+      assert.ok(header.height < (width < 640 ? 160 : 100), "示範導覽應保持精簡");
+      assert.equal(await page.locator(".demo-scroll").evaluate(element => getComputedStyle(element).overflowY), "visible");
+      if (width < 768) {
+        const bottom = await page.getByRole("navigation", { name: "手機後台主要導覽", exact: true }).boundingBox();
+        assert.ok(bottom.height < 100, "手機導覽不應撐滿內容區或遮住操作");
+      }
+      await page.getByRole("button", { name: "為陳小晴（示範）報到", exact: true }).filter({ visible: true }).first().click();
+      await page.getByText("陳小晴（示範） 已報到", { exact: true }).waitFor();
+      await page.evaluate(() => window.scrollTo({ top: 100, behavior: "instant" }));
+      assert.ok(await page.evaluate(() => scrollY) > 50);
+      await page.getByRole("button", { name: "未來七天", exact: true }).click();
+      await page.waitForURL(url => url.searchParams.get("view") === "week");
+      assert.ok(await page.evaluate(() => scrollY) > 50, "切換預約篩選不應強制回頂端");
+      await page.getByRole("button", { name: "示範說明", exact: true }).click();
+      await page.getByRole("heading", { name: "關於這次示範", exact: true }).waitFor();
+      await page.getByRole("button", { name: "繼續體驗", exact: true }).click();
+      await page.goto(preview.origin + "/demo?mode=admin&tab=patients");
+      await page.getByPlaceholder("搜尋既有客戶", { exact: true }).fill("陳小晴");
+      await page.getByText("本頁 1 位", { exact: true }).waitFor();
+      await page.goto(preview.origin + "/demo?mode=admin&tab=schedule");
+      await page.getByRole("button", { name: "設定常用時段", exact: true }).click();
+      await page.getByLabel("開始時間", { exact: true }).first().fill("09:30");
+      await page.getByRole("button", { name: "儲存常用時段", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "hidden" });
+      await page.getByRole("button", { name: "設定常用時段", exact: true }).click();
+      assert.equal(await page.getByLabel("開始時間", { exact: true }).first().inputValue(), "09:30");
+      await page.keyboard.press("Escape");
+      await page.getByRole("navigation", { name: "切換示範視角" }).getByRole("link", { name: "院所門面", exact: true }).click();
+      await page.getByRole("navigation", { name: "店家內容", exact: true }).getByRole("link", { name: "服務項目", exact: true }).click();
+      await page.waitForURL(url => url.hash === "#services");
+      await page.waitForFunction(() => {
+        const section = document.querySelector("#services").getBoundingClientRect();
+        const header = document.querySelector('[aria-label="示範體驗導覽"]').getBoundingClientRect();
+        return section.top >= header.bottom - 1 && section.top < innerHeight;
+      });
+      await page.screenshot({ path: `${dir}/smooth-clinic-${width}.png`, animations: "disabled" });
       await intact(page, errors, network);
     } finally { await page.close(); }
   }
