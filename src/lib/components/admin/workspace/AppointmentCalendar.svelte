@@ -12,12 +12,14 @@
   import StatusPill from "./StatusPill.svelte";
   let {
     appointments,
+    staff,
     startDate,
     view,
     fallbackDuration,
     onSelect,
   }: {
     appointments: ApiAppointment[];
+    staff: {id: string; name: string}[];
     startDate: string;
     view: "day" | "week";
     fallbackDuration: number;
@@ -34,17 +36,11 @@
               a.status !== "cancelled",
           ),
         }))
-      : [...new Set(appointments.map((a) => a.staff_id ?? "none"))].map(
-          (id) => ({
-            id,
-            label:
-              appointments.find((a) => (a.staff_id ?? "none") === id)
-                ?.staff_name ?? "未指定人員",
-            rows: appointments.filter(
-              (a) => (a.staff_id ?? "none") === id && a.status !== "cancelled",
-            ),
-          }),
-        ),
+      : [...staff.map(s => ({id: s.id, label: s.name})),
+        ...(appointments.some(a => !a.staff_id) ? [{id: "none", label: "未指定人員"}] : [])].map(person => ({
+          ...person,
+          rows: appointments.filter(a => (a.staff_id ?? "none") === person.id && a.status !== "cancelled"),
+        })),
   );
   const firstHour = $derived(
     Math.max(
@@ -75,7 +71,7 @@
 </script>
 
 <p class="hidden text-xs text-muted-foreground md:block">
-  時間表依預約成立時的服務時長顯示；已取消的預約可切回清單查詢。
+  時間表顯示已有預約，空白不代表可預約；新增時會核對班表、休假與名額。已取消的預約請切回清單查詢。
 </p>
 <Card.Root
   aria-label={view === "day" ? "依人員排列的當日時間表" : "七日預約行程"}
@@ -129,7 +125,7 @@
       {#each groups as g (g.id)}<h3
           class="sticky top-0 z-20 border-b border-l bg-card p-3 font-semibold"
         >
-          {g.label}
+          {g.label}<span class="ml-2 text-xs font-normal text-muted-foreground">{g.rows.length} 筆</span>
         </h3>{/each}
       <div class="relative" style:height={(lastHour - firstHour) * 90 + "px"}>
         {#each Array.from({ length: lastHour - firstHour }, (_, i) => firstHour + i) as hour (hour)}<span
@@ -144,6 +140,7 @@
           style:height={(lastHour - firstHour) * 90 + "px"}
           style:background-image={calendarGrid}
         >
+          {#if !g.rows.length}<p class="p-3 text-xs text-muted-foreground">無預約</p>{/if}
           {#each g.rows as a (a.id)}<button
               class="absolute inset-x-1 overflow-hidden rounded-lg border border-primary/30 bg-primary/5 px-2 py-1 text-left hover:bg-primary/15 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary"
               style:top={(minutes(a.appointment_time) - firstHour * 60) * 1.5 +

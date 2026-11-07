@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import DateInput from "#lib/components/ui/date-input/DateInput.svelte";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
@@ -182,7 +184,7 @@
     remove = null;
   }
   async function save(kind: "shift" | "leave") {
-    if (!staffId || busy) return;
+    if (!canManage || !staffId || busy) return;
     busy = true;
     dialogError = "";
     try {
@@ -206,7 +208,7 @@
     }
   }
   async function confirmRemove() {
-    if (!remove || busy) return;
+    if (!canManage || !remove || busy) return;
     busy = true;
     dialogError = "";
     try {
@@ -231,6 +233,8 @@
       busy = false;
     }
   }
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facility.id));
 </script>
 
 <div class="space-y-5">
@@ -241,7 +245,7 @@
         按日期管理人員班表與休假，支援週期樣板及複製。
       </p>
     </div>
-    <div class="flex flex-wrap gap-2"><SchedulePresetsEditor facilityId={facility.id} onSaved={value => { customPresets = value; message = "常用時段已更新，既有班表保持原值"; }} /><Button onclick={() => (batch = true)}>智慧排班</Button></div>
+    {#if canManage}<div class="flex flex-wrap gap-2"><SchedulePresetsEditor facilityId={facility.id} onSaved={value => { customPresets = value; message = "常用時段已更新，既有班表保持原值"; }} /><Button onclick={() => (batch = true)}>智慧排班</Button></div>{/if}
   </div>
   <div class="flex flex-wrap items-end gap-2">
     <Button
@@ -431,7 +435,7 @@
               {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
             </span>
           </p>
-          <div class="flex shrink-0 flex-wrap justify-end gap-2"><Button variant="outline" size="sm" disabled={busy} onclick={() => editShift(s)} aria-label={"編輯" + s.staff_name + "的排班"}>編輯時間</Button>
+          {#if canManage}<div class="flex shrink-0 flex-wrap justify-end gap-2"><Button variant="outline" size="sm" disabled={busy} onclick={() => editShift(s)} aria-label={"編輯" + s.staff_name + "的排班"}>編輯時間</Button>
           <Button
             variant="outline"
             size="sm"
@@ -441,7 +445,7 @@
             aria-label={"移除" + s.staff_name + "的排班"}
           >
             移除班次
-          </Button></div>
+          </Button></div>{/if}
         </div>{/each}{#each leaves.filter((l) => l.date === selected) as l (l.id)}<div
           class="flex items-center justify-between gap-2 rounded-xl border p-3"
         >
@@ -450,7 +454,7 @@
             <br />
             <span class="text-sm text-muted-foreground">{l.note ?? ""}</span>
           </p>
-          <Button
+          {#if canManage}<Button
             size="sm"
             variant="outline"
             disabled={busy}
@@ -458,7 +462,7 @@
               (remove = { kind: "leave", id: l.id, staffId: l.staff_id })}
           >
             移除休假
-          </Button>
+          </Button>{/if}
         </div>{/each}
     </div>
     {#if remove}<div class="space-y-3 rounded-xl bg-destructive/5 p-4">
@@ -483,7 +487,7 @@
           </Button>
         </div>
       </div>{/if}
-    <div class="space-y-3 border-t pt-4">
+    {#if canManage}<div class="space-y-3 border-t pt-4">
       <div class="space-y-1">
         <Field.Label for="shift-staff" class="text-sm font-medium">
           服務人員
@@ -560,10 +564,10 @@
       >
         設定當日休假
       </Button>
-    </div>
+    </div>{:else}<p class="text-sm text-muted-foreground">目前為唯讀，修改班表與休假請洽院所管理員。</p>{/if}
   </Dialog.Content>
 </Dialog.Root>
-<BatchSchedule
+{#if canManage}<BatchSchedule
   bind:open={batch}
   facilityId={facility.id}
   {presets}
@@ -572,4 +576,4 @@
     revision++;
     message = "批次排班已更新";
   }}
-/>
+/>{/if}

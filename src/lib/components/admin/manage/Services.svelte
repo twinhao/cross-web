@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import AdminEmpty from "../layout/AdminEmpty.svelte";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
@@ -106,13 +108,16 @@
       busy = false;
     }
   }
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facilityId));
 </script>
 
 <div class="space-y-4">
   <div class="flex justify-between gap-3">
     <h2 class="font-semibold">服務項目</h2>
-    <Button onclick={() => edit(null)}>新增服務</Button>
+    {#if canManage}<Button onclick={() => edit(null)}>新增服務</Button>{/if}
   </div>
+  {#if !canManage}<p class="text-sm text-muted-foreground">服務資料為唯讀，修改請洽院所管理員。</p>{/if}
   <Feedback {error} {message} />{#if error}<Button
       variant="outline"
       onclick={() => revision++}
@@ -136,7 +141,7 @@
             </p>
             <p class="mt-2 whitespace-pre-wrap text-sm">{s.description}</p>
           </div>
-          <div class="flex gap-2">
+          {#if canManage}<div class="flex gap-2">
             <Button variant="outline" onclick={() => edit(s)}>
               編輯服務
             </Button><Button
@@ -149,13 +154,13 @@
             >
               刪除
             </Button>
-          </div>
+          </div>{/if}
         </li>{:else}<li>
           <AdminEmpty
             title="尚無服務項目"
             description="先建立諮詢或療程，設定時長及是否公開價格，再到人員設定指派服務。"
           >
-            <Button onclick={() => edit(null)}>建立第一個服務</Button>
+            {#if canManage}<Button onclick={() => edit(null)}>建立第一個服務</Button>{/if}
           </AdminEmpty>
         </li>{/each}
     </ul>{/if}

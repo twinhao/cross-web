@@ -16,7 +16,8 @@
   let {
     facility,
     subscriptionHref,
-  }: { facility: MedicalFacility; subscriptionHref: string } = $props();
+    compact = false,
+  }: { facility: MedicalFacility; subscriptionHref: string; compact?: boolean } = $props();
   let catalog = $state.raw<BookingCatalog | null>(null);
   let busy = $state(false),
     error = $state(""),
@@ -198,7 +199,17 @@
     slotsError ? "可預約時段尚未確認" : slotsAvailable === true ? "已找到可線上預約的時段" : "線上預約仍有設定待完成");
 </script>
 
-<section aria-label="院所上線準備" class="rounded-2xl border border-border bg-card p-4 sm:p-5">
+{#if compact}
+<section aria-label="院所上線準備" class="flex items-center justify-between gap-3 rounded-xl border bg-card px-4 py-2">
+  <div class="min-w-0 text-xs leading-5">
+    <p role="status" class="font-medium">{status}</p>
+    {#if nextStep}<p class="text-muted-foreground">下一步：{nextStep.title}</p>{/if}
+    {#if error}<p class="text-destructive">{error}</p>{/if}
+  </div>
+  <Button size="sm" variant="ghost" class="min-h-11 shrink-0 px-2" href={clinicHref(facility.id, "info") + "#clinic-readiness"}>上線設定</Button>
+</section>
+{:else}
+<section id="clinic-readiness" aria-label="院所上線準備" class="scroll-mt-24 rounded-2xl border border-border bg-card p-4 sm:p-5">
   <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:flex-wrap">
     <div class="min-w-0 flex-1">
       <p class="text-sm font-semibold" role="status">{status}</p>
@@ -244,3 +255,4 @@
     </div>
   </details>
 </section>
+{/if}

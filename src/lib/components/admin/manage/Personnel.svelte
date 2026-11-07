@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import {
     Phone,
@@ -82,6 +84,8 @@
       busy = false;
     }
   }
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facilityId));
 </script>
 
 <div class="space-y-4">
@@ -100,16 +104,17 @@
           >
             {label}
           </NativeSelect.Option>{/each}
-      </NativeSelect.Root><Button
+      </NativeSelect.Root>{#if canManage}<Button
         onclick={() => {
           selected = null;
           editor = true;
         }}
       >
         <Plus class="size-4" />新增人員
-      </Button>
+      </Button>{/if}
     </div>
   </div>
+  {#if !canManage}<p class="text-sm text-muted-foreground">人員資料為唯讀，修改請洽院所管理員。</p>{/if}
   <Feedback {error} {message} />{#if error}<Button
       variant="outline"
       onclick={() => revision++}
@@ -173,7 +178,7 @@
                 <span class="truncate">{p.email || "信箱未填"}</span>
               </p>
             </div>
-          </Card.Content><Card.Footer
+          </Card.Content>{#if canManage}<Card.Footer
             class="flex-wrap gap-2 border-t border-border/60 bg-muted/15 p-4"
           >
             <Button
@@ -219,7 +224,7 @@
             >
               <Trash2 class="size-3.5" />
             </Button>
-          </Card.Footer>
+          </Card.Footer>{/if}
         </Card.Root>
       {:else}<Empty.Root
           class="col-span-full rounded-3xl bg-card py-14 ring-1 ring-foreground/5"
@@ -239,7 +244,7 @@
                 onclick={() => (role = "")}
               >
                 顯示全部人員
-              </Button>{:else}<Button
+              </Button>{:else if canManage}<Button
                 onclick={() => {
                   selected = null;
                   editor = true;
@@ -251,7 +256,7 @@
         </Empty.Root>{/each}
     </div>{/if}
 </div>
-{#if editor}<StaffEditor
+{#if editor && canManage}<StaffEditor
     bind:open={editor}
     {facilityId}
     staff={selected}
@@ -260,7 +265,7 @@
       message = "人員資料已更新";
     }}
   />{/if}
-{#if tool && selected}{#key tool + selected.id}<StaffTools
+{#if canManage && tool && selected}{#key tool + selected.id}<StaffTools
       open={true}
       onClose={() => (tool = null)}
       mode={tool}

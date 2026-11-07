@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Card from "#lib/components/ui/card/index.ts";
   import * as Table from "#lib/components/ui/table/index.ts";
@@ -64,6 +66,8 @@
       clearTimeout(timer);
     };
   });
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facilityId));
 </script>
 
 {#snippet actions(p: ApiPatientListItem)}<Button
@@ -73,7 +77,7 @@
     aria-label={"查看" + p.name + "的客戶檔案"}
   >
     查看檔案<ArrowUpRight class="size-3.5" />
-  </Button>{#if p.is_active}<Button
+  </Button>{#if canManage && p.is_active}<Button
       size="sm"
       variant="ghost"
       class="gap-1.5 text-primary"
@@ -313,7 +317,7 @@
     onClose={() => (selected = null)}
     onSaved={() => revision++}
   />{/if}
-<BookingDialog
+{#if canManage}<BookingDialog
   bind:open={booking}
   {facilityId}
   patient={seed}
@@ -321,4 +325,4 @@
     message = "預約已建立";
     revision++;
   }}
-/>
+/>{/if}

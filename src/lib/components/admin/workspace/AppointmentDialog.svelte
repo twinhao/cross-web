@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import DateInput from "#lib/components/ui/date-input/DateInput.svelte";
   import { revealError } from "#lib/admin/reveal-error.ts";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
@@ -83,7 +85,7 @@
     error = "";
   }
   async function perform(checkIn = false) {
-    if (!appointment || busy) return;
+    if (!appointment || busy || !canManage) return;
     busy = true;
     error = "";
     try {
@@ -114,6 +116,8 @@
       busy = false;
     }
   }
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facility.id));
 </script>
 
 <Dialog.Root
@@ -278,7 +282,7 @@
           class="flex shrink-0 flex-wrap justify-end gap-2 border-t bg-popover p-4"
           data-slot="dialog-footer"
         >
-          {#if stage === "confirm"}<Button
+          {#if !canManage}<Button variant="outline" onclick={onClose}>關閉</Button>{:else if stage === "confirm"}<Button
               variant="outline"
               disabled={busy}
               onclick={() => {

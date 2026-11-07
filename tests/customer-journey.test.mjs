@@ -354,7 +354,7 @@ test("院所上線清單區分方案與時段，僅查詢 API 且失敗可重試
     }),
   );
   try {
-    await page.goto(preview.origin + "/admin/dashboard");
+    await page.goto(preview.origin + `/admin/clinics/${facilityId}?tab=info`);
     const panel = page
       .locator("details")
       .filter({
@@ -438,7 +438,7 @@ test("已啟用但尚未完成服務的院所會自動展開清單，下一步�
     state.clinic.logo_url = "/cross-icon.png";
     state.services = [];
     try {
-      await page.goto(preview.origin + "/admin/dashboard");
+      await page.goto(preview.origin + `/admin/clinics/${facilityId}?tab=info`);
       const readiness = page.getByRole("region", { name: "院所上線準備", exact: true });
       const next = readiness.getByRole("group", { name: "下一步設定", exact: true });
       await next.getByText("下一步：啟用服務項目", { exact: true }).waitFor();
@@ -468,7 +468,7 @@ test("設定齊全可收起清單，之後沒有可約時段時再次展開並�
   await page.route("**/api/v1/medical-facilities/*/schedules*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ id: "future", staff_id: "staff-1", schedule_date: "2030-01-01", start_time: "09:00", end_time: "12:00" }]) }));
   await page.route("**/api/v1/booking/clinics/*/slots*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(available ? [{ date: "2030-01-01", slots: [{ id: "slot", time: "09:00", isAvailable: true }] }] : []) }));
   try {
-    await page.goto(preview.origin + "/admin/dashboard");
+    await page.goto(preview.origin + `/admin/clinics/${facilityId}?tab=info`);
     const readiness = page.getByRole("region", { name: "院所上線準備", exact: true });
     await page.waitForFunction(() => document.querySelector('[aria-label="上線設定已確認項目"]')?.getAttribute("aria-valuenow") === "7");
     assert.equal(await readiness.locator("details").evaluate((element) => element.open), false);

@@ -13,7 +13,7 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
-  import { isSystemAdmin } from "#lib/auth/roles.ts";
+  import { isSystemAdmin, canManageFacility } from "#lib/auth/roles.ts";
   import { apiMessage } from "#lib/admin/scheduling.ts";
   import {
     PLAN_LABELS,
@@ -206,7 +206,7 @@
         {facility.subscription_notes}
       </p>
     </div>{/if}{#if !system}<div class="flex flex-wrap gap-3">
-      {#if canStartTrial(facility)}<Button
+      {#if canManageFacility(auth.user, facility.id) && canStartTrial(facility)}<Button
           disabled={busy}
           onclick={() => {
             error = "";

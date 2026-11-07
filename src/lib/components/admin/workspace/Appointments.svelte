@@ -4,9 +4,6 @@
   import {
     CalendarDays,
     CalendarCheck2,
-    UserRoundCheck,
-    Clock3,
-    Activity,
     Plus,
     List,
     CalendarRange,
@@ -39,8 +36,11 @@
     appointmentEnd,
     apiMessage,
   } from "#lib/admin/scheduling.ts";
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
+  import { clinicHref } from "#lib/admin/workspace.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
-  import type { ApiAppointment, MedicalFacility } from "#lib/types/clinic.ts";
+  import type { ApiAppointment, ApiStaff, MedicalFacility } from "#lib/types/clinic.ts";
   import AppointmentDialog from "./AppointmentDialog.svelte";
   import AppointmentCalendar from "./AppointmentCalendar.svelte";
   import BookingDialog from "./BookingDialog.svelte";
@@ -49,16 +49,18 @@
     facility,
     workbench = false,
   }: { facility: MedicalFacility; workbench?: boolean } = $props();
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facility.id));
   const startDate = $derived(
-    validDate(page.url.searchParams.get("start"), taipeiToday()),
+    workbench ? taipeiToday() : validDate(page.url.searchParams.get("start"), taipeiToday()),
   );
   const view = $derived(
-    ["day", "week"].includes(page.url.searchParams.get("view") ?? "")
+    !workbench && ["day", "week"].includes(page.url.searchParams.get("view") ?? "")
       ? (page.url.searchParams.get("view") as "day" | "week")
       : "list",
   );
   const endDate = $derived(
-    view === "day"
+    workbench || view === "day"
       ? startDate
       : view === "week"
         ? addDateDays(startDate, 6)
@@ -72,6 +74,17 @@
   const createOpen = $derived(page.url.searchParams.get("new") === "1"),
     appointmentId = $derived(page.url.searchParams.get("appointment") ?? "");
   let showFilters = $state(false);
+  let roster = $state<ApiStaff[]>([]), rosterError = $state(""), rosterRevision = $state(0);
+  $effect(() => {
+    const id = facility.id, revision = rosterRevision;
+    void revision;
+    let active = true;
+    roster = [];
+    rosterError = "";
+    adminClinicsApi.staff.list(id).then(data => { if (active) roster = data; })
+      .catch(e => { if (active) rosterError = apiMessage(e, "人員名單載入失敗，暫時只顯示已有預約的人員"); });
+    return () => { active = false; };
+  });
   let rows = $state<ApiAppointment[]>([]),
     loading = $state(true),
     error = $state(""),
@@ -178,12 +191,12 @@
       ),
   );
   const people = $derived([
-    ...new Map(
-      rows
-        .filter((a) => a.staff_id)
-        .map((a) => [a.staff_id!, a.staff_name ?? "未指定"]),
-    ).entries(),
+    ...new Map<string, string>([
+      ...rows.filter(a => a.staff_id).map(a => [a.staff_id!, a.staff_name ?? "未指定"] as [string, string]),
+      ...roster.filter(s => s.is_active && s.is_bookable && ["doctor", "beautician", "therapist"].includes(s.role)).map(s => [s.id, s.name] as [string, string]),
+    ]).entries(),
   ]);
+  const calendarPeople = $derived(people.filter(([id]) => !staff || id === staff).map(([id, name]) => ({id, name})));
   const services = $derived([
     ...new Map(
       rows.map((a) => [a.service_id ?? "none", a.service_name ?? "一般預約"]),
@@ -205,6 +218,7 @@
     },
   ]);
   async function checkIn(a: ApiAppointment) {
+    if (!canManage) return;
     pending = a.id;
     message = "";
     try {
@@ -232,7 +246,7 @@
   }
 </script>
 
-<Tabs.Root value={view} onValueChange={changeView} class="gap-7">
+<Tabs.Root value={view} onValueChange={changeView} class={workbench ? "gap-4" : "gap-7"}>
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <p
@@ -245,60 +259,36 @@
       <h1 class="text-2xl font-semibold tracking-tight">
         {workbench ? "今日工作台" : "預約管理"}
       </h1>
-      <p class="mt-2 text-sm leading-6 text-muted-foreground">
+      <p class={workbench ? "mt-2 hidden text-sm leading-6 text-muted-foreground sm:block" : "mt-2 text-sm leading-6 text-muted-foreground"}>
         {workbench
           ? "每一天的安排，從這裡開始。掌握預約、報到與服務進度。"
           : "把諮詢與療程安排妥當，讓客戶的每次到訪更從容。"}
       </p>
     </div>
-    <Button
+    <div class="flex flex-wrap gap-2">
+    {#if workbench}<Button variant="outline" href={clinicHref(facility.id, "appointments")}>完整預約管理</Button>{/if}
+    {#if canManage}<Button
       aria-label="＋ 新增預約"
       class="h-10 gap-2 px-5 shadow-sm"
       onclick={() => params({ new: "1" })}
     >
       <Plus class="size-4" />
       <span>新增預約</span>
-    </Button>
+    </Button>{/if}
+    </div>
   </div>
-  {#if workbench}<div class="grid grid-cols-2 gap-3 lg:gap-5 xl:grid-cols-4">
-      {#each stats as stat, i (stat.label)}{@const Icon = [
-          CalendarDays,
-          Clock3,
-          UserRoundCheck,
-          Activity,
-        ][i]}<Card.Root class="gap-0 overflow-hidden py-0 shadow-sm">
-          <Card.Content class="p-4 sm:p-5">
-            <div class="mb-4 flex items-center justify-between gap-2">
-              <p class="text-xs font-medium text-muted-foreground">
-                {stat.label}
-              </p>
-              <span
-                class="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary/7 text-primary"
-              >
-                <Icon class="size-[18px]" strokeWidth={1.7} />
-              </span>
-            </div>
-            <p
-              class="text-[2rem] font-semibold leading-none tracking-tight tabular-nums sm:text-4xl"
-            >
-              {updated ? stat.value : "—"}
-              <span class="ml-2 text-xs font-normal text-muted-foreground">
-                筆
-              </span>
-            </p>
-            <p class="mt-4 text-[11px] text-muted-foreground">
-              {[
-                "所選日期的全部預約",
-                "預約成立，等待客戶到訪",
-                "已完成櫃檯報到",
-                "正在看診或接受療程",
-              ][i]}
-            </p>
-          </Card.Content>
-        </Card.Root>{/each}
-    </div>{/if}
-  <Card.Root class="gap-0 space-y-5 p-4 shadow-sm sm:p-6">
-    <div class="flex flex-wrap gap-2">
+  {#if !canManage}<p class="text-sm text-muted-foreground">目前為唯讀；新增、改期與報到請由院所管理員處理。</p>{/if}
+  {#if workbench}<div class="grid grid-cols-4 gap-2" aria-label="今日預約狀態">
+    {#each stats as stat, i (stat.label)}
+      {@const value = ["all", "confirmed", "checked_in", "in_progress"][i]}
+      <button type="button" class="rounded-xl border bg-card px-2 py-3 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary sm:px-4" aria-pressed={status === value} onclick={() => params({status: value === "all" ? null : value})}>
+        <span class="block text-xs text-muted-foreground">{stat.label}</span>
+        <span class="mt-1 block text-2xl font-semibold tabular-nums">{updated ? stat.value : "—"}</span>
+      </button>
+    {/each}
+  </div>{/if}
+  <Card.Root class="gap-0 space-y-4 p-4 shadow-sm sm:p-5">
+    {#if !workbench}<div class="flex flex-wrap gap-2">
       <Button
         size="sm"
         variant={startDate === taipeiToday() && endDate === startDate
@@ -375,9 +365,10 @@
       </div>
     </div>
 
+    {/if}
     <div
       class={workbench
-        ? "grid gap-3 sm:grid-cols-2"
+        ? "grid grid-cols-[minmax(0,1fr)_auto] gap-3"
         : "grid gap-3 sm:grid-cols-2 xl:grid-cols-3"}
     >
       <div class="space-y-1">
@@ -389,7 +380,7 @@
           placeholder="姓名或電話"
         />
       </div>
-      <div class="space-y-1">
+      {#if workbench}<div class="flex items-end sm:justify-end"><Button variant="outline" aria-expanded={showFilters} onclick={() => showFilters = !showFilters}>{showFilters ? "收合篩選" : "更多篩選"}{filterCount ? `（${filterCount}）` : ""}</Button></div>{:else}<div class="space-y-1">
         <Field.Label for="appointments-start" class="text-sm">
           {view === "week" ? "起始日期" : "日期"}
         </Field.Label><DateInput
@@ -404,7 +395,8 @@
           }}
         />
       </div>
-      {#if view === "list" && (!workbench || showFilters)}<div
+      {/if}
+      {#if view === "list" && !workbench}<div
           class={showFilters
             ? "space-y-1"
             : workbench
@@ -425,7 +417,7 @@
         </div>{/if}
       <div
         class={showFilters
-          ? "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
@@ -449,7 +441,7 @@
       </div>
       <div
         class={showFilters
-          ? "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
@@ -473,7 +465,7 @@
       </div>
       <div
         class={showFilters
-          ? "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
@@ -564,6 +556,7 @@
         </div>
         <Button variant="outline" onclick={() => revision++}>重試預約</Button>
       </div>{/if}
+    {#if rosterError}<div role="alert" class="rounded-xl border p-3 text-sm">{rosterError}<Button variant="outline" size="sm" class="ml-2" onclick={() => rosterRevision++}>重試人員名單</Button></div>{/if}
     {#if detailError}<div
         role="alert"
         class="rounded-xl bg-destructive/10 p-3 text-destructive"
@@ -586,8 +579,16 @@
             ? "符合篩選條件"
             : ""}
         </p>
+        {#if view !== "list"}<AppointmentCalendar
+          appointments={filtered}
+          staff={calendarPeople}
+          {startDate}
+          {view}
+          fallbackDuration={facility.slot_duration}
+          onSelect={select}
+        />{/if}
         {#if !filtered.length}<Card.Root class="gap-0 py-0 shadow-sm">
-            <Empty.Root class="py-14">
+            <Empty.Root class={view === "list" ? "py-14" : "py-6 md:hidden"}>
               <Empty.Header>
                 <Empty.Media variant="icon">
                   <CalendarCheck2 class="size-6" />
@@ -612,13 +613,6 @@
             </Empty.Root>
           </Card.Root>
         {:else}
-          {#if view !== "list"}<AppointmentCalendar
-              appointments={filtered}
-              {startDate}
-              {view}
-              fallbackDuration={facility.slot_duration}
-              onSelect={select}
-            />{/if}
           <div
             class={view === "list"
               ? "hidden overflow-hidden rounded-3xl bg-card shadow-sm ring-1 ring-foreground/5 md:block"
@@ -692,8 +686,8 @@
                           onclick={() => select(a)}
                           aria-label={"查看" + a.patient_name + "的預約"}
                         >
-                          詳情／改期
-                        </Button>{#if a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                          {canManage ? "詳情／改期" : "查看詳情"}
+                        </Button>{#if canManage && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                             size="sm"
                             disabled={!!pending}
                             onclick={() => checkIn(a)}
@@ -749,8 +743,8 @@
                       variant="outline"
                       onclick={() => select(a)}
                     >
-                      詳情／改期
-                    </Button>{#if a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                      {canManage ? "詳情／改期" : "查看詳情"}
+                    </Button>{#if canManage && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                         size="sm"
                         disabled={!!pending}
                         onclick={() => checkIn(a)}
@@ -767,7 +761,7 @@
     {/if}
   </Tabs.Content>
 </Tabs.Root>
-<BookingDialog
+{#if canManage}<BookingDialog
   bind:open={
     () => createOpen,
     (v) => {
@@ -779,7 +773,7 @@
     message = "預約已建立";
     revision++;
   }}
-/>
+/>{/if}
 <AppointmentDialog
   appointment={selected}
   {facility}

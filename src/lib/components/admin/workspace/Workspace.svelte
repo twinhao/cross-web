@@ -9,7 +9,9 @@
   import { Share2, ArrowUpRight } from "@lucide/svelte";
   import AdminFrame from "../layout/AdminFrame.svelte";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
-  import { isSystemAdmin } from "#lib/auth/roles.ts";
+  import { isSystemAdmin, canManageFacility } from "#lib/auth/roles.ts";
+  import { workspaceParams } from "#lib/admin/navigation.ts";
+  import { taipeiToday } from "#lib/constants/appointment.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import {
     clinicHref,
@@ -43,7 +45,7 @@
   let { name, facilityId }: { name: string; facilityId: string } = $props();
   const auth = getAuth();
   const system = $derived(isSystemAdmin(auth.user));
-  const canManageGallery = $derived(system || auth.user?.roles.includes("facility_admin"));
+  const canManageGallery = $derived(canManageFacility(auth.user, facilityId));
   let galleryOpen = $state(false), galleryBusy = $state(false);
   let galleryManager = $state<{ savePending: () => Promise<boolean> }>();
   async function finishGallery() {
@@ -173,9 +175,7 @@
     const url = new SvelteURL(page.url.href);
     url.pathname = demoSession ? "/demo" : `/admin/clinics/${facilityId}`;
     if (demoSession) url.searchParams.set("mode", "admin");
-    url.searchParams.set("tab", key);
-    url.searchParams.delete("appointment");
-    url.searchParams.delete("new");
+    url.search = workspaceParams(url.searchParams, tab, key, taipeiToday()).toString();
     return url.pathname + url.search;
   }
 </script>
@@ -278,7 +278,7 @@
               查看方案
             </a>
           </p>{/if}
-        {#if tab === "today" || tab === "info"}{#key facility}<ClinicReadiness {facility} {subscriptionHref} />{/key}{/if}
+        {#if tab === "today" || tab === "info"}{#key facility}<ClinicReadiness {facility} {subscriptionHref} compact={tab === "today"} />{/key}{/if}
         {#if tab === "today" || tab === "appointments"}<Appointments
             {facility}
             workbench={tab === "today"}
@@ -286,7 +286,7 @@
               class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 text-sm"
             >
               <p>目前方案：{PLAN_LABELS[facility.subscription_plan]}</p>
-              {#if canStartTrial(facility)}<Button
+              {#if canManageGallery && canStartTrial(facility)}<Button
                   disabled={saving}
                   variant="outline"
                   onclick={() => (trialConfirm = true)}
@@ -361,9 +361,9 @@
                       <h2 class="font-semibold">基本資訊</h2>
                       <div class="flex flex-wrap gap-2">
                       {#if canManageGallery}<Button variant="outline" onclick={() => (galleryOpen = true)}>環境相簿</Button>{/if}
-                      <Button variant="outline" onclick={() => (edit = true)}>
+                      {#if canManageGallery}<Button variant="outline" onclick={() => (edit = true)}>
                         編輯資訊
-                      </Button>
+                      </Button>{/if}
                       </div>
                     </div>
                     <dl class="grid gap-4 text-sm sm:grid-cols-2">
@@ -397,9 +397,9 @@
                         {facilityId}
                       />{:else if tab === "services"}<Services
                         {facilityId}
-                      />{:else if tab === "announcements"}<Announcements
+                      />{:else if tab === "announcements" && canManageGallery}<Announcements
                         {facilityId}
-                      />{/if}{/key}{/if}
+                      />{:else if tab === "announcements"}<p class="rounded-xl border p-4 text-sm text-muted-foreground">公告由院所管理員維護；目前帳號無公告管理權限。</p>{/if}{/key}{/if}
               </Tabs.Content>
             </Tabs.Root>
           </div>
@@ -408,7 +408,7 @@
     </div>
   </AdminFrame>
 </div>
-{#if facility && edit}<ClinicEditor
+{#if facility && edit && canManageGallery}<ClinicEditor
     bind:open={edit}
     clinic={facility}
     onSaved={(value) => {
@@ -416,7 +416,7 @@
       notice = "院所資訊已更新";
     }}
   />{/if}
-{#if facility && galleryOpen}<Modal bind:open={galleryOpen} title="管理院所環境相簿" description="讓民眾在院所門面先認識你的空間。" busy={galleryBusy}><ClinicPhotoManager clinicId={facilityId} bind:this={galleryManager} bind:busy={galleryBusy} /><div class="admin-dialog-footer"><Button disabled={galleryBusy} onclick={finishGallery}>{galleryBusy ? "儲存中…" : "完成"}</Button></div></Modal>{/if}
+{#if facility && galleryOpen && canManageGallery}<Modal bind:open={galleryOpen} title="管理院所環境相簿" description="讓民眾在院所門面先認識你的空間。" busy={galleryBusy}><ClinicPhotoManager clinicId={facilityId} bind:this={galleryManager} bind:busy={galleryBusy} /><div class="admin-dialog-footer"><Button disabled={galleryBusy} onclick={finishGallery}>{galleryBusy ? "儲存中…" : "完成"}</Button></div></Modal>{/if}
 <Modal
   bind:open={remove}
   title="刪除院所"

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Field from "#lib/components/ui/field/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
@@ -84,7 +86,7 @@
   });
   async function save(e?: SubmitEvent) {
     e?.preventDefault();
-    if (!patient) return;
+    if (!patient || !canManage) return;
     if (active !== patient.is_active && !confirm) {
       confirm = true;
       return;
@@ -114,6 +116,8 @@
     v
       ? new Date(v).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
       : "未記錄";
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facilityId));
 </script>
 
 <Modal
@@ -165,7 +169,7 @@
           .last_visit ?? "無"} · 常見人員 {patient.stats.top_staff_name ?? "無"}
       </p>
       <form onsubmit={save} class="space-y-4">
-        <Field.Set disabled={busy} class="gap-5">
+        <Field.Set disabled={busy || !canManage} class="gap-5">
           <Field.Legend>聯絡方式與照護註記</Field.Legend><Field.Field
             class="gap-2"
           >
@@ -253,7 +257,7 @@
               啟用客戶檔案
             </Field.Label>
           </Field.Field>
-        </Field.Set>{#if confirm}<div
+        </Field.Set>{#if !canManage}<p class="text-sm text-muted-foreground">目前為唯讀，修改客戶檔案請洽院所管理員。</p>{:else if confirm}<div
             class="space-y-3 rounded-xl border border-destructive/30 p-3"
           >
             <p class="text-sm">

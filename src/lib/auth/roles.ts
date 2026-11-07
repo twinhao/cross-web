@@ -40,6 +40,15 @@ export function canAccessAdmin(user: User | null): boolean {
   return isSystemAdmin(user) || isFacilityUser(user);
 }
 
+/** 與後端院所寫入權限一致；介面判斷不能取代 API 授權。 */
+export function canManageFacility(user: User | null, facilityId: string): boolean {
+  if (!user) return false;
+  return (
+    (isSystemAdmin(user) && !user.facility_id) ||
+    (user.roles.includes("facility_admin") && user.facility_id === facilityId)
+  );
+}
+
 export function getAdminHomePath(user: User | null): string {
   // 系統管理員與院所使用者登入後都先進總覽 Dashboard
   if (isSystemAdmin(user)) return "/admin/dashboard";

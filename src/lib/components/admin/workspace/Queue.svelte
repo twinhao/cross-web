@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAuth } from "#lib/auth/auth.svelte.ts";
+  import { canManageFacility } from "#lib/auth/roles.ts";
   import DateInput from "#lib/components/ui/date-input/DateInput.svelte";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Card from "#lib/components/ui/card/index.ts";
@@ -41,7 +43,7 @@
       id = facility.id,
       r = revision;
     void r;
-    if (!allowed) return;
+    if (!allowed || !canManage) return;
     let active = true;
     untrack(() => {
       loading = true;
@@ -75,6 +77,7 @@
     };
   });
   onMount(() => {
+    if (!canManage) return;
     const id = setInterval(() => {
       if (document.visibilityState === "visible" && !pending) revision++;
     }, 10000);
@@ -88,7 +91,7 @@
     };
   });
   async function act(kind: "check-in" | "call-next", id: string | null) {
-    if (pending) return;
+    if (pending || !canManage) return;
     pending = kind + id;
     error = "";
     try {
@@ -121,6 +124,8 @@
     url.searchParams.set("queue_date", value);
     void goto(url, { replace: true, reset: false });
   }
+  const auth = getAuth();
+  const canManage = $derived(canManageFacility(auth.user, facility.id));
 </script>
 
 <div class="space-y-5">
@@ -128,7 +133,8 @@
     <h1 class="text-2xl font-semibold tracking-tight">叫號與報到</h1>
     <p class="mt-1 text-sm text-muted-foreground">核對客戶、報到與服務進度。</p>
   </div>
-  {#if !allowed}<Card.Root class="gap-0 shadow-sm space-y-3 p-6">
+  {#if !canManage}<p class="rounded-xl border p-4 text-sm text-muted-foreground">叫號與報到需由院所管理員操作；目前帳號可從預約管理查看服務狀態。</p>
+  {:else if !allowed}<Card.Root class="gap-0 shadow-sm space-y-3 p-6">
       <h2 class="font-semibold">叫號與報到需標準方案以上</h2>
       <p class="text-sm text-muted-foreground">
         前往訂閱頁查看目前方案與可用試用。
