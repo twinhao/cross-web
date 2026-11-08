@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-08 側邊欄提供院所設定子選單，`AdminFrame` 接收真實子頁 `activeKey`；桌面／手機控制項 ID 分開。`SidebarLink.svelte` 共用連結及收合 Tooltip，保留鍵盤與導覽語意。員工不顯示叫號／公告入口，手機以客戶捷徑替代叫號；後端權限維持既有規則。
+
 - 2026-11-07 後台第一批精簡：今日固定臺北當日，跨日工具集中於完整預約管理；今日上線狀態精簡，完整檢查保留於設定。預約／排班的日期與人員透過 `admin/navigation.ts` 接續，日曆人員不只來自已有預約。修改按鈕使用 `canManageFacility` 對齊後端；一般院所員工的叫號／公告不發送受限請求。詳見 `docs/admin-simplification-2026-11-07.md`。
 
 - 完整示範院所入口 `/demo`，使用獨立身分與分頁記憶體 API，禁止回退到正式後端；`mode` 為示範視角，`view` 保留給後台日曆。切換視角不能重置資料，只有明確重置或重新整理才還原。詳見 `docs/demo-experience.md`。

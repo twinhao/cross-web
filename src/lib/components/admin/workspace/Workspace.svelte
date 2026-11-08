@@ -178,6 +178,10 @@
     url.search = workspaceParams(url.searchParams, tab, key, taipeiToday()).toString();
     return url.pathname + url.search;
   }
+  const settingsPanels = $derived(SETTINGS_PANELS.filter(key => key !== "announcements" || canManageGallery));
+  const settingsNavigation = $derived(settingsPanels.map(key => ({
+    key, label: key === "info" ? "基本資料" : PANEL_LABELS[key], href: hrefFor(key),
+  })));
 </script>
 
 <div class="cross-admin min-h-dvh bg-background">
@@ -185,15 +189,13 @@
     heading={heading ?? "院所工作區"}
     facilityName={facility?.name ?? ""}
     {system}
-    activeKey={SETTINGS_PANELS.includes(tab)
-      ? "info"
-      : tab === "stats"
+    activeKey={tab === "stats"
         ? "analytics"
         : tab}
     groups={[
       {
         label: "日常作業",
-        items: [navigation[0], navigation[1], navigation[2], navigation[4]].map(
+        items: [navigation[0], navigation[1], navigation[2], navigation[4]].filter(item => item.key !== "queue" || canManageGallery).map(
           (item) => ({
             ...item,
             href: item.key === "today" ? item.href : hrefFor(item.key),
@@ -214,13 +216,14 @@
           .map((item) => ({
             ...item,
             href: item.key === "subscription" ? item.href : hrefFor(item.key),
+            ...(item.key === "info" ? { children: settingsNavigation } : {}),
           })),
       },
     ]}
     mobile={[
       { key: "today", label: "今日", href: todayHref },
       { key: "appointments", label: "預約", href: hrefFor("appointments") },
-      { key: "queue", label: "叫號", href: hrefFor("queue") },
+      canManageGallery ? { key: "queue", label: "叫號", href: hrefFor("queue") } : {key: "patients", label: "客戶", href: hrefFor("patients")},
     ]}
   >
     {#snippet actions()}<Button
@@ -344,7 +347,7 @@
                 aria-label="院所設定分類"
                 class="grid w-full grid-cols-2 sm:inline-flex sm:w-fit"
               >
-                {#each SETTINGS_PANELS as key (key)}<Tabs.Trigger
+                {#each settingsPanels as key (key)}<Tabs.Trigger
                     value={key}
                     class="px-4 py-2"
                   >

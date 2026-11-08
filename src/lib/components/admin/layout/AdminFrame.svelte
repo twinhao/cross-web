@@ -20,6 +20,7 @@
     ArrowUpRight,
     PanelLeftClose,
     PanelLeftOpen,
+    ChevronDown,
   } from "@lucide/svelte";
   import * as Sheet from "#lib/components/ui/sheet/index.ts";
 
@@ -30,7 +31,9 @@
   import { getAuth } from "#lib/auth/auth.svelte.ts";
   import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import Password from "../manage/Password.svelte";
-  type Item = { key: string; label: string; href: string };
+  import SidebarLink from "./SidebarLink.svelte";
+  import { Tooltip } from "bits-ui";
+  type Item = { key: string; label: string; href: string; children?: {key: string; label: string; href: string}[] };
   let {
     heading,
     facilityName = "",
@@ -54,6 +57,7 @@
   let menuOpen = $state(false);
   let collapsed = $state(false);
   let manualSidebar = false;
+  let branchOverrides = $state<Record<string, boolean>>({});
   const sidebarId = $props.id();
   const clinicWorkspace = $derived(
     groups.some((group) => group.items.some((item) => item.key === "today")),
@@ -90,6 +94,7 @@
   });
   afterNavigate(() => {
     menuOpen = false;
+    branchOverrides = {};
   });
   function toggleSidebar() {
     manualSidebar = true;
@@ -128,12 +133,12 @@
   );
 </script>
 
-{#snippet navigation(compact: boolean)}
+{#snippet navigation(compact: boolean, surface: "desktop" | "mobile")}
   <div
     class="flex h-full min-h-0 w-full flex-col bg-sidebar px-3 py-4 text-sidebar-foreground"
     data-sidebar-compact={compact}
   >
-    <header class="shrink-0 space-y-4 pb-5">
+    <header class="shrink-0 space-y-3 pb-4">
       <a
         href={homeHref}
         aria-label={clinicWorkspace ? "Cross · 今日工作台" : "Cross · 平台總覽"}
@@ -180,7 +185,7 @@
       aria-label={system && !clinicWorkspace ? "平台管理導覽" : "後台主要導覽"}
     >
       {#each groups as group, index (group.label)}
-        <section class={compact ? "mb-3" : "mb-5"}>
+        <section class={compact ? "mb-3" : "mb-4"}>
           <p
             class={compact
               ? "sr-only"
@@ -193,33 +198,28 @@
               aria-hidden="true"
             ></div>{/if}
           <div class="space-y-1">
-            {#each group.items as item (item.key)}{@const Icon =
-                icons[item.key] ?? Settings2}
-              <a
-                href={item.href}
-                aria-label={item.label}
-                title={compact ? item.label : undefined}
-                aria-current={activeKey === item.key ? "page" : undefined}
-                onclick={() => (menuOpen = false)}
-                class="relative flex min-h-11 items-center rounded-xl text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sidebar-ring {compact
-                  ? 'mx-auto w-11 justify-center'
-                  : 'gap-3 px-3'} {activeKey === item.key
-                  ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                  : 'font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'}"
-              >
-                {#if activeKey === item.key}<span
-                    class="absolute inset-y-3 left-0 w-[3px] rounded-full bg-sidebar-primary"
-                    aria-hidden="true"
-                  ></span>{/if}
-                <Icon
-                  class="size-[18px] shrink-0"
-                  strokeWidth={activeKey === item.key ? 2 : 1.7}
-                  aria-hidden="true"
-                />
-                <span class={compact ? "sr-only" : "truncate"}>
-                  {item.label}
-                </span>
-              </a>
+            {#each group.items as item (item.key)}
+              {@const selectedChild = item.children?.find(child => child.key === activeKey)}
+              {@const selected = activeKey === item.key || !!selectedChild}
+              {@const open = branchOverrides[item.key] ?? selected}
+              {@const branchId = `${sidebarId}-${surface}-${item.key}`}
+              <div>
+                <div class={item.children?.length && !compact ? "grid grid-cols-[minmax(0,1fr)_2.75rem] items-center" : ""}>
+                  <SidebarLink href={compact && selectedChild ? selectedChild.href : item.href} label={item.label} icon={icons[item.key] ?? Settings2} active={selected && (compact || !item.children?.length)} highlighted={selected} {compact} onNavigate={() => (menuOpen = false)} />
+                  {#if item.children?.length && !compact}
+                    <Button variant="ghost" size="icon" class="size-11" aria-label={(open ? "收合" : "展開") + item.label} aria-expanded={open} aria-controls={branchId} onclick={() => { branchOverrides[item.key] = !open; }}>
+                      <ChevronDown class="size-4 transition-transform motion-reduce:transition-none {open ? 'rotate-180' : ''}" aria-hidden="true" />
+                    </Button>
+                  {/if}
+                </div>
+                {#if item.children?.length && !compact && open}
+                  <ul id={branchId} aria-label={item.label + "子選單"} class="mt-1 ml-5 space-y-1 border-l border-sidebar-border pl-3">
+                    {#each item.children as child (child.key)}
+                      <li><SidebarLink href={child.href} label={child.label} active={activeKey === child.key} nested onNavigate={() => (menuOpen = false)} /></li>
+                    {/each}
+                  </ul>
+                {/if}
+              </div>
             {/each}
           </div>
         </section>
@@ -289,6 +289,7 @@
     </footer>
   </div>
 {/snippet}
+<Tooltip.Provider delayDuration={150}>
 <div class="flex min-h-dvh">
   <aside
     id={`${sidebarId}-desktop-sidebar`}
@@ -298,7 +299,7 @@
       ? 'w-20'
       : 'w-[16.5rem]'}"
   >
-    {@render navigation(collapsed)}
+    {@render navigation(collapsed, "desktop")}
   </aside>
   <div class="flex min-w-0 flex-1 flex-col">
     <header
@@ -376,7 +377,7 @@
       onclick={() => (menuOpen = false)}
     >
       <X class="size-4" />
-    </Button>{@render navigation(false)}
+    </Button>{@render navigation(false, "mobile")}
   </Sheet.Content>
 </Sheet.Root>
 {#if mobile.length}<div
@@ -409,3 +410,4 @@
     </div>
   </div>{/if}
 {#if password}<Password bind:open={password} />{/if}
+</Tooltip.Provider>

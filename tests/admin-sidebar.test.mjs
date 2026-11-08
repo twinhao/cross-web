@@ -234,3 +234,51 @@ test("平台與院所側欄清楚區分，品牌返回保留所選院所，短�
     await page.close();
   }
 });
+
+test("設定子選單可直接切換，選取精確到子頁，收合圖示支援提示與鍵盤", async () => {
+  const {page,errors}=await setupComplete(browser,preview.origin,{role:"facility_admin"});
+  try {
+    await page.goto(preview.origin+path("appointments"));await ready(page,false);
+    const nav=page.getByRole("navigation",{name:"後台主要導覽",exact:true});
+    await nav.getByRole("button",{name:"展開院所設定",exact:true}).click();
+    const children=nav.getByRole("list",{name:"院所設定子選單",exact:true});
+    assert.deepEqual((await children.getByRole("link").allTextContents()).map(text=>text.trim()),["基本資料","人員設定","服務項目","公告"]);
+    await children.getByRole("link",{name:"人員設定",exact:true}).click();await page.waitForURL("**tab=personnel**");
+    assert.equal(await children.getByRole("link",{name:"人員設定",exact:true}).getAttribute("aria-current"),"page");
+    assert.equal(await nav.locator('[aria-current="page"]').count(),1);
+    await page.reload();await ready(page,false);await children.getByRole("link",{name:"人員設定",exact:true}).waitFor();
+    await page.screenshot({path:dir+"/settings-expanded.png",animations:"disabled"});
+    await page.getByRole("button",{name:"收合側邊欄",exact:true}).click();await ready(page,true);
+    const settings=nav.getByRole("link",{name:"院所設定",exact:true});
+    assert.equal(await settings.getAttribute("aria-current"),"page");
+    assert.match(await settings.getAttribute("href"),/tab=personnel/);
+    await settings.focus();await page.getByRole("tooltip").getByText("院所設定",{exact:true}).waitFor();
+    await page.keyboard.press("Escape");await page.getByRole("tooltip").waitFor({state:"hidden"});
+    const schedule=nav.getByRole("link",{name:"排班管理",exact:true});await schedule.hover();
+    await page.getByRole("tooltip").getByText("排班管理",{exact:true}).waitFor();
+    const tip=await page.getByRole("tooltip").boundingBox();assert(tip.x>=80&&tip.x+tip.width<=1440);
+    await schedule.focus();await page.keyboard.press("Enter");await page.waitForURL("**tab=schedule**");
+    await noOverflow(page);assert.deepEqual(errors,[]);
+  }finally{await page.close();}
+});
+
+test("手機設定子選單可操作且關聯唯一；員工只看到可用的選單及客戶快捷入口", async () => {
+  for(const role of ["facility_admin","facility_staff"]){
+    const {page,errors,requests}=await setupComplete(browser,preview.origin,{role,width:390});
+    try{
+      await page.goto(preview.origin+path("personnel"));await ready(page,true);
+      const mobile=page.getByRole("navigation",{name:"手機後台主要導覽",exact:true});
+      assert.equal(await mobile.getByRole("link",{name:role==="facility_admin"?"叫號":"客戶",exact:true}).count(),1);
+      await mobile.getByRole("button",{name:"更多",exact:true}).click();
+      const sheet=page.getByRole("dialog"),children=sheet.getByRole("list",{name:"院所設定子選單",exact:true});await children.waitFor();
+      const toggle=sheet.getByRole("button",{name:"收合院所設定",exact:true});
+      const id=await toggle.getAttribute("aria-controls");assert.equal(await page.locator(`[id="${id}"]`).count(),1);
+      assert.equal(await children.getByRole("link",{name:"公告",exact:true}).count(),role==="facility_admin"?1:0);
+      assert.equal(await sheet.getByRole("link",{name:"叫號與報到",exact:true}).count(),role==="facility_admin"?1:0);
+      assert.equal(await children.getByRole("link",{name:"人員設定",exact:true}).getAttribute("aria-current"),"page");
+      await page.screenshot({path:`${dir}/mobile-${role}.png`,animations:"disabled"});
+      await children.getByRole("link",{name:"服務項目",exact:true}).click();await sheet.waitFor({state:"hidden"});await page.waitForURL("**tab=services**");
+      await noOverflow(page);assert.deepEqual(errors,[]);assert.equal(requests.filter(r=>r.method!=="GET").length,0);
+    }finally{await page.close();}
+  }
+});
