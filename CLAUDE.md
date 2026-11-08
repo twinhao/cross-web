@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-08 人員日曆以兩行摘要避免短卡片裁切，高度不足時精簡為單行並保留完整可存取名稱。`admin/appointment-calendar.ts` 將同人員重疊時段分欄，短卡片最低顯示高度納入碰撞範圍；手機保留清單。只改呈現，不改可用時段或預約資料。詳見 `docs/appointment-calendar-2026-11-08.md`。
+
 - 2026-11-08 側邊欄提供院所設定子選單，`AdminFrame` 接收真實子頁 `activeKey`；桌面／手機控制項 ID 分開。`SidebarLink.svelte` 共用連結及收合 Tooltip，保留鍵盤與導覽語意。員工不顯示叫號／公告入口，手機以客戶捷徑替代叫號；後端權限維持既有規則。
 - 2026-11-08 收合外觀再調整為 72px：品牌與功能保留，移除獨立院所圖示與分隔線，選取改用實色底板。窄版密碼／登出收進 `SidebarAccount.svelte`，展開及手機保留完整帳戶操作。短視窗仍須可原生捲動及鍵盤抵達最後功能。
 
