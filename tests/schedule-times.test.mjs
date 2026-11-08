@@ -82,7 +82,7 @@ test('常用時段失敗保留表單，儲存後單日與批次帶入，同時�
    await page.getByRole('button',{name:'儲存班次',exact:true}).click();await page.getByRole('alert').getByText(/影響 1 筆既有預約/).waitFor();
    assert.equal(await page.locator('#shift-end').inputValue(),'11:00');assert.equal(state.shifts[0].end_time,'12:30');
    await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();
-   await page.getByRole('button',{name:'智慧排班',exact:true}).click();assert.equal(await page.locator('#batch-from').inputValue(),'09:30');
+   await page.getByRole('button',{name:'批次排班',exact:true}).click();assert.equal(await page.locator('#batch-from').inputValue(),'09:30');
    await page.locator('#batch-session').selectOption('evening');assert.equal(await page.locator('#batch-from').inputValue(),'18:00');
    await page.screenshot({path:`${evidence}/presets-batch-${width}.png`});assert.deepEqual(errors,[]);
   }finally{await page.close();}

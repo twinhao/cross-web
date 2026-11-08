@@ -68,7 +68,7 @@
     renewNote = $state(""),
     trialConfirm = $state(false);
   const subscriptionIssue = $derived(subscriptionWarning(facility)),
-    features = $derived(accessibleFeatures(facility)),
+    features = $derived(accessibleFeatures(facility).filter(feature => feature !== "no_show_risk")),
     days = $derived(daysUntilExpiry(facility.subscription_expires_at));
   function openEdit() {
     plan = facility.subscription_plan;
@@ -203,6 +203,7 @@
         "院所基本資料、現場與電話代訂、客戶與人員管理"}
     </p>
   </div>
+  {#if features.includes("reminders")}<p class="text-xs leading-6 text-muted-foreground">App 預約提醒需會員對象綁定及已啟用通知的裝置。電話／現場代訂不保證收到提醒；目前未提供 Email、簡訊或瀏覽器推播。</p>{/if}
   {#if facility.subscription_notes}<div>
       <h3 class="text-sm font-medium">付款記錄／備註</h3>
       <p class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">

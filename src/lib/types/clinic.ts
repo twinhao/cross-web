@@ -511,19 +511,19 @@ export interface ApiAppointment {
   updated_at: string | null;
 }
 
-// 後台代訂（櫃檯為現場/電話客人建立；身分證為識別碼）
-export interface ApiAppointmentCreate {
-  patient_name: string;
-  patient_national_id: string;
-  patient_phone?: string;
-  patient_gender?: "M" | "F";
+// 後台代訂：既有客戶使用同院所 ID，新客沿用姓名與證號識別。
+export type ApiAppointmentCreate = {
   service_id?: string;
   staff_id: string;
   appointment_date: string; // YYYY-MM-DD
   appointment_time: string; // HH:MM
   booking_method?: "phone" | "walk_in";
   notes?: string;
-}
+} & ({ patient_id: string; patient_name?: never; patient_national_id?: never;
+  patient_phone?: never; patient_gender?: never } | {
+  patient_id?: never; patient_name: string; patient_national_id: string;
+  patient_phone?: string; patient_gender?: "M" | "F";
+});
 
 export interface ApiAppointmentUpdate {
   status?: AppointmentStatus;

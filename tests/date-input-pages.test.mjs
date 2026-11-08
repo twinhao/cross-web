@@ -71,7 +71,7 @@ test("預約篩選、叫號、手機日期管理與批次排班皆使用共用�
     await inspect(page, "叫號日期");
     await page.goto(preview.origin + path("schedule"));
     await inspect(page, "直接管理日期");
-    await page.getByRole("button", { name: "智慧排班", exact: true }).click();
+    await page.getByRole("button", { name: "批次排班", exact: true }).click();
     await page.getByLabel("排班方式", { exact: true }).selectOption("copy");
     await inspect(page, "批次排班", page.getByRole("dialog"), 3);
     assert.deepEqual(errors, []);

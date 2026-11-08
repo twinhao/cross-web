@@ -10,7 +10,7 @@ test('身分載入完成前不掛載後台；未登入與民眾不能進入後�
   assert.equal(adminAccess('login', null, true).state, 'allow');
 });
 test('院所帳號只能存取自己的院所，不能掛載系統管理頁', () => {
-  for (const role of ['facility_admin', 'facility_staff']) {
+  for (const role of ['facility_admin', 'facility_staff', 'facility_receptionist']) {
     const account = user([role], 'own');
     for (const name of ['clinics', 'users', 'applications', 'settings']) assert.equal(adminAccess(name, account, false).state, 'redirect');
     assert.equal(adminAccess('clinic', account, false, 'other').state, 'redirect');

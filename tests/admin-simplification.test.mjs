@@ -66,7 +66,7 @@ test('一般院所員工保留查詢，不能開啟管理表單或發出受限�
   for(const tab of ['personnel','services','info','schedule','appointments','patients','subscription','announcements','queue']){
    await page.goto(preview.origin+path(tab));await page.locator('.cross-admin h1').waitFor();
    await page.waitForLoadState('networkidle');
-   for(const name of ['新增人員','編輯服務','新增服務','編輯資訊','環境相簿','智慧排班','設定常用時段','＋ 新增預約','啟用 90 天試用'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0,`${tab}: ${name}`);
+   for(const name of ['新增人員','編輯服務','新增服務','編輯資訊','環境相簿','批次排班','設定常用時段','＋ 新增預約','啟用 90 天試用'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0,`${tab}: ${name}`);
    if(tab==='patients'){assert.equal(await page.getByRole('button',{name:/再次預約/}).count(),0);await page.getByRole('button',{name:/的客戶檔案/}).filter({visible:true}).first().click();await page.getByRole('dialog').getByText('目前為唯讀，修改客戶檔案請洽院所管理員。',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'儲存客戶檔案',exact:true}).count(),0);await page.keyboard.press('Escape');}
   }
   assert.equal(requests.filter(r=>r.path.endsWith('/queue')||r.path.endsWith('/announcements')||r.method!=='GET').length,0);

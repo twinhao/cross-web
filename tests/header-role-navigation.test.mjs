@@ -74,6 +74,7 @@ test("平台及院所管理帳號只顯示一個管理後台入口，手機亦�
     ["superadmin"],
     ["facility_admin"],
     ["facility_staff"],
+    ["facility_receptionist"],
     ["patient", "admin"],
   ])
     for (const width of [360, 1440]) {

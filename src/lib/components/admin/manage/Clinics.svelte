@@ -142,7 +142,7 @@
                 shareOpen = true;
               }}
             >
-              分享預約頁
+              分享院所頁
             </Button><Button
               size="sm"
               variant="ghost"

@@ -168,7 +168,7 @@
   >
     <div class="flex max-h-[calc(100dvh-2rem)] flex-col">
       <Dialog.Header class="shrink-0 p-6 pr-12">
-        <Dialog.Title>智慧排班</Dialog.Title><Dialog.Description>
+        <Dialog.Title>批次排班</Dialog.Title><Dialog.Description>
           以週期樣板或既有七日班表建立安排；先預覽，再確認送出。
         </Dialog.Description>
       </Dialog.Header>

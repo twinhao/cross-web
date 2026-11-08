@@ -31,7 +31,7 @@ const PLAN_FEATURES: Record<SubscriptionPlan, Feature[]> = {
 
 export const FEATURE_LABELS: Record<Feature, string> = {
   online_booking: "線上預約",
-  reminders: "預約提醒",
+  reminders: "App 預約提醒",
   queue_management: "叫號/報到",
   analytics: "客戶分析",
   no_show_risk: "No-show 風險",

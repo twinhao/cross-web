@@ -27,7 +27,7 @@ export async function setupWorkspace(browser,origin,{width=1440,role='facility_a
   if(path.endsWith('/queue'))return json({date:url.searchParams.get('date')??today,groups:[{staff_id:'staff-1',staff_name:staff[0].name,current_number:3,waiting_count:1,appointments:state.appointments.slice(0,3)}]});
   if(path.endsWith('/check-in')){const id=path.split('/').at(-2),a=state.appointments.find(a=>a.id===id);a.status='checked_in';return json(a);}
   if(path.endsWith('/appointments')){
-    if(method==='POST'){const body=req.postDataJSON();const row={...body,id:'appointment-created',duration_minutes:body.service_id==='laser'?60:30,status:'confirmed',staff_name:staff.find(s=>s.id===body.staff_id)?.name,service_name:services.find(s=>s.id===body.service_id)?.service_name};state.appointments.push(row);return json(row,201);}
+    if(method==='POST'){const body=req.postDataJSON();const row={...body,...(body.patient_id?{patient_name:'既有客戶（虛構）',patient_phone:'0900000000'}:{}),id:'appointment-created',duration_minutes:body.service_id==='laser'?60:30,status:'confirmed',staff_name:staff.find(s=>s.id===body.staff_id)?.name,service_name:services.find(s=>s.id===body.service_id)?.service_name};state.appointments.push(row);return json(row,201);}
     if(state.failList)return json({detail:'測試：預約資料暫時無法載入'},503);
     const start=url.searchParams.get('start_date')??url.searchParams.get('date')??'0000',end=url.searchParams.get('end_date')??url.searchParams.get('date')??'9999';return json(state.appointments.filter(a=>a.appointment_date>=start&&a.appointment_date<=end));
   }

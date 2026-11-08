@@ -38,16 +38,16 @@ export function createDemoSession() {
     if (!["GET", "PATCH"].includes(method)) throw new DemoError(405, "此示範操作尚未提供。");
     return collection[index];
   }
-  function available(serviceId: string, staffId: string | null) {
+  function available(serviceId: string, staffId: string | null, allowGeneral = false) {
     const service = state.services.find(row => row.id === serviceId && row.is_active);
-    if (!service || !state.facility.is_active) return [];
-    const duration = number(service.duration_minutes), step = Math.max(15, state.facility.slot_duration);
+    if (serviceId && !service || !serviceId && !allowGeneral || !state.facility.is_active) return [];
+    const duration = number(service?.duration_minutes ?? state.facility.slot_duration), step = Math.max(15, state.facility.slot_duration);
     const now = new Date(), taipeiTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Taipei", hour: "2-digit", minute: "2-digit" }).format(now);
     return Array.from({ length: 14 }, (_, offset) => {
       const date = demoDay(offset), start = new Date(`${date}T00:00:00+08:00`);
       const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
       const hours = state.facility.business_hours?.[days[new Date(`${date}T12:00:00Z`).getUTCDay()]];
-      const candidates = state.staff.filter(person => person.is_active && person.is_bookable && person.is_public_visible && (!staffId || person.id === staffId) && state.assignments[person.id]?.includes(serviceId));
+      const candidates = state.staff.filter(person => person.is_active && person.is_bookable && person.is_public_visible && (!staffId || person.id === staffId) && (!serviceId || state.assignments[person.id]?.includes(serviceId)));
       const slots = [];
       if (hours && duration > 0) for (let t = minutes(hours.open); t + duration <= minutes(hours.close); t += step) {
         if (offset === 0 && t <= minutes(taipeiTime)) continue;
@@ -67,12 +67,23 @@ export function createDemoSession() {
   function addAppointment(body: Record<string, unknown>, online: boolean) {
     const serviceId = text(body.service_id), date = text(body.appointment_date), time = text(body.appointment_time).slice(0, 5);
     const requestedStaff = text(body.staff_id ?? body.doctor_id) || null;
-    const person = state.staff.find(person => (!requestedStaff || person.id === requestedStaff) && available(serviceId, person.id).some(day => day.date === date && day.slots.some(slot => slot.time === time && slot.isAvailable)));
+    const person = state.staff.find(person => (!requestedStaff || person.id === requestedStaff) && available(serviceId, person.id, !online).some(day => day.date === date && day.slots.some(slot => slot.time === time && slot.isAvailable)));
     if (!person) throw new DemoError(409, "此示範時段已不可用，請重新選擇。");
-    const service = state.services.find(row => row.id === serviceId)!;
-    const patient = state.patients.find(row => row.id === body.member_patient_id) ?? state.patients[0];
-    const row: DemoRow = { ...body, id: newId(), facility_id: DEMO_ID, staff_id: person.id, staff_name: person.name, service_id: serviceId, service_name: service.service_name, duration_minutes: service.duration_minutes,
-      patient_id: patient.id, patient_name: online ? patient.name : body.patient_name, patient_phone: online ? patient.phone : body.patient_phone,
+    const service = state.services.find(row => row.id === serviceId);
+    let patient = state.patients.find(row => row.id === (online ? body.member_patient_id : body.patient_id));
+    if (!online && body.patient_id) {
+      if (!patient) throw new DemoError(404, "示範客戶不存在。");
+      if (!patient.is_active) throw new DemoError(409, "此示範客戶已停用。");
+      if ([body.patient_name, body.patient_national_id, body.patient_phone, body.patient_gender].some(value => value != null)) throw new DemoError(422, "已選取客戶，請勿另送身分資料。");
+    }
+    if (!online && !body.patient_id) {
+      patient = {id: newId(), name: text(body.patient_name), phone: text(body.patient_phone), gender: body.patient_gender ?? null,
+        national_id_last4: text(body.patient_national_id).slice(-4), is_active: true, appointment_count: 0, no_show_count: 0};
+      state.patients.push(patient);
+    }
+    patient ??= state.patients[0];
+    const row: DemoRow = { ...body, id: newId(), facility_id: DEMO_ID, staff_id: person.id, staff_name: person.name, service_id: service?.id ?? null, service_name: service?.service_name ?? null, duration_minutes: service?.duration_minutes ?? state.facility.slot_duration,
+      patient_id: patient.id, patient_name: patient.name, patient_phone: patient.phone,
       appointment_date: date, appointment_time: `${time}:00`, status: "confirmed", booking_method: online ? "online" : body.booking_method, queue_number: state.appointments.filter(a => a.appointment_date === date).length + 1, notes: body.notes ?? null, check_in_time: null, created_at: new Date().toISOString(), updated_at: null };
     state.appointments.push(row); return online ? booking(row) : row;
   }

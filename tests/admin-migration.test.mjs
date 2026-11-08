@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright-core';
 import { buildProblem, CHROME, startPreview } from './support/built-app.mjs';
 
 const id = '11111111-2222-3333-4444-555555555555';
+const testTokens = { access_token: randomUUID(), refresh_token: randomUUID(), token_type: 'bearer' };
 const clinic = {
   id, name: '虛構遷移測試院所', hospital_level: 'clinic', facility_type: 'aesthetic', payment_type: 'self_pay',
   phone: '0200000000', address: '虛構地址', description: '', logo_url: null, hero_banner: null,
@@ -30,13 +32,13 @@ async function setup({ role = 'superadmin', authenticated = true } = {}) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [], requests = [];
   page.on('pageerror', error => errors.push(error.message));
-  if (authenticated) await page.addInitScript(() => { localStorage.setItem('access_token', 'local-test'); localStorage.setItem('refresh_token', 'local-refresh'); });
+  if (authenticated) await page.addInitScript(tokens => { localStorage.setItem('access_token', tokens.access_token); localStorage.setItem('refresh_token', tokens.refresh_token); }, testTokens);
   await page.route('**/api/v1/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
     requests.push({ path, method: request.method(), contentType: request.headers()['content-type'], body: request.postData() });
     const json = value => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(value) });
     if (path === '/api/v1/auth/me') return json(account(role));
-    if (path === '/api/v1/auth/login') return json({ access_token: 'local-test', refresh_token: 'local-refresh', token_type: 'bearer' });
+    if (path === '/api/v1/auth/login') return json(testTokens);
     if (path === '/api/v1/service-categories') return json({
       facility_types: ['healthcare', 'aesthetic', 'beauty', 'other'].map(value => ({ value, label: value, categories: [] })),
       payment_types: [{ value: 'nhi', label: '健保' }, { value: 'self_pay', label: '自費' }, { value: 'both', label: '健保+自費' }],
@@ -66,7 +68,7 @@ test('未登入後台轉至登入頁；登入與登出沿用 Svelte 的同一份
     await page.getByRole('button', { name: '登入', exact: true }).click();
     await page.waitForURL('**/admin/dashboard');
     await page.getByRole('heading', { level: 1 }).waitFor();
-    assert.equal(await page.evaluate(() => localStorage.getItem('access_token')), 'local-test');
+    assert.equal(await page.evaluate(() => localStorage.getItem('access_token')), testTokens.access_token);
     await page.getByRole('button', { name: /登出/ }).click();
     await page.waitForURL('**/admin/login');
     assert.equal(await page.evaluate(() => localStorage.getItem('access_token')), null);
@@ -93,8 +95,11 @@ test('系統管理頁可載入；院所工作區保留設定、對話框與 mult
     await page.waitForTimeout(200);
     assert.deepEqual(errors, [], '開啟編輯對話框時不應發生執行錯誤');
     await page.getByRole('dialog').waitFor();
-    await page.locator('input[type=file]').first().setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jv9kAAAAASUVORK5CYII=', 'base64') });
-    await page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/logo'));
+    await Promise.all([
+      page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/logo')),
+      page.locator('input[type=file]').first().setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jv9kAAAAASUVORK5CYII=', 'base64') }),
+    ]);
+    await page.getByText('Logo 已更新', { exact: true }).waitFor();
     const upload = requests.find(request => request.path.endsWith('/logo') && request.method === 'POST');
     assert.match(upload?.contentType ?? '', /multipart\/form-data; boundary=/);
     assert.match(upload?.body ?? '', /name="file"; filename="logo.png"/);

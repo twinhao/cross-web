@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getAuth } from "#lib/auth/auth.svelte.ts";
-  import { canManageFacility } from "#lib/auth/roles.ts";
+  import { canOperateFacility } from "#lib/auth/roles.ts";
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Card from "#lib/components/ui/card/index.ts";
   import * as Table from "#lib/components/ui/table/index.ts";
@@ -67,7 +67,7 @@
     };
   });
   const auth = getAuth();
-  const canManage = $derived(canManageFacility(auth.user, facilityId));
+  const canOperate = $derived(canOperateFacility(auth.user, facilityId));
 </script>
 
 {#snippet actions(p: ApiPatientListItem)}<Button
@@ -77,7 +77,7 @@
     aria-label={"查看" + p.name + "的客戶檔案"}
   >
     查看檔案<ArrowUpRight class="size-3.5" />
-  </Button>{#if canManage && p.is_active}<Button
+  </Button>{#if canOperate && p.is_active}<Button
       size="sm"
       variant="ghost"
       class="gap-1.5 text-primary"
@@ -317,7 +317,7 @@
     onClose={() => (selected = null)}
     onSaved={() => revision++}
   />{/if}
-{#if canManage}<BookingDialog
+{#if canOperate}<BookingDialog
   bind:open={booking}
   {facilityId}
   patient={seed}

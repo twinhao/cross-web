@@ -95,9 +95,9 @@
 <Dialog bind:open {onOpenChange}>
 	<DialogContent class="sm:max-w-[420px]">
 		<DialogHeader>
-			<DialogTitle>分享診所頁面</DialogTitle>
+			<DialogTitle>分享院所頁</DialogTitle>
 			<DialogDescription>
-				掃描 QR Code 或複製連結，把這個診所頁面分享出去；對方可直接查看並線上預約。
+				掃描 QR Code 或複製連結，讓對方查看院所介紹、服務與目前提供的預約方式。
 			</DialogDescription>
 		</DialogHeader>
 

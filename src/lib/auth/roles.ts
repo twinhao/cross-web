@@ -1,18 +1,19 @@
 import type { User } from "../types/auth.ts";
 
 const SYSTEM_ADMIN_ROLES = new Set(["admin", "superadmin"]);
-const FACILITY_ROLES = new Set(["facility_admin", "facility_staff"]);
+const FACILITY_ROLES = new Set(["facility_admin", "facility_staff", "facility_receptionist"]);
 
-/** 後台員工帳號允許的 4 種角色 — patient 等其它角色不在後台管理 */
+/** 後台角色；櫃檯日常操作與管理設定分開。 */
 export const STAFF_ROLE_NAMES = [
   "superadmin",
   "admin",
   "facility_admin",
   "facility_staff",
+  "facility_receptionist",
 ] as const;
 
 const STAFF_ROLE_SET: Set<string> = new Set(STAFF_ROLE_NAMES);
-const FACILITY_BOUND_ROLE_SET = new Set(["facility_admin", "facility_staff"]);
+const FACILITY_BOUND_ROLE_SET = new Set(["facility_admin", "facility_staff", "facility_receptionist"]);
 
 /** 是否為後台員工角色（用於過濾後台 user 列表與 role 選項） */
 export function isStaffRole(roleName: string): boolean {
@@ -47,6 +48,12 @@ export function canManageFacility(user: User | null, facilityId: string): boolea
     (isSystemAdmin(user) && !user.facility_id) ||
     (user.roles.includes("facility_admin") && user.facility_id === facilityId)
   );
+}
+
+/** 櫃檯只處理所屬院所的預約、報到及叫號。 */
+export function canOperateFacility(user: User | null, facilityId: string): boolean {
+  return canManageFacility(user, facilityId) || !!user &&
+    user.roles.includes("facility_receptionist") && user.facility_id === facilityId;
 }
 
 export function getAdminHomePath(user: User | null): string {

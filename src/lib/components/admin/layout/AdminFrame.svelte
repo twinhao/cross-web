@@ -134,7 +134,7 @@
       ? "平台管理員"
       : auth.user?.roles.includes("facility_admin")
         ? "院所管理員"
-        : "院所員工",
+        : auth.user?.roles.includes("facility_receptionist") ? "櫃檯人員" : "院所員工",
   );
 </script>
 

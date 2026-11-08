@@ -7,6 +7,17 @@ const publicBase = `/api/v1/booking/clinics/${DEMO_ID}`;
 const adminBase = `/api/v1/medical-facilities/${DEMO_ID}`;
 const post = body => ({ method: "POST", body: JSON.stringify(body) });
 
+test("示範後台既有客戶沿用紀錄，一般預約可建立且新客不混入他人紀錄", async () => {
+  const session=createDemoSession(),count=session.snapshot().patients.length;
+  const existing=await session.request(adminBase+"/appointments",post({patient_id:"demo-patient-0",staff_id:"demo-doctor",appointment_date:demoDay(1),appointment_time:"09:00"}));
+  assert.equal(existing.patient_id,"demo-patient-0");assert.equal(existing.patient_name,"陳小晴（示範）");
+  assert.equal(existing.duration_minutes,session.snapshot().facility.slot_duration);
+  assert.equal(session.snapshot().patients.length,count);
+  const guest=await session.request(adminBase+"/appointments",post({patient_name:"新虛構客戶",patient_national_id:"A123456789",service_id:"demo-consult",staff_id:"demo-doctor",appointment_date:demoDay(1),appointment_time:"10:00"}));
+  assert.equal(guest.patient_name,"新虛構客戶");assert.notEqual(guest.patient_id,existing.patient_id);
+  assert.equal(session.snapshot().patients.length,count+1);
+});
+
 test("示範資料互相隔離；未知路徑、真實院所與外部網址全部拒絕", async () => {
   assert.equal(isDemoPath("/demo"), true); assert.equal(isDemoPath("/demo/"), true); assert.equal(isDemoPath("/demo-other"), false);
   const session = createDemoSession();

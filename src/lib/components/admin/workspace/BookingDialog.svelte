@@ -59,8 +59,7 @@
   );
   const canSubmit = $derived(
     !!catalog &&
-      !!name.trim() &&
-      !!nationalId.trim() &&
+      (!!chosen || !!name.trim() && !!nationalId.trim()) &&
       !!staffId &&
       people.some((s) => s.id === staffId) &&
       !!date &&
@@ -74,7 +73,7 @@
         ? "正在建立預約，請稍候。"
         : !catalog
           ? "資料載入完成後即可填寫預約。"
-          : !name.trim() || !nationalId.trim()
+          : !chosen && (!name.trim() || !nationalId.trim())
             ? "請填寫客戶姓名與完整身分證字號。"
             : !staffId
               ? "請選擇服務人員。"
@@ -162,10 +161,12 @@
     error = "";
     try {
       await adminClinicsApi.appointments.create(facilityId, {
-        patient_name: name.trim(),
-        patient_national_id: nationalId.trim().toUpperCase(),
-        patient_phone: phone.trim() || undefined,
-        patient_gender: gender === "M" || gender === "F" ? gender : undefined,
+        ...(chosen ? {patient_id: chosen.id} : {
+          patient_name: name.trim(),
+          patient_national_id: nationalId.trim().toUpperCase(),
+          patient_phone: phone.trim() || undefined,
+          patient_gender: gender === "M" || gender === "F" ? gender : undefined,
+        }),
         service_id: serviceId || undefined,
         staff_id: staffId,
         appointment_date: date,
@@ -264,10 +265,14 @@
                     </button>
                   </li>{/each}
               </ul>{/if}
-            {#if chosen}<p class="rounded-xl bg-primary/5 p-3 text-sm">
-                已帶入 {chosen.name}。請核對完整身分證字號（末四碼 {chosen.national_id_last4 ??
-                  "未記錄"}），以正確連結既有紀錄。
-              </p>{/if}
+            {#if chosen}<div class="space-y-2 rounded-xl bg-primary/5 p-3 text-sm" role="status">
+                <p>已選擇既有客戶：<strong>{chosen.name}</strong></p>
+                <p class="text-muted-foreground">{chosen.phone || "未填電話"}{#if chosen.national_id_last4} · 證號末四碼 {chosen.national_id_last4}{/if}</p>
+                <p>本次沿用此客戶紀錄，免再輸入完整證號。</p>
+                <Button type="button" variant="ghost" size="sm" onclick={() => {
+                  chosen = null; name = ""; phone = ""; gender = ""; nationalId = "";
+                }}>更換客戶</Button>
+              </div>{:else}
             <div class="grid gap-3 sm:grid-cols-2">
               <div class="space-y-1.5">
                 <Field.Label for="booking-name" class="text-sm font-medium">
@@ -320,6 +325,7 @@
                 </NativeSelect.Root>
               </div>
             </div>
+            {/if}
           </Field.Set>
           <Field.Set class="gap-5" disabled={saving}>
             <Field.Legend class="mb-3 font-semibold">

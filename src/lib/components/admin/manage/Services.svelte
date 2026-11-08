@@ -15,6 +15,7 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import { apiMessage } from "#lib/admin/scheduling.ts";
+  import { clinicHref } from "#lib/admin/workspace.ts";
   import type { ApiService } from "#lib/types/clinic.ts";
   let { facilityId }: { facilityId: string } = $props();
   let rows = $state<ApiService[]>([]),
@@ -113,10 +114,11 @@
 </script>
 
 <div class="space-y-4">
-  <div class="flex justify-between gap-3">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 class="font-semibold">服務項目</h2>
-    {#if canManage}<Button onclick={() => edit(null)}>新增服務</Button>{/if}
+    {#if canManage}<div class="flex flex-wrap gap-2"><Button variant="outline" href={clinicHref(facilityId, "personnel")}>人員服務對應</Button><Button onclick={() => edit(null)}>新增服務</Button></div>{/if}
   </div>
+  <p class="text-sm text-muted-foreground">設定服務內容與時長後，可從「人員服務對應」指定承接人員，再安排班表。</p>
   {#if !canManage}<p class="text-sm text-muted-foreground">服務資料為唯讀，修改請洽院所管理員。</p>{/if}
   <Feedback {error} {message} />{#if error}<Button
       variant="outline"

@@ -9,7 +9,7 @@
   import { Share2, ArrowUpRight } from "@lucide/svelte";
   import AdminFrame from "../layout/AdminFrame.svelte";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
-  import { isSystemAdmin, canManageFacility } from "#lib/auth/roles.ts";
+  import { isSystemAdmin, canManageFacility, canOperateFacility } from "#lib/auth/roles.ts";
   import { workspaceParams } from "#lib/admin/navigation.ts";
   import { taipeiToday } from "#lib/constants/appointment.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
@@ -42,6 +42,7 @@
   const auth = getAuth();
   const system = $derived(isSystemAdmin(auth.user));
   const canManageGallery = $derived(canManageFacility(auth.user, facilityId));
+  const canOperate = $derived(canOperateFacility(auth.user, facilityId));
   let galleryOpen = $state(false), galleryBusy = $state(false);
   let galleryManager = $state<{ savePending: () => Promise<boolean> }>();
   async function finishGallery() {
@@ -137,7 +138,7 @@
   });
   const subscriptionIssue = $derived(facility ? subscriptionWarning(facility) : null);
   const pageHasSubscriptionGate = $derived(!!facility && (
-    (tab === "queue" && canManageGallery && !canAccessFeature(facility, "queue_management")) ||
+    (tab === "queue" && canOperate && !canAccessFeature(facility, "queue_management")) ||
     (tab === "analytics" && !canAccessFeature(facility, "analytics")) ||
     (tab === "stats" && !canAccessFeature(facility, "advanced_queue"))
   ));
@@ -177,7 +178,7 @@
     groups={[
       {
         label: "日常作業",
-        items: [navigation[0], navigation[1], navigation[2], navigation[4]].filter(item => item.key !== "queue" || canManageGallery).map(
+        items: [navigation[0], navigation[1], navigation[2], navigation[4]].filter(item => item.key !== "queue" || canOperate).map(
           (item) => ({
             ...item,
             href: item.key === "today" ? item.href : hrefFor(item.key),
@@ -205,17 +206,17 @@
     mobile={[
       { key: "today", label: "今日", href: todayHref },
       { key: "appointments", label: "預約", href: hrefFor("appointments") },
-      canManageGallery ? { key: "queue", label: "叫號", href: hrefFor("queue") } : {key: "patients", label: "客戶", href: hrefFor("patients")},
+      canOperate ? { key: "queue", label: "叫號", href: hrefFor("queue") } : {key: "patients", label: "客戶", href: hrefFor("patients")},
     ]}
   >
     {#snippet actions()}<Button
         variant="outline"
         size="sm"
-        aria-label="分享預約頁"
+        aria-label="分享院所頁"
         onclick={() => (share = true)}
       >
         <Share2 class="size-4" />
-        <span class="hidden sm:inline">分享預約頁</span>
+        <span class="hidden sm:inline">分享院所頁</span>
       </Button><Button
         href={demoSession ? "/demo" : "/clinic/" + facilityId}
         target="_blank"

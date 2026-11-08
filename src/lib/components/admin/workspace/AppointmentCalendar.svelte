@@ -179,7 +179,7 @@
   {/if}
 </Card.Root>
 <p class="text-sm text-muted-foreground md:hidden">
-  手機以時間清單顯示，方便逐筆操作。
+  手機以{view === "week" ? "七日" : "當日"}時間清單顯示，方便逐筆操作。
 </p>
 
 <style>

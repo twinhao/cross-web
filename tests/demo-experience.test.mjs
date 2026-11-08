@@ -137,7 +137,7 @@ test("完成示範預約後能在後台找到同一筆資料；重置需確認�
       await page.waitForURL(url => url.searchParams.get("mode") === "admin" && url.searchParams.get("start") === demoDay(1));
       await page.locator(".cross-admin").getByText("陳小晴（示範）", { exact: false }).filter({ visible: true }).first().waitFor();
       assert.equal(new URL(page.url()).searchParams.get("start"), demoDay(1));
-      await page.getByRole("tab", { name: "週行程", exact: true }).click();
+      await page.getByRole("tab", { name: width < 768 ? "七日清單" : "週行程", exact: true }).click();
       await page.waitForURL(url => url.searchParams.get("mode") === "admin" && url.searchParams.get("view") === "week");
       await intact(page, errors, network);
       await page.getByRole("button", { name: "重置", exact: true }).click();

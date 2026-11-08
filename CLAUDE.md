@@ -54,11 +54,13 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-08 功能合理性修正：`facility_receptionist` 為綁定院所的櫃檯角色，日常預約／報到／叫號使用 `canOperateFacility`；設定、客戶檔案、帳務與試用仍使用 `canManageFacility`，`facility_staff` 維持唯讀。既有客戶代訂只傳 `patient_id`，新客沿用原識別欄位，兩種模式不可混合。對外使用「App 預約提醒」「未到統計」「批次排班」「分享院所頁」；手機採用當日／七日清單名稱。詳見 `docs/feature-fixes-2026-11-08.md`。
+
 - 2026-11-08 完整訂閱資料及試用操作集中於「我的訂閱」，今日與院所設定不嵌入方案／訂閱卡。有效試用不跨頁倒數；到期、停用或功能受限保留一則提示，受限功能入口須保留平台院所或示範情境。試用失敗訊息僅在開啟中的對話框顯示。詳見 `docs/subscription-consolidation-2026-11-08.md`。
 
 - 2026-11-08 人員日曆以兩行摘要避免短卡片裁切，高度不足時精簡為單行並保留完整可存取名稱。`admin/appointment-calendar.ts` 將同人員重疊時段分欄，短卡片最低顯示高度納入碰撞範圍；手機保留清單。只改呈現，不改可用時段或預約資料。詳見 `docs/appointment-calendar-2026-11-08.md`。
 
-- 2026-11-08 側邊欄提供院所設定子選單，`AdminFrame` 接收真實子頁 `activeKey`；桌面／手機控制項 ID 分開。`SidebarLink.svelte` 共用連結及收合 Tooltip，保留鍵盤與導覽語意。員工不顯示叫號／公告入口，手機以客戶捷徑替代叫號；後端權限維持既有規則。
+- 2026-11-08 側邊欄提供院所設定子選單，`AdminFrame` 接收真實子頁 `activeKey`；桌面／手機控制項 ID 分開。`SidebarLink.svelte` 共用連結及收合 Tooltip，保留鍵盤與導覽語意。唯讀員工不顯示叫號／公告入口，手機以客戶捷徑替代叫號；櫃檯角色可使用叫號，公告仍需管理員。
 - 2026-11-08 收合外觀再調整為 72px：品牌與功能保留，移除獨立院所圖示與分隔線，選取改用實色底板。窄版密碼／登出收進 `SidebarAccount.svelte`，展開及手機保留完整帳戶操作。短視窗仍須可原生捲動及鍵盤抵達最後功能。
 
 - 2026-11-07 後台第一批精簡：今日固定臺北當日，跨日工具集中於完整預約管理；今日上線狀態精簡，完整檢查保留於設定。預約／排班的日期與人員透過 `admin/navigation.ts` 接續，日曆人員不只來自已有預約。修改按鈕使用 `canManageFacility` 對齊後端；一般院所員工的叫號／公告不發送受限請求。詳見 `docs/admin-simplification-2026-11-07.md`。

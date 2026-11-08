@@ -245,7 +245,7 @@
         按日期管理人員班表與休假，支援週期樣板及複製。
       </p>
     </div>
-    {#if canManage}<div class="flex flex-wrap gap-2"><SchedulePresetsEditor facilityId={facility.id} onSaved={value => { customPresets = value; message = "常用時段已更新，既有班表保持原值"; }} /><Button onclick={() => (batch = true)}>智慧排班</Button></div>{/if}
+    {#if canManage}<div class="flex flex-wrap gap-2"><SchedulePresetsEditor facilityId={facility.id} onSaved={value => { customPresets = value; message = "常用時段已更新，既有班表保持原值"; }} /><Button onclick={() => (batch = true)}>批次排班</Button></div>{/if}
   </div>
   <div class="flex flex-wrap items-end gap-2">
     <Button

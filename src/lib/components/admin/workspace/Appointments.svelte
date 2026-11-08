@@ -37,7 +37,7 @@
     apiMessage,
   } from "#lib/admin/scheduling.ts";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
-  import { canManageFacility } from "#lib/auth/roles.ts";
+  import { canOperateFacility } from "#lib/auth/roles.ts";
   import { clinicHref } from "#lib/admin/workspace.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
   import type { ApiAppointment, ApiStaff, MedicalFacility } from "#lib/types/clinic.ts";
@@ -50,7 +50,7 @@
     workbench = false,
   }: { facility: MedicalFacility; workbench?: boolean } = $props();
   const auth = getAuth();
-  const canManage = $derived(canManageFacility(auth.user, facility.id));
+  const canOperate = $derived(canOperateFacility(auth.user, facility.id));
   const startDate = $derived(
     workbench ? taipeiToday() : validDate(page.url.searchParams.get("start"), taipeiToday()),
   );
@@ -218,7 +218,7 @@
     },
   ]);
   async function checkIn(a: ApiAppointment) {
-    if (!canManage) return;
+    if (!canOperate) return;
     pending = a.id;
     message = "";
     try {
@@ -267,7 +267,7 @@
     </div>
     <div class="flex flex-wrap gap-2">
     {#if workbench}<Button variant="outline" href={clinicHref(facility.id, "appointments")}>完整預約管理</Button>{/if}
-    {#if canManage}<Button
+    {#if canOperate}<Button
       aria-label="＋ 新增預約"
       class="h-10 gap-2 px-5 shadow-sm"
       onclick={() => params({ new: "1" })}
@@ -277,7 +277,7 @@
     </Button>{/if}
     </div>
   </div>
-  {#if !canManage}<p class="text-sm text-muted-foreground">目前為唯讀；新增、改期與報到請由院所管理員處理。</p>{/if}
+  {#if !canOperate}<p class="text-sm text-muted-foreground">目前為唯讀；新增、改期與報到請由櫃檯人員或院所管理員處理。</p>{/if}
   {#if workbench}<div class="grid grid-cols-4 gap-2" aria-label="今日預約狀態">
     {#each stats as stat, i (stat.label)}
       {@const value = ["all", "confirmed", "checked_in", "in_progress"][i]}
@@ -355,11 +355,11 @@
           aria-label="預約檢視方式"
           class="grid w-full grid-cols-3 sm:inline-flex"
         >
-          {#each [{ id: "list", label: "清單", icon: List }, { id: "day", label: "人員日曆", icon: CalendarDays }, { id: "week", label: "週行程", icon: CalendarRange }] as item (item.id)}<Tabs.Trigger
+          {#each [{ id: "list", label: "清單", mobile: "區間清單", icon: List }, { id: "day", label: "人員日曆", mobile: "當日清單", icon: CalendarDays }, { id: "week", label: "週行程", mobile: "七日清單", icon: CalendarRange }] as item (item.id)}<Tabs.Trigger
               value={item.id}
               class="gap-1.5 px-3 text-xs"
             >
-              <item.icon class="size-3.5" />{item.label}
+              <item.icon class="size-3.5" /><span class="hidden md:inline">{item.label}</span><span class="md:hidden">{item.mobile}</span>
             </Tabs.Trigger>{/each}
         </Tabs.List>
       </div>
@@ -686,8 +686,8 @@
                           onclick={() => select(a)}
                           aria-label={"查看" + a.patient_name + "的預約"}
                         >
-                          {canManage ? "詳情／改期" : "查看詳情"}
-                        </Button>{#if canManage && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                          {canOperate ? "詳情／改期" : "查看詳情"}
+                        </Button>{#if canOperate && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                             size="sm"
                             disabled={!!pending}
                             onclick={() => checkIn(a)}
@@ -743,8 +743,8 @@
                       variant="outline"
                       onclick={() => select(a)}
                     >
-                      {canManage ? "詳情／改期" : "查看詳情"}
-                    </Button>{#if canManage && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                      {canOperate ? "詳情／改期" : "查看詳情"}
+                    </Button>{#if canOperate && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                         size="sm"
                         disabled={!!pending}
                         onclick={() => checkIn(a)}
@@ -761,7 +761,7 @@
     {/if}
   </Tabs.Content>
 </Tabs.Root>
-{#if canManage}<BookingDialog
+{#if canOperate}<BookingDialog
   bind:open={
     () => createOpen,
     (v) => {
