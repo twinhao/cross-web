@@ -19,14 +19,14 @@
     aria-label={label}
     aria-current={active ? "page" : undefined}
     onclick={(event) => { props.onclick?.(event); onNavigate(); }}
-    class="relative flex min-h-11 min-w-0 items-center rounded-xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sidebar-ring {nested ? 'text-[13px]' : 'text-sm'} {compact
-      ? 'mx-auto w-11 justify-center'
-      : 'gap-3 px-3'} {active
-      ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
+    class="relative flex min-h-11 min-w-0 items-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sidebar-ring {nested ? 'text-[13px]' : 'text-sm'} {compact
+      ? 'mx-auto w-11 justify-center rounded-2xl'
+      : 'gap-3 rounded-xl px-3'} {active
+      ? compact ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground shadow-sm' : 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
       : highlighted ? 'font-semibold text-sidebar-accent-foreground hover:bg-sidebar-accent/60' : 'font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'}"
   >
-    {#if active}<span class="absolute inset-y-3 left-0 w-[3px] rounded-full bg-sidebar-primary" aria-hidden="true"></span>{/if}
-    {#if Icon}<Icon class="size-[18px] shrink-0" strokeWidth={active ? 2 : 1.7} aria-hidden="true" />{/if}
+    {#if active && !compact}<span class="absolute inset-y-3 left-0 w-[3px] rounded-full bg-sidebar-primary" aria-hidden="true"></span>{/if}
+    {#if Icon}<Icon class={compact ? "size-5 shrink-0" : "size-[18px] shrink-0"} strokeWidth={active ? 2 : 1.7} aria-hidden="true" />{/if}
     <span class={compact ? "sr-only" : "min-w-0 truncate"}>{label}</span>
   </a>
 {/snippet}

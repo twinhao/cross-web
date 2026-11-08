@@ -65,7 +65,7 @@ test("桌面側欄可收合並記住偏好，鍵盤換頁及重新整理保留�
       () =>
         Math.round(
           document.querySelector("aside").getBoundingClientRect().width,
-        ) === 80,
+        ) === 72,
     );
     const link = nav.getByRole("link", { name: "排班管理", exact: true });
     await link.focus();
@@ -85,7 +85,8 @@ test("桌面側欄可收合並記住偏好，鍵盤換頁及重新整理保留�
       path: dir + "/desktop-collapsed.png",
       animations: "disabled",
     });
-    await page.getByRole("button", { name: "修改密碼", exact: true }).click();
+    await page.getByRole("button", { name: "開啟帳戶選單", exact: true }).click();
+    await page.getByRole("dialog", {name:"帳戶選單",exact:true}).getByRole("button", { name: "修改密碼", exact: true }).click();
     await page
       .getByRole("dialog")
       .getByRole("heading", { name: "修改密碼", exact: true })
@@ -256,7 +257,7 @@ test("設定子選單可直接切換，選取精確到子頁，收合圖示支�
     await page.keyboard.press("Escape");await page.getByRole("tooltip").waitFor({state:"hidden"});
     const schedule=nav.getByRole("link",{name:"排班管理",exact:true});await schedule.hover();
     await page.getByRole("tooltip").getByText("排班管理",{exact:true}).waitFor();
-    const tip=await page.getByRole("tooltip").boundingBox();assert(tip.x>=80&&tip.x+tip.width<=1440);
+    const tip=await page.getByRole("tooltip").boundingBox();assert(tip.x>=72&&tip.x+tip.width<=1440);
     await schedule.focus();await page.keyboard.press("Enter");await page.waitForURL("**tab=schedule**");
     await noOverflow(page);assert.deepEqual(errors,[]);
   }finally{await page.close();}
@@ -281,4 +282,45 @@ test("手機設定子選單可操作且關聯唯一；員工只看到可用的�
       await noOverflow(page);assert.deepEqual(errors,[]);assert.equal(requests.filter(r=>r.method!=="GET").length,0);
     }finally{await page.close();}
   }
+});
+
+test("收合窄欄在一般高度無需捲動，短視窗仍能用鍵盤抵達最後功能及帳戶", async () => {
+  const {page,errors,requests}=await setupComplete(browser,preview.origin,{role:"facility_admin",width:1024});
+  try{
+    await page.addInitScript(()=>localStorage.setItem("cross_admin_sidebar_collapsed","true"));
+    await page.setViewportSize({width:1024,height:733});await page.goto(preview.origin+path("appointments"));await ready(page,true);
+    const aside=page.locator("aside"),nav=aside.getByRole("navigation",{name:"後台主要導覽",exact:true});
+    assert.equal(await nav.evaluate(e=>e.scrollHeight<=e.clientHeight),true);
+    assert.match(await aside.getByRole("link",{name:"Cross · 今日工作台",exact:true}).getAttribute("title"),/虛構醫美操作測試院所/);
+    assert.equal(await aside.getByRole("button",{name:"修改密碼",exact:true}).count(),0);
+    await page.screenshot({path:dir+"/rail-733.png",animations:"disabled"});
+    const account=aside.getByRole("button",{name:"開啟帳戶選單",exact:true});
+    await account.click();const popup=page.getByRole("dialog",{name:"帳戶選單",exact:true});await popup.waitFor();
+    await page.keyboard.press("Escape");await popup.waitFor({state:"hidden"});
+    assert.equal(await account.evaluate(e=>e===document.activeElement),true);
+    await page.setViewportSize({width:1024,height:420});
+    const subscription=nav.getByRole("link",{name:"我的訂閱",exact:true});await subscription.focus();
+    assert(await nav.evaluate(e=>e.scrollTop)>0);
+    const linkBox=await subscription.boundingBox(),accountBox=await account.boundingBox();assert(linkBox.y+linkBox.height<=accountBox.y);assert(accountBox.y+accountBox.height<=420);
+    await page.keyboard.press("Enter");await page.getByRole("heading",{name:"我的訂閱",exact:true}).waitFor();
+    await page.screenshot({path:dir+"/rail-short.png",animations:"disabled"});
+    await account.click();await page.getByRole("dialog",{name:"帳戶選單",exact:true}).getByRole("button",{name:"登出",exact:true}).click();
+    await page.waitForURL("**/admin/login");assert.equal(await page.evaluate(()=>localStorage.getItem("access_token")),null);
+    assert.equal(requests.filter(r=>r.method!=="GET").length,0);assert.deepEqual(errors,[]);
+  }finally{await page.close();}
+});
+
+test("示範頁開關帳戶選單保留捲動位置，焦點正確且不連正式 API",async()=>{
+  const page=await browser.newPage({viewport:{width:1200,height:826}}),errors=[],api=[];
+  await page.addInitScript(()=>localStorage.setItem("cross_admin_sidebar_collapsed","true"));
+  page.on("pageerror",e=>errors.push(e.message));await page.route("**/api/**",r=>{api.push(r.request().url());return r.abort();});
+  try{
+    await page.goto(preview.origin+"/demo?mode=admin&tab=appointments");await ready(page,true);await page.getByText("共 4 筆",{exact:true}).waitFor();
+    await page.evaluate(()=>window.scrollTo({top:100,behavior:"instant"}));const scroll=await page.evaluate(()=>scrollY);
+    const account=page.getByRole("button",{name:"開啟帳戶選單",exact:true});const box=await account.boundingBox();assert(box.y>=0&&box.y+box.height<=826);await page.mouse.click(box.x+box.width/2,box.y+box.height/2);
+    const popup=page.getByRole("dialog",{name:"帳戶選單",exact:true});await popup.waitFor();assert.equal(await page.evaluate(()=>scrollY),scroll);
+    assert.equal(await popup.getByRole("button",{name:"修改密碼",exact:true}).evaluate(e=>e===document.activeElement),true);
+    await page.keyboard.press("Escape");await popup.waitFor({state:"hidden"});assert.equal(await page.evaluate(()=>scrollY),scroll);assert.equal(await account.evaluate(e=>e===document.activeElement),true);
+    assert.deepEqual(api,[]);assert.deepEqual(errors,[]);
+  }finally{await page.close();}
 });

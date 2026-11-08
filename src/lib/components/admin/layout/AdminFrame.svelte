@@ -32,6 +32,7 @@
   import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import Password from "../manage/Password.svelte";
   import SidebarLink from "./SidebarLink.svelte";
+  import SidebarAccount from "./SidebarAccount.svelte";
   import { Tooltip } from "bits-ui";
   type Item = { key: string; label: string; href: string; children?: {key: string; label: string; href: string}[] };
   let {
@@ -55,6 +56,7 @@
   } = $props();
   const auth = getAuth();
   let menuOpen = $state(false);
+  let accountOpen = $state(false);
   let collapsed = $state(false);
   let manualSidebar = false;
   let branchOverrides = $state<Record<string, boolean>>({});
@@ -84,6 +86,7 @@
     const resize = () => {
       if (!manualSidebar) collapsed = !wide.matches;
       if (desktop.matches) menuOpen = false;
+      else accountOpen = false;
     };
     wide.addEventListener("change", resize);
     desktop.addEventListener("change", resize);
@@ -94,9 +97,11 @@
   });
   afterNavigate(() => {
     menuOpen = false;
+    accountOpen = false;
     branchOverrides = {};
   });
   function toggleSidebar() {
+    accountOpen = false;
     manualSidebar = true;
     collapsed = !collapsed;
     try {
@@ -135,23 +140,23 @@
 
 {#snippet navigation(compact: boolean, surface: "desktop" | "mobile")}
   <div
-    class="flex h-full min-h-0 w-full flex-col bg-sidebar px-3 py-4 text-sidebar-foreground"
+    class="flex h-full min-h-0 w-full flex-col text-sidebar-foreground {compact ? 'bg-muted/30 px-2 py-3' : 'bg-sidebar px-3 py-4'}"
     data-sidebar-compact={compact}
   >
-    <header class="shrink-0 space-y-3 pb-4">
+    <header class={compact ? "shrink-0 pb-3" : "shrink-0 space-y-3 pb-4"}>
       <a
         href={homeHref}
         aria-label={clinicWorkspace ? "Cross · 今日工作台" : "Cross · 平台總覽"}
-        title={compact ? "Cross · 工作台" : undefined}
+        title={compact ? (facilityName ? facilityName + " · " : "") + "Cross · 工作台" : undefined}
         onclick={() => (menuOpen = false)}
         class={compact
           ? "mx-auto flex size-11 items-center justify-center rounded-xl focus-visible:outline-2 focus-visible:outline-sidebar-ring"
           : "flex min-h-11 items-center gap-3 rounded-xl px-2 pr-10 focus-visible:outline-2 focus-visible:outline-sidebar-ring md:pr-2"}
       >
         <span
-          class="grid size-10 shrink-0 place-items-center rounded-xl border border-sidebar-border bg-background"
+          class={compact ? "grid size-10 shrink-0 place-items-center" : "grid size-10 shrink-0 place-items-center rounded-xl border border-sidebar-border bg-background"}
         >
-          <img src={BRAND_ICON} width="28" height="28" alt="" />
+          <img src={BRAND_ICON} width={compact ? 32 : 28} height={compact ? 32 : 28} alt="" />
         </span>
         <span class={compact ? "sr-only" : "min-w-0"}>
           <strong class="text-lg tracking-tight text-foreground">Cross</strong>
@@ -160,7 +165,7 @@
           </span>
         </span>
       </a>
-      {#if facilityName}
+      {#if facilityName && !compact}
         <div
           title={facilityName}
           class={compact
@@ -181,11 +186,11 @@
       {/if}
     </header>
     <nav
-      class="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]"
+      class="min-h-0 flex-1 overflow-y-auto overscroll-contain {compact ? 'admin-rail-scroll [scrollbar-width:none]' : '[scrollbar-width:thin]'}"
       aria-label={system && !clinicWorkspace ? "平台管理導覽" : "後台主要導覽"}
     >
-      {#each groups as group, index (group.label)}
-        <section class={compact ? "mb-3" : "mb-4"}>
+      {#each groups as group (group.label)}
+        <section class={compact ? "mb-2 last:mb-0" : "mb-4"}>
           <p
             class={compact
               ? "sr-only"
@@ -193,10 +198,6 @@
           >
             {group.label}
           </p>
-          {#if compact && index > 0}<div
-              class="mx-auto mb-3 w-6 border-t border-sidebar-border"
-              aria-hidden="true"
-            ></div>{/if}
           <div class="space-y-1">
             {#each group.items as item (item.key)}
               {@const selectedChild = item.children?.find(child => child.key === activeKey)}
@@ -236,7 +237,10 @@
           <span class={compact ? "sr-only" : ""}>返回平台院所管理</span>
         </Button>{/if}
     </nav>
-    <footer class="mt-3 shrink-0 space-y-2 border-t border-sidebar-border pt-3">
+    <footer class={compact ? "mt-3 shrink-0 pt-2" : "mt-3 shrink-0 space-y-2 border-t border-sidebar-border pt-3"}>
+      {#if compact}
+        <SidebarAccount bind:open={accountOpen} name={userName} {role} onPassword={() => { password = true; }} onLogout={() => auth.logout("/admin/login")} />
+      {:else}
       <div
         class={compact
           ? "flex justify-center"
@@ -286,6 +290,7 @@
           <span class={compact ? "sr-only" : ""}>登出</span>
         </Button>
       </div>
+      {/if}
     </footer>
   </div>
 {/snippet}
@@ -296,7 +301,7 @@
     aria-label={clinicWorkspace ? "院所側邊欄" : "平台側邊欄"}
     data-collapsed={collapsed}
     class="sticky top-0 hidden h-dvh shrink-0 border-r border-sidebar-border transition-[width] duration-200 motion-reduce:transition-none md:block {collapsed
-      ? 'w-20'
+      ? 'w-[4.5rem]'
       : 'w-[16.5rem]'}"
   >
     {@render navigation(collapsed, "desktop")}
@@ -411,3 +416,7 @@
   </div>{/if}
 {#if password}<Password bind:open={password} />{/if}
 </Tooltip.Provider>
+
+<style>
+  .admin-rail-scroll::-webkit-scrollbar { display: none; }
+</style>
