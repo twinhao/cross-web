@@ -97,6 +97,7 @@ test('方案與訂閱僅承諾可操作功能，清楚列出 App 提醒條件及
  const {page,errors}=await setupWorkspace(browser,preview.origin);
  try{
   await page.goto(preview.origin+'/pricing');await page.getByRole('heading',{level:1}).waitFor();
+  await page.waitForLoadState('networkidle');
   assert.equal((await page.locator('main').innerText()).includes('未到風險提示'),false);
   await page.getByRole('button',{name:'客人需要下載 App 才能預約或收到提醒嗎？',exact:true}).click();
   await page.getByText(/目前不包含 Email、簡訊或瀏覽器推播/).waitFor();
