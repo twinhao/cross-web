@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-08 完整訂閱資料及試用操作集中於「我的訂閱」，今日與院所設定不嵌入方案／訂閱卡。有效試用不跨頁倒數；到期、停用或功能受限保留一則提示，受限功能入口須保留平台院所或示範情境。試用失敗訊息僅在開啟中的對話框顯示。詳見 `docs/subscription-consolidation-2026-11-08.md`。
+
 - 2026-11-08 人員日曆以兩行摘要避免短卡片裁切，高度不足時精簡為單行並保留完整可存取名稱。`admin/appointment-calendar.ts` 將同人員重疊時段分欄，短卡片最低顯示高度納入碰撞範圍；手機保留清單。只改呈現，不改可用時段或預約資料。詳見 `docs/appointment-calendar-2026-11-08.md`。
 
 - 2026-11-08 側邊欄提供院所設定子選單，`AdminFrame` 接收真實子頁 `activeKey`；桌面／手機控制項 ID 分開。`SidebarLink.svelte` 共用連結及收合 Tooltip，保留鍵盤與導覽語意。員工不顯示叫號／公告入口，手機以客戶捷徑替代叫號；後端權限維持既有規則。

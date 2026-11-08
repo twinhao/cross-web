@@ -1,4 +1,13 @@
 import type { MedicalFacility, FacilitySubscriptionUpdate } from '../types/clinic.ts';
+import { isExpired, type SubscriptionShape } from '../feature-access.ts';
+
+/** 共用呈現用提示；功能與寫入權限仍沿用既有判斷。 */
+export function subscriptionWarning(subscription: SubscriptionShape): string | null {
+  if (subscription.subscription_status === 'suspended') return '訂閱已暫停，部分功能無法使用。';
+  if (subscription.subscription_status === 'cancelled') return '訂閱已取消，部分功能無法使用。';
+  if (isExpired(subscription.subscription_expires_at)) return '訂閱已到期，部分功能無法使用。';
+  return null;
+}
 export function taipeiDate(value:string|null):string { return value?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)):''; }
 export function dateInstant(day:string,end=false):string|null {return day?new Date(`${day}T${end?'23:59:59.999':'00:00:00.000'}+08:00`).toISOString():null;}
 export function renewalDate(expires:string|null,months:number,now=new Date()):string { const base=expires&&new Date(expires)>now?new Date(expires):now; const [y,m,d]=taipeiDate(base.toISOString()).split('-').map(Number); const target=new Date(Date.UTC(y,m-1+months,1)); const last=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate(); return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(Math.min(d,last)).padStart(2,'0')}`; }

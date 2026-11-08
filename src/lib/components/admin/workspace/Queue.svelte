@@ -14,6 +14,7 @@
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
+  import { subscriptionWarning } from "#lib/admin/subscription.ts";
   import { apiMessage, validDate } from "#lib/admin/scheduling.ts";
   import { taipeiToday } from "#lib/constants/appointment.ts";
   import type {
@@ -24,7 +25,7 @@
   } from "#lib/types/clinic.ts";
   import StatusPill from "./StatusPill.svelte";
   import AppointmentDialog from "./AppointmentDialog.svelte";
-  let { facility }: { facility: MedicalFacility } = $props();
+  let { facility, subscriptionHref = "/admin/subscription" }: { facility: MedicalFacility; subscriptionHref?: string } = $props();
   const date = $derived(
     validDate(page.url.searchParams.get("queue_date"), taipeiToday()),
   );
@@ -137,9 +138,9 @@
   {:else if !allowed}<Card.Root class="gap-0 shadow-sm space-y-3 p-6">
       <h2 class="font-semibold">叫號與報到需標準方案以上</h2>
       <p class="text-sm text-muted-foreground">
-        前往訂閱頁查看目前方案與可用試用。
+        {subscriptionWarning(facility) ?? "請至訂閱頁查看開通條件。"}
       </p>
-      <Button href="/admin/subscription">查看我的訂閱</Button>
+      <Button href={subscriptionHref}>查看我的訂閱</Button>
     </Card.Root>
   {:else}
     <div class="flex flex-wrap items-end gap-2">

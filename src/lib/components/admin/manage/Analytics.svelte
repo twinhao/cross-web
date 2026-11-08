@@ -5,6 +5,7 @@
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
   import { apiMessage } from "#lib/admin/scheduling.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
+  import { subscriptionWarning } from "#lib/admin/subscription.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
   import Feedback from "./Feedback.svelte";
   import type {
@@ -16,7 +17,8 @@
   let {
     facility,
     stats = false,
-  }: { facility: MedicalFacility; stats?: boolean } = $props();
+    subscriptionHref = "/admin/subscription",
+  }: { facility: MedicalFacility; stats?: boolean; subscriptionHref?: string } = $props();
   let range = $state(30),
     revision = $state(0),
     loading = $state(true),
@@ -119,9 +121,9 @@
           {stats ? "看診統計" : "完整客戶分析"}為專業方案功能
         </h2>
         <p class="text-sm text-muted-foreground">
-          院所目前尚未開通此功能，可查看方案或啟用符合資格的試用。
+          {subscriptionWarning(facility) ?? "此功能目前未開通，請至訂閱頁查看開通條件。"}
         </p>
-        <Button variant="outline" href="/admin/subscription">查看訂閱</Button>
+        <Button variant="outline" href={subscriptionHref}>查看訂閱</Button>
       </Card.Root>{:else if stats && doctors}<p
         class="text-sm text-muted-foreground"
       >

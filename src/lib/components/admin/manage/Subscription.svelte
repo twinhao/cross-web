@@ -28,6 +28,7 @@
     dateInstant,
     renewalDate,
     renewalPayload,
+    subscriptionWarning,
   } from "#lib/admin/subscription.ts";
   import type {
     MedicalFacility,
@@ -66,7 +67,7 @@
     renewExpiry = $state(""),
     renewNote = $state(""),
     trialConfirm = $state(false);
-  const expired = $derived(isExpired(facility.subscription_expires_at)),
+  const subscriptionIssue = $derived(subscriptionWarning(facility)),
     features = $derived(accessibleFeatures(facility)),
     days = $derived(daysUntilExpiry(facility.subscription_expires_at));
   function openEdit() {
@@ -178,10 +179,12 @@
         </Button>
       </div>{/if}
   </div>
-  <Feedback {error} {message} />{#if expired}<p
+  <Feedback error={trialConfirm ? "" : error} {message} />{#if subscriptionIssue}<p
+      role="status"
+      aria-label="訂閱提醒"
       class="text-sm text-destructive"
     >
-      訂閱已到期，付費功能暫停使用。
+      {subscriptionIssue}
     </p>{:else if days !== null && days <= 7}<p class="text-sm text-amber-700">
       訂閱剩餘 {days} 天，請及早安排續約。
     </p>{/if}

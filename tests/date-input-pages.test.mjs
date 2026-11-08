@@ -124,7 +124,7 @@ test("人員休假、訂閱起訖／精選與續約日期皆可使用自訂日�
       .first()
       .click();
     await inspect(page, "人員休假", page.getByRole("dialog"));
-    await page.goto(preview.origin + path("info"));
+    await page.goto(preview.origin + path("subscription"));
     await page.getByRole("button", { name: "編輯訂閱", exact: true }).click();
     await inspect(page, "編輯訂閱", page.getByRole("dialog"), 3);
     await page

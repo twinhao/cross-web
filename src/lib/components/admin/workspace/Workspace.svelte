@@ -19,12 +19,8 @@
     SETTINGS_PANELS,
   } from "#lib/admin/workspace.ts";
   import { apiMessage } from "#lib/admin/scheduling.ts";
-  import {
-    PLAN_LABELS,
-    isExpired,
-    canStartTrial,
-    daysUntilExpiry,
-  } from "#lib/feature-access.ts";
+  import { canAccessFeature } from "#lib/feature-access.ts";
+  import { subscriptionWarning } from "#lib/admin/subscription.ts";
   import type { MedicalFacility } from "#lib/types/clinic.ts";
   import Appointments from "./Appointments.svelte";
   import Queue from "./Queue.svelte";
@@ -116,9 +112,7 @@
     saving = $state(false),
     notice = $state(""),
     deleteError = $state(""),
-    share = $state(false),
-    trialConfirm = $state(false),
-    trialError = $state("");
+    share = $state(false);
   $effect(() => {
     const id = facilityId,
       r = revision;
@@ -141,9 +135,12 @@
       active = false;
     };
   });
-  const expired = $derived(
-    facility ? isExpired(facility.subscription_expires_at) : false,
-  );
+  const subscriptionIssue = $derived(facility ? subscriptionWarning(facility) : null);
+  const pageHasSubscriptionGate = $derived(!!facility && (
+    (tab === "queue" && canManageGallery && !canAccessFeature(facility, "queue_management")) ||
+    (tab === "analytics" && !canAccessFeature(facility, "analytics")) ||
+    (tab === "stats" && !canAccessFeature(facility, "advanced_queue"))
+  ));
   async function deleteClinic() {
     saving = true;
     deleteError = "";
@@ -152,21 +149,6 @@
       await goto("/admin/clinics");
     } catch (e) {
       deleteError = apiMessage(e, "刪除院所失敗，請重試");
-    } finally {
-      saving = false;
-    }
-  }
-  async function startTrial() {
-    if (!facility) return;
-    saving = true;
-    trialError = "";
-    try {
-      facility = await adminClinicsApi.startTrial(facilityId);
-      await auth.refreshUser();
-      notice = "試用已啟用";
-      trialConfirm = false;
-    } catch (e) {
-      trialError = apiMessage(e, "無法啟用試用，請重試");
     } finally {
       saving = false;
     }
@@ -266,44 +248,22 @@
           variant="dashboard"
         />
       {:else if facility}
-        {#if expired || ["suspended", "cancelled"].includes(facility.subscription_status)}<p
+        {#if subscriptionIssue && tab !== "subscription" && !pageHasSubscriptionGate}<p
+            role="status"
+            aria-label="訂閱提醒"
             class="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm"
           >
-            訂閱已到期或暫停，部分功能無法使用。
+            {subscriptionIssue}
             <a href={subscriptionHref} class="ml-2 text-primary underline">
               查看訂閱
-            </a>
-          </p>{:else if facility.subscription_status === "trial"}<p
-            class="rounded-xl bg-primary/5 p-3 text-sm"
-          >
-            試用剩餘 {daysUntilExpiry(facility.subscription_expires_at) ?? "—"} 天。
-            <a href={subscriptionHref} class="text-primary underline">
-              查看方案
             </a>
           </p>{/if}
         {#if tab === "today" || tab === "info"}{#key facility}<ClinicReadiness {facility} {subscriptionHref} compact={tab === "today"} />{/key}{/if}
         {#if tab === "today" || tab === "appointments"}<Appointments
             {facility}
             workbench={tab === "today"}
-          />{#if tab === "today"}<div
-              class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 text-sm"
-            >
-              <p>目前方案：{PLAN_LABELS[facility.subscription_plan]}</p>
-              {#if canManageGallery && canStartTrial(facility)}<Button
-                  disabled={saving}
-                  variant="outline"
-                  onclick={() => (trialConfirm = true)}
-                >
-                  啟用 90 天試用
-                </Button>{:else}<Button
-                  size="sm"
-                  variant="outline"
-                  href={subscriptionHref}
-                >
-                  管理訂閱
-                </Button>{/if}
-            </div>{/if}
-        {:else if tab === "queue"}<Queue {facility} />
+          />
+        {:else if tab === "queue"}<Queue {facility} {subscriptionHref} />
         {:else if tab === "schedule"}<Schedule {facility} />
         {:else if tab === "patients"}<Customers {facilityId} />
         {:else if tab === "analytics" || tab === "stats"}<div class="space-y-4">
@@ -325,7 +285,7 @@
                 </Button>
               </nav>
             </div>
-            {#key tab}<Analytics {facility} stats={tab === "stats"} />{/key}
+            {#key tab}<Analytics {facility} {subscriptionHref} stats={tab === "stats"} />{/key}
           </div>
         {:else if tab === "subscription"}<div class="space-y-4">
             <h1 class="text-2xl font-semibold tracking-tight">我的訂閱</h1>
@@ -379,10 +339,7 @@
                         </div>{/each}
                     </dl>
                   </section>
-                  <Subscription
-                    {facility}
-                    onUpdated={(value) => (facility = value)}
-                  />{#if system}<section
+                  {#if system}<section
                       class="space-y-3 rounded-xl border border-destructive/20 p-4"
                     >
                       <h2 class="font-medium text-destructive">刪除院所</h2>
@@ -450,23 +407,3 @@
     clinicId={facilityId}
     clinicName={facility.name}
   />{/if}
-
-<Modal
-  bind:open={trialConfirm}
-  title="確認啟用 90 天試用"
-  description="每間院所僅能啟用一次試用。確認後將立即開始計算 90 天，並開放試用功能。"
-  busy={saving}
->
-  <Feedback error={trialError} />
-  <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    <Button
-      variant="outline"
-      disabled={saving}
-      onclick={() => (trialConfirm = false)}
-    >
-      先不要
-    </Button><Button disabled={saving} onclick={startTrial}>
-      {saving ? "啟用中…" : "確認啟用試用"}
-    </Button>
-  </div>
-</Modal>
