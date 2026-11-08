@@ -246,7 +246,7 @@
         </p>{/if}
       {#if loading && !facility}<AdminSkeleton
           label="正在載入院所工作區…"
-          variant="dashboard"
+          variant={tab === "today" || tab === "analytics" ? "dashboard" : tab === "schedule" ? "calendar" : tab === "info" || tab === "subscription" ? "form" : tab === "personnel" || tab === "services" ? "cards" : "list"}
         />
       {:else if facility}
         {#if subscriptionIssue && tab !== "subscription" && !pageHasSubscriptionGate}<p

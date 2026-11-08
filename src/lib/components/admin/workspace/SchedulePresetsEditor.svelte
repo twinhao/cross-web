@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdminSkeleton from "../layout/AdminSkeleton.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.ts";
   import * as Field from "#lib/components/ui/field/index.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
@@ -34,7 +35,7 @@
   <Dialog.Content class="admin-dialog" showCloseButton={!busy} onInteractOutside={e => { if (busy) e.preventDefault(); }} onEscapeKeydown={e => { if (busy) e.preventDefault(); }}>
     <Dialog.Header><Dialog.Title>院所常用時段</Dialog.Title><Dialog.Description>新增單日或批次排班時自動帶入，個別日期仍可修改。儲存只更新預設值，不會改動既有班表、營業時間或預約。</Dialog.Description></Dialog.Header>
     {#if error}<p role="alert" class="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>{#if !ready}<Button variant="outline" disabled={loading || busy} onclick={edit}>重新讀取</Button>{/if}{/if}
-    {#if loading}<p role="status" class="text-sm text-muted-foreground">正在讀取院所設定…</p>{:else}
+    {#if loading}<AdminSkeleton label="正在讀取院所設定…" variant="form" />{:else}
       <div class="space-y-4">
         {#each SESSION_KEYS as key (key)}<fieldset class="rounded-xl border p-3"><legend class="px-1 text-sm font-medium">{SESSION_LABELS[key]}</legend><div class="grid grid-cols-2 gap-3"><div><Field.Label for={"preset-"+key+"-start"}>開始時間</Field.Label><Input id={"preset-"+key+"-start"} type="time" bind:value={values[key].start} disabled={busy} /></div><div><Field.Label for={"preset-"+key+"-end"}>結束時間</Field.Label><Input id={"preset-"+key+"-end"} type="time" bind:value={values[key].end} disabled={busy} /></div></div></fieldset>{/each}
       </div>

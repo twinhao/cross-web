@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
 	import { untrack } from "svelte";
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import { page } from "$app/state";
@@ -46,12 +47,7 @@
 		</div>
 
 		{#if isLoading}
-			<div class="flex items-center justify-center py-20">
-				<div
-					class="size-8 animate-spin rounded-full border-4 border-border border-t-current"
-					style:border-top-color={primaryColor}
-				></div>
-			</div>
+			<div class="py-4"><ContentSkeleton variant="appointment" label="正在載入預約結果…" /></div>
 		{:else if error || !booking}
 			<div class="flex flex-col items-center gap-3 py-20 text-center">
 				<p class="text-sm text-muted-foreground">無法載入預約資訊</p>

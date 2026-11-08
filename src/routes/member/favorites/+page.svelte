@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MemberLoading from "#lib/components/member/MemberLoading.svelte";
 	import Compass from "@lucide/svelte/icons/compass";
 	import Heart from "@lucide/svelte/icons/heart";
 	import { untrack } from "svelte";
@@ -49,9 +50,7 @@
 </script>
 
 {#if !guard.ready}
-	<div class="flex min-h-[60vh] items-center justify-center bg-background">
-		<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-	</div>
+	<MemberLoading title="收藏店家" variant="clinics" />
 {:else}
 	<div class="min-h-[60vh] bg-background">
 		<!-- Header -->

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
+  import MemberLoading from "#lib/components/member/MemberLoading.svelte";
 	import PencilIcon from "@lucide/svelte/icons/pencil";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import Trash2Icon from "@lucide/svelte/icons/trash-2";
@@ -77,9 +79,7 @@
 </script>
 
 {#if !guard.ready}
-	<div class="flex min-h-[60vh] items-center justify-center bg-background">
-		<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-	</div>
+	<MemberLoading title="預約對象" variant="list" />
 {:else}
 	<div class="min-h-[60vh] bg-background">
 		<!-- Header -->
@@ -107,9 +107,7 @@
 				</p>
 			{/if}
 			{#if isLoading}
-				<div class="flex items-center justify-center py-12">
-					<div class="size-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
-				</div>
+				<ContentSkeleton variant="list" label="正在載入預約對象…" />
 			{:else if patients.length === 0}
 				<Card class="flex flex-col items-center gap-3 p-8 text-center">
 					<UserCheck class="size-10 text-muted-foreground" />

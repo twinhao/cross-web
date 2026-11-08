@@ -238,7 +238,7 @@
         <div class="space-y-6">
           <div><h2 class="text-xl font-semibold tracking-tight">確認預約資料</h2><p class="mt-2 text-sm leading-6 text-muted-foreground">核對服務、時間與預約對象，確認後再送出。</p></div>
           <div class="lg:hidden"><BookingSummary clinic={clinicConfig} {selection} {paymentType} onEdit={handleStepClick} compact/></div>
-          {#if slots.isLoading}<p role="status" class="text-sm text-muted-foreground">正在重新確認可約名額…</p>{:else if slots.error || !validSlot}<div role="alert" class="space-y-3 rounded-xl border p-4"><p class="text-sm">無法確認這個時段的剩餘名額，請返回重新選擇。</p><Button variant="outline" class="min-h-11 rounded-xl" onclick={() => handleStepClick(2)}>重新選擇時段</Button></div>{/if}
+          {#if slots.isLoading}<div role="status" aria-label="正在重新確認可約名額…" aria-busy="true"><span class="sr-only">正在重新確認可約名額…</span><Skeleton class="h-4 w-48 max-w-full" aria-hidden="true" /></div>{:else if slots.error || !validSlot}<div role="alert" class="space-y-3 rounded-xl border p-4"><p class="text-sm">無法確認這個時段的剩餘名額，請返回重新選擇。</p><Button variant="outline" class="min-h-11 rounded-xl" onclick={() => handleStepClick(2)}>重新選擇時段</Button></div>{/if}
           {#if auth.isAuthenticated && !isDemo}
             <fieldset disabled={isSubmitting} class="min-w-0 space-y-6">
               <BookingSection title="這次為誰預約？"><PatientSelector selectedId={selectedPatient?.id || null} onSelect={patient => selectedPatient = patient}/></BookingSection>

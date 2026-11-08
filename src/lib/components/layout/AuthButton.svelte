@@ -8,6 +8,7 @@
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
+  import { Skeleton } from "#lib/components/ui/skeleton/index.ts";
   import * as Popover from "#lib/components/ui/popover/index.ts";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
   import { canAccessAdmin, getAdminHomePath } from "#lib/auth/roles.ts";
@@ -21,7 +22,7 @@
   afterNavigate(()=>open=false);
 </script>
 {#if auth.isLoading}
-  <!-- 登入狀態載入中 -->
+  <div role="status" aria-label="正在確認登入狀態" aria-busy="true"><Skeleton class="h-9 w-11 rounded-xl sm:w-24" aria-hidden="true" /></div>
 {:else if auth.isAuthenticated && auth.user}
   {#if isAdmin}
     <Button href={getAdminHomePath(auth.user)} variant="ghost" size="sm" class="min-h-11 gap-1.5"><LayoutDashboard class="size-4"/>管理後台</Button>

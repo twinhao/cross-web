@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Skeleton } from "#lib/components/ui/skeleton/index.ts";
   import { onMount } from "svelte";
   import { clinicsApi } from "#lib/api/clinics.ts";
   import type { Clinic } from "#lib/types/clinic.ts";
@@ -48,9 +49,7 @@
     <p class="mt-3 text-sm leading-7 text-muted-foreground">
       每間院所都會標示預約方式。先認識服務與團隊，再選擇線上、電話或現場安排；營業時間不代表仍有可約名額。
     </p>
-    {#if loading}<p role="status" class="mt-6 text-sm text-muted-foreground">
-        正在載入合作院所…
-      </p>
+    {#if loading}<div role="status" aria-label="正在載入合作院所…" aria-busy="true" class="mt-6 grid gap-5 md:grid-cols-3"><span class="sr-only">正在載入合作院所…</span>{#each [0, 1, 2] as item (item)}<div aria-hidden="true" class="overflow-hidden rounded-2xl border bg-card"><Skeleton class="aspect-[16/9] w-full rounded-none" /><div class="space-y-4 p-5"><div class="flex items-center gap-3"><Skeleton class="size-12 rounded-2xl" /><Skeleton class="h-5 w-2/3" /></div><Skeleton class="h-4 w-3/4" /><Skeleton class="h-4 w-full" /><Skeleton class="h-10 w-full rounded-xl" /></div></div>{/each}</div>
     {:else if failed}<div
         role="alert"
         class="mt-6 flex flex-wrap items-center gap-3 rounded-xl border p-4 text-sm"

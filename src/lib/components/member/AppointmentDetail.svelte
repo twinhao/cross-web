@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
+  import MemberLoading from "#lib/components/member/MemberLoading.svelte";
 	import ArrowLeft from "@lucide/svelte/icons/arrow-left";
 	import CalendarDays from "@lucide/svelte/icons/calendar-days";
 	import CheckCircle2 from "@lucide/svelte/icons/circle-check";
@@ -127,9 +129,7 @@
 {/snippet}
 
 {#if !guard.ready}
-	<div class="flex min-h-[60vh] items-center justify-center bg-background">
-		<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-	</div>
+	<MemberLoading title="預約詳情" variant="appointment" />
 {:else}
 	<div class="min-h-[60vh] bg-background pb-12">
 		<!-- Header -->
@@ -145,9 +145,7 @@
 
 		<div class="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:px-6">
 			{#if isLoading}
-				<div class="flex items-center justify-center py-16">
-					<div class="size-6 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
-				</div>
+				<ContentSkeleton variant="appointment" label="正在載入預約詳情…" />
 			{:else if notFound || !appt}
 				<Card class="flex flex-col items-center gap-3 p-12 text-center">
 					<XCircle class="size-10 text-muted-foreground" />

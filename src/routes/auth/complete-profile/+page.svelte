@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
   import DateInput from "#lib/components/ui/date-input/DateInput.svelte";
 	import UserPlus from "@lucide/svelte/icons/user-plus";
 	import { untrack } from "svelte";
@@ -25,7 +26,7 @@
 	import { validateIdentifier } from "#lib/validation/tw-identifier.ts";
 
 	// 移植自舊版 app/auth/complete-profile（layout 為 PublicFrame）：首次登入建立本人就診資料。
-	// 伺服器端與載入期間只顯示轉圈；登入守門、查詢既有看診對象都在瀏覽器端。
+	// 登入與既有看診對象確認期間顯示表單骨架，資料查詢仍在瀏覽器端。
 	// next：舊版未檢查就交給 router（外部網址會整頁跳走）；SvelteKit 的 goto 不接受外部網址，
 	// 這裡沿用 /auth 的站內路徑檢查（外部網址改回 /member）。
 	const auth = getAuth();
@@ -115,9 +116,7 @@
 
 <PublicFrame>
 	{#if auth.isLoading || isCheckingProfile}
-		<div class="flex min-h-[70vh] items-center justify-center bg-background">
-			<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-		</div>
+		<div class="flex min-h-[70vh] items-center justify-center bg-background p-4"><div class="w-full max-w-lg rounded-2xl border bg-card p-6"><ContentSkeleton variant="form" label="正在載入個人資料…" /></div></div>
 	{:else}
 		<div class="flex min-h-[70vh] items-center justify-center bg-background p-4">
 			<Card class="w-full max-w-lg">

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
 	import CheckCircle2 from "@lucide/svelte/icons/circle-check";
 	import KeyRound from "@lucide/svelte/icons/key-round";
 	import Loader2 from "@lucide/svelte/icons/loader-circle";
@@ -14,7 +15,7 @@
 	 *
 	 * 這一步同時完成兩件事：證明信箱是本人的、以及設定密碼——所以密碼
 	 * 從頭到尾不會出現在 email 裡。設定完成後仍需人工審核才會開通後台。
-	 * 只在瀏覽器端渲染（頁面在伺服器端輸出「載入中…」，同舊版 Suspense），token 由網址讀取。
+	 * 只在瀏覽器端渲染（伺服器端輸出共用骨架），token 由網址讀取。
 	 */
 	const token = page.url.searchParams.get("token") ?? "";
 	let password = $state("");
@@ -105,7 +106,7 @@
 	</Card>
 {:else if !info}
 	<Card class="w-full max-w-md p-8 text-center">
-		<Loader2 class="mx-auto size-5 animate-spin text-muted-foreground" />
+		<ContentSkeleton variant="form" label="正在載入信箱驗證…" />
 	</Card>
 {:else}
 	<Card class="w-full max-w-md space-y-5 p-8">

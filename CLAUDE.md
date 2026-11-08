@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-08 初次載入應使用符合內容的骨架；共用 `ContentSkeleton`、`MemberLoading`、`AdminLoading` 與既有 `AdminSkeleton`。載入失敗須結束骨架並顯示錯誤，背景更新沿用既有資料保留策略；儲存／送出狀態不替換為整頁骨架。身分確認期間不得顯示真實資料或操作入口，骨架需支援讀屏與減少動態效果。詳見 `docs/loading-skeleton-2026-11-08.md`。
+
 - 2026-11-08 功能合理性修正：`facility_receptionist` 為綁定院所的櫃檯角色，日常預約／報到／叫號使用 `canOperateFacility`；設定、客戶檔案、帳務與試用仍使用 `canManageFacility`，`facility_staff` 維持唯讀。既有客戶代訂只傳 `patient_id`，新客沿用原識別欄位，兩種模式不可混合。對外使用「App 預約提醒」「未到統計」「批次排班」「分享院所頁」；手機採用當日／七日清單名稱。詳見 `docs/feature-fixes-2026-11-08.md`。
 
 - 2026-11-08 完整訂閱資料及試用操作集中於「我的訂閱」，今日與院所設定不嵌入方案／訂閱卡。有效試用不跨頁倒數；到期、停用或功能受限保留一則提示，受限功能入口須保留平台院所或示範情境。試用失敗訊息僅在開啟中的對話框顯示。詳見 `docs/subscription-consolidation-2026-11-08.md`。

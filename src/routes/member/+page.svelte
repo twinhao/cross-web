@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MemberLoading from "#lib/components/member/MemberLoading.svelte";
 	import CalendarDays from "@lucide/svelte/icons/calendar-days";
 	import ChevronRight from "@lucide/svelte/icons/chevron-right";
 	import Clock from "@lucide/svelte/icons/clock";
@@ -146,9 +147,7 @@
 {/snippet}
 
 {#if !guard.ready}
-	<div class="flex min-h-[60vh] items-center justify-center bg-background">
-		<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-	</div>
+	<MemberLoading title="我的預約" variant="list" />
 {:else}
 	<div class="min-h-[60vh] bg-background pb-12">
 		<div class="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:px-6">

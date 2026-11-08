@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
   import { page } from '$app/state';
   import { api } from '#lib/api/client.ts';
   import { pollOnVisible } from '#lib/hooks/poll-on-visible.svelte.ts';
@@ -29,7 +30,7 @@
 
 <Seo {...data.seo} />
 
-{#if loading}<div class="flex min-h-screen items-center justify-center" role="status">載入看板中…</div>
+{#if loading}<div class="min-h-screen px-6 py-5 sm:px-10"><ContentSkeleton variant="board" label="載入看板中…" /></div>
 {:else if failed || !board}<div class="flex min-h-screen items-center justify-center text-2xl text-muted-foreground" role="status">看板暫時無法載入，將自動重試…</div>
 {:else if !board.enabled}<div class="flex min-h-screen flex-col items-center justify-center gap-3 text-center"><p class="text-2xl font-semibold">此院所尚未開通候診看板</p><p class="text-muted-foreground">候診室大螢幕為「專業方案」功能，升級後即可啟用。</p></div>
 {:else}<div class="flex min-h-screen flex-col px-6 py-5 sm:px-10"><header class="flex items-center justify-between gap-4 border-b border-border/60 pb-4"><div><h1 class="text-2xl font-bold sm:text-3xl">{board.facility_name ?? '候診叫號'}</h1><p class="text-sm text-muted-foreground">候診叫號看板</p></div><span class="text-sm text-muted-foreground">● 每 10 秒自動更新</span></header>

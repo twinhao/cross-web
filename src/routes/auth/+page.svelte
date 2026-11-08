@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ContentSkeleton from "#lib/components/loading/ContentSkeleton.svelte";
 	import Building2 from "@lucide/svelte/icons/building-2";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
@@ -12,7 +13,7 @@
 	import { cn } from "#lib/utils.ts";
 
 	// 移植自舊版 app/auth/page.tsx：民眾端登入（Google / Apple）。
-	// 伺服器端與載入登入狀態期間只顯示轉圈（舊版 Suspense fallback 與 isLoading 同一個轉圈）；?next= 在瀏覽器端才讀。
+	// 登入狀態確認期間保留登入版面骨架；?next= 在瀏覽器端才讀。
 	const auth = getAuth();
 	let error = $state("");
 	let isSubmitting = $state(false);
@@ -53,9 +54,7 @@
 </script>
 
 {#if auth.isLoading}
-	<div class="flex min-h-screen items-center justify-center bg-background">
-		<div class="size-8 animate-spin rounded-full border-4 border-muted border-t-primary"></div>
-	</div>
+	<AuthSplitLayout variant="consumer"><div class="w-full max-w-md p-6"><ContentSkeleton variant="form" label="正在載入登入資訊…" /></div></AuthSplitLayout>
 {:else}
 	<AuthSplitLayout variant="consumer">
 		<Card class="w-full max-w-md border-none bg-transparent shadow-none">

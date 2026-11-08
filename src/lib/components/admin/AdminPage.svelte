@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AdminSkeleton from "./layout/AdminSkeleton.svelte";
+  import AdminLoading from "./layout/AdminLoading.svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
@@ -36,9 +36,8 @@
   });
 </script>
 
-{#if access.state === "loading"}<AdminSkeleton
-    label="載入後台中…"
-    variant="dashboard"
+{#if access.state !== "allow"}<AdminLoading
+    variant={name === "dashboard" || name === "index" ? "dashboard" : name === "login" ? "form" : "list"}
   />{:else if access.state === "allow"}{#if name === "login"}<Login
     />{:else if native}<Workspace
       {name}

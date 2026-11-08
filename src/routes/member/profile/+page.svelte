@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MemberLoading from "#lib/components/member/MemberLoading.svelte";
  import { getAuth, requireMember } from "#lib/auth/auth.svelte.ts";
  import { memberApi } from "#lib/api/member.ts";
  import EditProfileDialog from "#lib/components/member/EditProfileDialog.svelte";
@@ -95,4 +96,4 @@
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
-</div>{/if}
+</div>{:else}<MemberLoading title="帳戶設定" variant="form" />{/if}
