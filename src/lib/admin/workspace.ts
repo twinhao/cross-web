@@ -1,4 +1,4 @@
-import type { ApiService, ApiStaff, MedicalFacility } from '../types/clinic.ts';
+import type { ApiAppointment, ApiService, ApiStaff, MedicalFacility } from '../types/clinic.ts';
 import { adminClinicsApi } from '../api/admin/clinics.ts';
 import { DEMO_CLINIC_ID } from '../clinic-discovery.ts';
 export const PANEL_LABELS: Record<string, string> = { today: '今日工作台', subscription: '我的訂閱', appointments: '預約管理', queue: '叫號與報到', patients: '客戶管理', schedule: '排班管理', analytics: '營運分析', stats: '看診統計', info: '院所設定', personnel: '人員設定', services: '服務項目', announcements: '公告' };
@@ -8,6 +8,14 @@ export function clinicHref(id: string, tab: string, params: Record<string, strin
     return `/demo?${new URLSearchParams({ mode: 'admin', tab, ...params })}`;
   }
   return `/admin/clinics/${encodeURIComponent(id)}?${new URLSearchParams({ tab, ...params })}`;
+}
+/** 接續同一筆預約的現場接待，保留示範、日期與所在階段。 */
+export function receptionHref(id: string, appointment: Pick<ApiAppointment, 'id' | 'appointment_date' | 'status'>): string {
+  return clinicHref(id, 'queue', {
+    queue_date: appointment.appointment_date,
+    queue_view: appointment.status === 'confirmed' ? 'arrivals' : 'service',
+    queue_focus: appointment.id,
+  });
 }
 export interface BookingCatalog {
   facility: MedicalFacility;

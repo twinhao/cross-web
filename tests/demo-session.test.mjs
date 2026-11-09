@@ -53,7 +53,7 @@ test("示範門面反映後台服務調整，圖片只允許分頁內的安全�
   assert.ok(session.snapshot().schedules.some(row => row.schedule_date === demoDay(29)));
 });
 
-test("示範報到更新原預約且可重送；叫下一號結束原服務，不新增錯誤預約", async () => {
+test("示範報到冪等；現場叫號需先完成服務、核對下一位，舊格式保持相容", async () => {
   const session = createDemoSession();
   const path = adminBase + "/appointments/demo-appointment-0/check-in";
   const count = session.snapshot().appointments.length;
@@ -63,7 +63,16 @@ test("示範報到更新原預約且可重送；叫下一號結束原服務，�
   assert.equal(session.snapshot().appointments.length, count);
   await assert.rejects(session.request(path), error => error.status === 405);
   await assert.rejects(session.request(adminBase + "/appointments/demo-appointment-0/unknown", post({})), error => error.status === 403);
-  await session.request(adminBase + "/queue/call-next", post({ date: demoDay(), staff_id: "demo-doctor" }));
+  const nextBody={date:demoDay(),staff_id:"demo-doctor",require_idle:true,expected_appointment_id:"demo-appointment-0"};
+  await assert.rejects(session.request(adminBase+"/queue/call-next",post(nextBody)),error=>error.status===409);
+  assert.equal(session.snapshot().appointments.find(row=>row.id==="demo-appointment-2").status,"in_progress");
+  await session.request(adminBase+"/appointments/demo-appointment-2",{method:"PATCH",body:JSON.stringify({status:"completed"})});
+  await assert.rejects(session.request(adminBase+"/queue/call-next",post({...nextBody,expected_appointment_id:"other"})),error=>error.status===409);
+  const result=await session.request(adminBase + "/queue/call-next", post(nextBody));
+  assert.equal(result.called.id,"demo-appointment-0");
+  const legacy=createDemoSession();await legacy.request(path,post({}));
+  await legacy.request(adminBase+"/queue/call-next",post({date:demoDay(),staff_id:"demo-doctor"}));
+  assert.equal(legacy.snapshot().appointments.find(row=>row.id==="demo-appointment-2").status,"completed");
   const rows = session.snapshot().appointments;
   assert.equal(rows.find(row => row.id === "demo-appointment-0").status, "in_progress");
   assert.equal(rows.find(row => row.id === "demo-appointment-2").status, "completed");

@@ -6,6 +6,8 @@ export function workspaceParams(current: URLSearchParams, from: string, to: stri
   params.set('tab', to);
   params.delete('appointment');
   params.delete('new');
+  params.delete('queue_focus');
+  if (to === 'queue' && from !== 'queue') params.delete('queue_view');
   const sourceDate = from === 'today' ? today : validDate(params.get('start'), today);
   if (to === 'schedule' && from !== 'schedule' && (['today', 'appointments'].includes(from) || !params.has('month'))) {
     params.set('month', sourceDate.slice(0, 7));

@@ -38,7 +38,7 @@
   } from "#lib/admin/scheduling.ts";
   import { getAuth } from "#lib/auth/auth.svelte.ts";
   import { canOperateFacility } from "#lib/auth/roles.ts";
-  import { clinicHref } from "#lib/admin/workspace.ts";
+  import { clinicHref, receptionHref } from "#lib/admin/workspace.ts";
   import { canAccessFeature } from "#lib/feature-access.ts";
   import type { ApiAppointment, ApiStaff, MedicalFacility } from "#lib/types/clinic.ts";
   import AppointmentDialog from "./AppointmentDialog.svelte";
@@ -92,8 +92,7 @@
     updated = $state(""),
     revision = $state(0),
     search = $state(""),
-    message = $state(""),
-    pending = $state("");
+    message = $state("");
   const filterCount = $derived(
     Number(status !== "all") +
       Number(!!staff) +
@@ -209,7 +208,7 @@
       value: rows.filter((a) => a.status === "confirmed").length,
     },
     {
-      label: "已報到",
+      label: "候診中",
       value: rows.filter((a) => a.status === "checked_in").length,
     },
     {
@@ -217,20 +216,6 @@
       value: rows.filter((a) => a.status === "in_progress").length,
     },
   ]);
-  async function checkIn(a: ApiAppointment) {
-    if (!canOperate) return;
-    pending = a.id;
-    message = "";
-    try {
-      await adminClinicsApi.queue.checkIn(facility.id, a.id);
-      message = `${a.patient_name} 已報到`;
-      revision++;
-    } catch (e) {
-      error = apiMessage(e, "報到失敗，請重試");
-    } finally {
-      pending = "";
-    }
-  }
   function updatedAppointment(text: string) {
     message = text;
     revision++;
@@ -687,13 +672,12 @@
                           aria-label={"查看" + a.patient_name + "的預約"}
                         >
                           {canOperate ? "詳情／改期" : "查看詳情"}
-                        </Button>{#if canOperate && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                        </Button>{#if canOperate && ["confirmed", "checked_in", "in_progress"].includes(a.status) && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                             size="sm"
-                            disabled={!!pending}
-                            onclick={() => checkIn(a)}
-                            aria-label={"為" + a.patient_name + "報到"}
+                            href={receptionHref(facility.id, a)}
+                            aria-label={a.status === "confirmed" ? "前往為" + a.patient_name + "報到" : "查看" + a.patient_name + "的現場接待"}
                           >
-                            報到
+                            {a.status === "confirmed" ? "前往報到" : "現場接待"}
                           </Button>{/if}
                       </div>
                     </Table.Cell>
@@ -744,13 +728,12 @@
                       onclick={() => select(a)}
                     >
                       {canOperate ? "詳情／改期" : "查看詳情"}
-                    </Button>{#if canOperate && a.status === "confirmed" && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
+                    </Button>{#if canOperate && ["confirmed", "checked_in", "in_progress"].includes(a.status) && a.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management")}<Button
                         size="sm"
-                        disabled={!!pending}
-                        onclick={() => checkIn(a)}
-                        aria-label={"為" + a.patient_name + "報到"}
+                        href={receptionHref(facility.id, a)}
+                        aria-label={a.status === "confirmed" ? "前往為" + a.patient_name + "報到" : "查看" + a.patient_name + "的現場接待"}
                       >
-                        報到
+                        {a.status === "confirmed" ? "前往報到" : "現場接待"}
                       </Button>{/if}
                   </div>
                 </div>

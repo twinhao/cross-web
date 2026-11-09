@@ -68,7 +68,8 @@ test("預約篩選、叫號、手機日期管理與批次排班皆使用共用�
       (url) => url.searchParams.get("start") === "2026-10-24",
     );
     await page.goto(preview.origin + path("queue"));
-    await inspect(page, "叫號日期");
+    await page.getByRole("button", { name: "查詢日期", exact: true }).click();
+    await inspect(page, "接待日期");
     await page.goto(preview.origin + path("schedule"));
     await inspect(page, "直接管理日期");
     await page.getByRole("button", { name: "批次排班", exact: true }).click();

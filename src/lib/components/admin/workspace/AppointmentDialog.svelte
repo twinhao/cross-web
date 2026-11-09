@@ -14,6 +14,7 @@
   import { appointmentEnd, apiMessage } from "#lib/admin/scheduling.ts";
   import {
     matchingStaff,
+    receptionHref,
     loadBookingCatalog,
     type BookingCatalog,
   } from "#lib/admin/workspace.ts";
@@ -50,7 +51,7 @@
   const actionLabels: Partial<Record<AppointmentStatus, string>> = {
     cancelled: "取消預約",
     no_show: "標記未到診",
-    completed: "完成服務",
+    completed: "補登完成",
   };
   const people = $derived(
     catalog ? matchingStaff(catalog, appointment?.service_id ?? "") : [],
@@ -84,14 +85,12 @@
     stage = "confirm";
     error = "";
   }
-  async function perform(checkIn = false) {
+  async function perform() {
     if (!appointment || busy || !canOperate) return;
     busy = true;
     error = "";
     try {
-      if (checkIn)
-        await adminClinicsApi.queue.checkIn(facility.id, appointment.id);
-      else if (stage === "reschedule")
+      if (stage === "reschedule")
         await adminClinicsApi.appointments.update(facility.id, appointment.id, {
           appointment_date: date,
           appointment_time: time,
@@ -102,9 +101,7 @@
           status: action,
         });
       onUpdated(
-        checkIn
-          ? "客戶已報到"
-          : stage === "reschedule"
+        stage === "reschedule"
             ? "預約已改期"
             : `${actionLabels[action]}成功`,
       );
@@ -118,6 +115,7 @@
   }
   const auth = getAuth();
   const canOperate = $derived(canOperateFacility(auth.user, facility.id));
+  const reception = $derived(!!appointment && ["confirmed", "checked_in", "in_progress"].includes(appointment.status) && appointment.appointment_date === taipeiToday() && canAccessFeature(facility, "queue_management"));
 </script>
 
 <Dialog.Root
@@ -223,7 +221,7 @@
             </p>
             {#if action === "cancelled"}<p>
                 取消後會釋出這段預約時間。若只要離開視窗，請按「返回詳情」。
-              </p>{/if}
+              </p>{:else if action === "completed"}<p class="text-sm text-muted-foreground">請確認實際服務已完成，再補登這筆紀錄。</p>{/if}
           {:else if loading}<AdminSkeleton
               label="正在載入排程資訊…"
               variant="form"
@@ -323,30 +321,26 @@
                 onclick={startEdit}
               >
                 改期
-              </Button>{#if canAccessFeature(facility, "queue_management") && appointment.appointment_date === taipeiToday()}<Button
-                  disabled={busy}
-                  onclick={() => perform(true)}
-                >
-                  報到
-                </Button>{/if}{/if}
+              </Button>{/if}
+            {#if reception}<Button href={receptionHref(facility.id, appointment)} disabled={busy}>{appointment.status === "confirmed" ? "前往報到" : "前往現場接待"}</Button>{/if}
             {#if ["confirmed", "checked_in"].includes(appointment.status)}<Button
                 variant="destructive"
                 disabled={busy}
                 onclick={() => confirm("cancelled")}
               >
                 取消預約
-              </Button><Button
+              </Button>{#if appointment.status === "confirmed"}<Button
                 variant="outline"
                 disabled={busy}
                 onclick={() => confirm("no_show")}
               >
                 標記未到診
-              </Button>{/if}
-            {#if ["confirmed", "checked_in", "in_progress"].includes(appointment.status)}<Button
+              </Button>{/if}{/if}
+            {#if !reception && ["confirmed", "checked_in", "in_progress"].includes(appointment.status)}<Button
                 disabled={busy}
                 onclick={() => confirm("completed")}
               >
-                完成服務
+                補登完成
               </Button>{/if}
           {/if}
         </div>

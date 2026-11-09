@@ -80,8 +80,11 @@ test("示範使用頁面捲動，篩選不跳回頂端；報到、搜尋與常�
         const bottom = await page.getByRole("navigation", { name: "手機後台主要導覽", exact: true }).boundingBox();
         assert.ok(bottom.height < 100, "手機導覽不應撐滿內容區或遮住操作");
       }
-      await page.getByRole("button", { name: "為陳小晴（示範）報到", exact: true }).filter({ visible: true }).first().click();
-      await page.getByText("陳小晴（示範） 已報到", { exact: true }).waitFor();
+      await page.getByRole("link", { name: "前往為陳小晴（示範）報到", exact: true }).filter({ visible: true }).first().click();
+      await page.getByRole("button", { name: "為陳小晴（示範）報到", exact: true }).click();
+      await page.getByText("陳小晴（示範） 已報到，請至「候診與服務」查看。", { exact: true }).waitFor();
+      await page.getByRole("link", { name: "預約與紀錄", exact: true }).click();
+      await page.getByRole("heading", { name: "預約管理", exact: true }).waitFor();
       await page.evaluate(() => window.scrollTo({ top: 100, behavior: "instant" }));
       assert.ok(await page.evaluate(() => scrollY) > 50);
       await page.getByRole("button", { name: "未來七天", exact: true }).click();

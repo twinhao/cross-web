@@ -30,10 +30,10 @@ test('桌面與手機的櫃檯可代訂、報到、叫號；服務、資料及�
   const {page,errors}=await setupWorkspace(browser,preview.origin,{role:'facility_receptionist',width});
   try{
    await page.goto(preview.origin+'/admin/dashboard');await page.getByRole('button',{name:'＋ 新增預約',exact:true}).waitFor();
-   await page.getByRole('button',{name:'為測試客人1報到',exact:true}).filter({visible:true}).waitFor();
+   await page.getByRole('link',{name:'前往為測試客人1報到',exact:true}).filter({visible:true}).waitFor();
    await page.goto(preview.origin+path('queue'));await page.getByRole('heading',{name:'叫號與報到',exact:true}).waitFor();
    assert.equal(await page.getByText(/目前帳號可從預約管理查看服務狀態/).count(),0);
-   await page.getByRole('button',{name:'叫下一號',exact:true}).first().waitFor();
+   await page.getByRole('button',{name:/^叫.*開始服務$/}).first().waitFor();
    for(const tab of ['info','services','personnel','subscription']){
     await page.goto(preview.origin+path(tab));await page.locator('.cross-admin h1').waitFor();
     for(const name of ['編輯資訊','新增服務','新增人員','啟用 90 天試用','編輯訂閱'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);

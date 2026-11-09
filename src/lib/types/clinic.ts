@@ -566,6 +566,8 @@ export interface QueueBoard {
 export interface QueueCallNextRequest {
   date: string; // YYYY-MM-DD
   staff_id: string | null;
+  require_idle?: boolean;
+  expected_appointment_id?: string;
 }
 
 // call-next 回應中被叫到者的摘要（對齊後端 CalledAppointmentRead，僅五欄，

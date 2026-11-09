@@ -24,7 +24,19 @@ export async function setupWorkspace(browser,origin,{width=1440,role='facility_a
   if(path.endsWith('/schedules')){if(state.failSlots)return json({detail:'測試：無法確認排班'},503);if(method==='POST'){const row={...req.postDataJSON(),id:'schedule-new',staff_id:path.split('/').at(-2),staff_name:'林醫師（虛構）',is_available:true};state.shifts.push(row);return json(row);}return json(state.shifts);}
   if(path.endsWith('/staff-leaves'))return json(state.leaves);
   if(path.endsWith('/leaves')&&method==='POST'){const row={...req.postDataJSON(),id:'leave-new',staff_id:path.split('/').at(-2)};state.leaves.push(row);return json(row);}
-  if(path.endsWith('/queue'))return json({date:url.searchParams.get('date')??today,groups:[{staff_id:'staff-1',staff_name:staff[0].name,current_number:3,waiting_count:1,appointments:state.appointments.slice(0,3)}]});
+  if(path.endsWith('/queue')){
+    if(state.failQueue)return json({detail:'測試：接待名單暫時無法載入'},503);
+    const date=url.searchParams.get('date')??today;
+    return json({date,groups:staff.map(person=>{const appointments=state.appointments.filter(a=>a.staff_id===person.id&&a.appointment_date===date);return {staff_id:person.id,staff_name:person.name,current_number:appointments.find(a=>a.status==='in_progress')?.queue_number??null,waiting_count:appointments.filter(a=>a.status==='checked_in').length,appointments};})});
+  }
+  if(path.endsWith('/queue/call-next')){
+    const body=req.postDataJSON(),group=state.appointments.filter(a=>a.appointment_date===body.date&&(a.staff_id??null)===(body.staff_id??null)),current=group.filter(a=>a.status==='in_progress');
+    if(body.require_idle&&current.length)return json({detail:'目前仍有服務中的客戶，請先完成服務並重新整理叫號台'},409);
+    const next=group.filter(a=>a.status==='checked_in').sort((a,b)=>(a.queue_number??Infinity)-(b.queue_number??Infinity)||a.appointment_time.localeCompare(b.appointment_time))[0];
+    if(!next)return json({detail:'目前沒有已報到的民眾可叫號'},409);
+    if(body.expected_appointment_id&&next.id!==body.expected_appointment_id)return json({detail:'候診順序已更新，請重新整理後確認下一位客戶'},409);
+    current.forEach(a=>a.status='completed');next.status='in_progress';return json({called:next,current_number:next.queue_number});
+  }
   if(path.endsWith('/check-in')){const id=path.split('/').at(-2),a=state.appointments.find(a=>a.id===id);a.status='checked_in';return json(a);}
   if(path.endsWith('/appointments')){
     if(method==='POST'){const body=req.postDataJSON();const row={...body,...(body.patient_id?{patient_name:'既有客戶（虛構）',patient_phone:'0900000000'}:{}),id:'appointment-created',duration_minutes:body.service_id==='laser'?60:30,status:'confirmed',staff_name:staff.find(s=>s.id===body.staff_id)?.name,service_name:services.find(s=>s.id===body.service_id)?.service_name};state.appointments.push(row);return json(row,201);}

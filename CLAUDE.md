@@ -54,6 +54,8 @@ Run Snyk code scanning on new first-party code. Fix any issues found and rescan 
 
 ## 預約工作區規則
 
+- 2026-11-09 現場報到、叫號及完成服務集中於「叫號與報到」，以待報到／候診與服務分頁；今日、預約清單與詳情僅帶到同筆 `queue_focus`，保留日期、階段與示範情境。每人員先完成目前服務再叫下一位，送出 `require_idle` 與 `expected_appointment_id` 防止舊名單誤操作。非今日僅查詢；已結束紀錄、改期及取消回預約管理。非現場情境保留「補登完成」。背景刷新不得跳捲動或覆蓋新回應；操作後讀取失敗須保留成功訊息並停用寫入直到重新讀取。詳見 `docs/reception-workflow-2026-11-09.md`。
+
 - 2026-11-09 服務類別管理依四種院所類型分頁，`category_type` 保留瀏覽器歷史；搜尋／狀態篩選、空狀態與表單提供清楚接續。維護後更新分類字彙快取，保留有效內容並拒絕舊請求覆蓋。分類刪除沒有後端引用檢查，確認文案須準確，提供改為停用，不宣稱會自動阻擋。平台列表／總覽排除舊示範 ID，既有帳號關聯與記憶體 `/demo` 不受影響。詳見 `docs/categories-ux-2026-11-09.md`。
 
 - 2026-11-08 初次載入應使用符合內容的骨架；共用 `ContentSkeleton`、`MemberLoading`、`AdminLoading` 與既有 `AdminSkeleton`。載入失敗須結束骨架並顯示錯誤，背景更新沿用既有資料保留策略；儲存／送出狀態不替換為整頁骨架。身分確認期間不得顯示真實資料或操作入口，骨架需支援讀屏與減少動態效果。詳見 `docs/loading-skeleton-2026-11-08.md`。

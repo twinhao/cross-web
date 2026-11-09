@@ -198,7 +198,16 @@ export function createDemoSession() {
       }
       if (resource === "queue") {
         const date = url.searchParams.get("date") ?? (text(body.date) || demoDay());
-        if (method === "POST") { const waiting = state.appointments.find(a => a.appointment_date === date && a.status === "checked_in" && (!body.staff_id || a.staff_id === body.staff_id)); if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。"); state.appointments.filter(a => a.appointment_date === date && a.staff_id === waiting.staff_id && a.status === "in_progress").forEach(a => { a.status = "completed"; }); waiting.status = "in_progress"; return { appointment: waiting, message: "已叫號（示範）" }; }
+        if (method === "POST") {
+          const group = state.appointments.filter(a => a.appointment_date === date && (a.staff_id ?? null) === (body.staff_id ?? null));
+          const current = group.filter(a => a.status === "in_progress");
+          if (body.require_idle === true && current.length) throw new DemoError(409, "目前仍有服務中的客戶，請先完成服務並重新整理叫號台");
+          const waiting = group.filter(a => a.status === "checked_in").sort((a, b) => (a.queue_number == null ? Infinity : number(a.queue_number)) - (b.queue_number == null ? Infinity : number(b.queue_number)) || text(a.appointment_time).localeCompare(text(b.appointment_time)))[0];
+          if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。");
+          if (body.expected_appointment_id && body.expected_appointment_id !== waiting.id) throw new DemoError(409, "候診順序已更新，請重新整理後確認下一位客戶");
+          current.forEach(a => { a.status = "completed"; }); waiting.status = "in_progress";
+          return { called: { id: waiting.id, queue_number: waiting.queue_number ?? null, patient_name: waiting.patient_name, appointment_time: text(waiting.appointment_time).slice(0, 5), status: waiting.status }, current_number: waiting.queue_number ?? null };
+        }
         return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: list.find(a => a.status === "in_progress")?.queue_number ?? null, waiting_count: list.filter(a => a.status === "checked_in").length, appointments: list }; }) };
       }
       if (resource === "analytics") {
