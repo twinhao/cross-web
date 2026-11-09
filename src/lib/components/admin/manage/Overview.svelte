@@ -23,6 +23,7 @@
     daysUntilExpiry,
   } from "#lib/feature-access.ts";
   import { FACILITY_TYPE_LABELS } from "#lib/constants/clinic-constants.ts";
+  import { isDemoClinic } from "#lib/clinic-discovery.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
   import Feedback from "./Feedback.svelte";
   import type {
@@ -43,7 +44,7 @@
     adminClinicsApi
       .list()
       .then((v) => {
-        if (live) rows = v;
+        if (live) rows = v.filter((facility) => !isDemoClinic(facility.id));
       })
       .catch((e) => {
         if (live) error = apiMessage(e, "院所概況載入失敗");

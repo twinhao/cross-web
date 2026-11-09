@@ -7,10 +7,11 @@ import { test } from "node:test";
 register("./support/svelte-hooks.mjs", import.meta.url);
 const { mountServiceTaxonomy } = await import("./support/service-taxonomy-harness.svelte.js");
 const { FALLBACK_TAXONOMY } = await import("../src/lib/api/service-categories.ts");
+const { refreshServiceTaxonomy } = await import("../src/lib/hooks/service-taxonomy.svelte.ts");
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-test("先回 fallback、並行只打一次 API、抓到後全部更新、之後掛載直接用快取", async (t) => {
+test("分類共用快取，維護後保留內容重新取得，舊回應不覆蓋新分類", async (t) => {
   globalThis.window = new EventTarget();
   globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
   t.after(() => {
@@ -46,4 +47,23 @@ test("先回 fallback、並行只打一次 API、抓到後全部更新、之後�
   assert.deepEqual(later.stores[0].current, fetched, "之後掛載的元件直接拿快取");
   await tick();
   assert.equal(calls.length, 1, "不再打 API");
+
+  const pending = [];
+  globalThis.fetch = () => new Promise((resolve) => pending.push((taxonomy) => resolve(new Response(JSON.stringify(taxonomy), { headers: { "content-type": "application/json" } }))));
+  refreshServiceTaxonomy();
+  refreshServiceTaxonomy();
+  assert.equal(pending.length, 2);
+  assert.deepEqual(first.stores[0].current, fetched, "重新取得期間保留原內容");
+  const updated = { ...fetched, facility_types: [{ value: "healthcare", label: "看診", categories: [{ code: "x", label: "新分類名稱" }] }] };
+  pending[1](updated);
+  await tick(); await tick();
+  assert.deepEqual(first.stores[0].current, updated);
+  pending[0](fetched);
+  await tick(); await tick();
+  assert.deepEqual(first.stores[0].current, updated, "較慢的舊請求不能把名稱改回去");
+
+  globalThis.fetch = async () => new Response("", { status: 503 });
+  refreshServiceTaxonomy();
+  await tick(); await tick();
+  assert.deepEqual(first.stores[0].current, updated, "刷新失敗保留已取得的分類，不換成預設字彙");
 });

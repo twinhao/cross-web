@@ -8,6 +8,7 @@
   import { apiMessage } from "#lib/admin/scheduling.ts";
   import { PLAN_LABELS, isExpired } from "#lib/feature-access.ts";
   import { FACILITY_TYPE_LABELS } from "#lib/constants/clinic-constants.ts";
+  import { isDemoClinic } from "#lib/clinic-discovery.ts";
   import { Button } from "#lib/components/ui/button/index.ts";
   import { Input } from "#lib/components/ui/input/index.ts";
   import Feedback from "./Feedback.svelte";
@@ -33,7 +34,7 @@
     adminClinicsApi
       .list()
       .then((v) => {
-        if (live) rows = v;
+        if (live) rows = v.filter((facility) => !isDemoClinic(facility.id));
       })
       .catch((e) => {
         if (live) error = apiMessage(e, "院所列表載入失敗");

@@ -12,6 +12,7 @@
   import { Button } from "#lib/components/ui/button/index.ts";
   import { adminUsersApi } from "#lib/api/admin/users.ts";
   import { requiresFacility } from "#lib/auth/roles.ts";
+  import { isDemoClinic } from "#lib/clinic-discovery.ts";
   import { apiMessage } from "#lib/admin/scheduling.ts";
   import type { AdminUser, Role } from "#lib/types/user.ts";
   import type { MedicalFacility } from "#lib/types/clinic.ts";
@@ -159,7 +160,7 @@
         >
           <NativeSelect.Option value="">
             未綁定院所
-          </NativeSelect.Option>{#each facilities as f (f.id)}<NativeSelect.Option
+          </NativeSelect.Option>{#if user?.facility_id && isDemoClinic(user.facility_id)}<NativeSelect.Option value={user.facility_id} disabled>舊版示範院所（保留既有關聯）</NativeSelect.Option>{/if}{#each facilities.filter((facility) => !isDemoClinic(facility.id)) as f (f.id)}<NativeSelect.Option
               value={f.id}
             >
               {f.name}
