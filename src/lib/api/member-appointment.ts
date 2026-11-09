@@ -18,6 +18,7 @@ export interface MemberAppointment {
 // enabled=false（院所方案不足）時其餘進度欄位可為 null，客戶端應隱藏進度卡
 export interface MemberQueueStatus {
   enabled: boolean;
+  queue_deferred?: boolean;
   queue_number: number | null;
   status: AppointmentStatus;
   current_number: number | null; // 目前叫號

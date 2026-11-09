@@ -137,3 +137,61 @@ test('查詢其他日期唯讀，員工不能操作現場接待，歷史紀錄�
     assert.equal(writes(employee.requests).length, 0);
   } finally { await employee.page.close(); }
 });
+
+test('過號可先服務其他人，隔幾位返回仍保留號碼且不打斷目前服務', async () => {
+  for (const width of [1440, 390, 320]) {
+    const { page, state, requests, errors } = await setupWorkspace(browser, preview.origin, { width });
+    sameStaff(state);
+    state.appointments.forEach((a, i) => { a.status = i === 0 ? 'in_progress' : 'checked_in'; });
+    try {
+      await page.goto(preview.origin + path());
+      await page.getByRole('button', { name: '將測試客人1標記過號', exact: true }).click();
+      await page.getByRole('button', { name: '返回現場接待', exact: true }).click();
+      assert.equal(writes(requests).length, 0);
+      await page.getByRole('button', { name: '將測試客人1標記過號', exact: true }).click();
+      await page.getByRole('button', { name: '確認過號', exact: true }).click();
+      await page.getByRole('status').getByText('測試客人1 已過號，保留原號碼並暫停候診。', { exact: true }).waitFor();
+      assert.equal(state.appointments[0].status, 'checked_in');
+      assert.equal(state.appointments[0].queue_deferred, true);
+      assert.equal(state.appointments[0].queue_number, 1);
+      await page.getByRole('button', { name: '叫測試客人2開始服務', exact: true }).click();
+      await page.getByRole('button', { name: '完成測試客人2的服務', exact: true }).click();
+      await page.getByRole('button', { name: '確認完成服務', exact: true }).click();
+      await page.getByRole('status').getByText('測試客人2 的服務已完成。', { exact: true }).waitFor();
+      await page.getByRole('button', { name: '叫測試客人3開始服務', exact: true }).click();
+      await page.getByRole('button', { name: '確認測試客人1已返回', exact: true }).click();
+      await page.getByRole('status').getByText('測試客人1 已返回候診，保留原號碼；目前服務不受影響。', { exact: true }).waitFor();
+      assert.equal(state.appointments[2].status, 'in_progress');
+      assert.equal(state.appointments[0].queue_number, 1);
+      const next = page.getByRole('button', { name: '叫測試客人1開始服務', exact: true });
+      assert(await next.isDisabled());
+      assert.equal(await page.getByRole('button', { name: '確認測試客人1已返回', exact: true }).count(), 0);
+      if (evidence) await page.screenshot({ path: `${evidence}/${width}-returned.png`, fullPage: true });
+      await page.getByRole('button', { name: '完成測試客人3的服務', exact: true }).click();
+      await page.getByRole('button', { name: '確認完成服務', exact: true }).click();
+      await page.getByRole('status').getByText('測試客人3 的服務已完成。', { exact: true }).waitFor();
+      await next.click();
+      await page.getByRole('status').getByText('已叫到 1 號：測試客人1，列為服務中。', { exact: true }).waitFor();
+      assert.equal(requests.filter(r => r.path.endsWith('/queue-defer')).length, 2);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  }
+});
+
+test('過號遇到其他人更新時保留名單，重新讀取後才可操作', async () => {
+  const { page, state, requests } = await setupWorkspace(browser, preview.origin);
+  sameStaff(state);
+  try {
+    await page.goto(preview.origin + path());
+    await page.getByRole('button', { name: '將測試客人2標記過號', exact: true }).click();
+    state.appointments[1].status = 'in_progress';
+    await page.getByRole('button', { name: '確認過號', exact: true }).click();
+    await page.getByRole('dialog').getByRole('alert').getByText('此客戶的服務狀態已更新，請重新讀取名單後確認').waitFor();
+    assert(await page.getByRole('button', { name: '確認過號', exact: true }).isDisabled());
+    assert.equal(state.appointments[1].queue_deferred, undefined);
+    await page.getByRole('dialog').getByRole('button', { name: '重新讀取名單', exact: true }).click();
+    await page.getByRole('button', { name: '完成測試客人2的服務', exact: true }).waitFor();
+    assert.equal(requests.filter(r => r.path.endsWith('/queue-defer')).length, 1);
+  } finally { await page.close(); }
+});

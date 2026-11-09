@@ -183,10 +183,18 @@ export function createDemoSession() {
       }
       if (resource === "appointments") {
         if (child) {
-          if (!id || child !== "check-in") throw new DemoError(403, "此示範預約操作尚未提供。");
+          if (!id || !["check-in", "queue-defer"].includes(child)) throw new DemoError(403, "此示範預約操作尚未提供。");
           if (method !== "POST") throw new DemoError(405, "報到請使用送出操作。");
           const row = state.appointments.find(row => row.id === id);
           if (!row) throw new DemoError(404, "找不到示範預約。");
+          if (child === "queue-defer") {
+            const deferred = body.deferred === true;
+            if (row.appointment_date !== demoDay()) throw new DemoError(409, "過號與返回僅能操作今天的預約");
+            if (row.status !== "checked_in" && !(deferred && row.status === "in_progress")) throw new DemoError(409, "目前狀態無法處理過號或返回，請重新讀取名單");
+            if (!!row.queue_deferred === deferred) return row;
+            if (row.status !== body.expected_status) throw new DemoError(409, "此客戶的服務狀態已更新，請重新讀取名單後確認");
+            Object.assign(row, { queue_deferred: deferred, status: "checked_in" }); return row;
+          }
           if (!["confirmed", "checked_in"].includes(text(row.status))) throw new DemoError(409, "目前狀態無法報到，請先核對預約。");
           if (row.status === "confirmed") Object.assign(row, { status: "checked_in", check_in_time: new Date().toISOString() });
           return row;
@@ -202,13 +210,13 @@ export function createDemoSession() {
           const group = state.appointments.filter(a => a.appointment_date === date && (a.staff_id ?? null) === (body.staff_id ?? null));
           const current = group.filter(a => a.status === "in_progress");
           if (body.require_idle === true && current.length) throw new DemoError(409, "目前仍有服務中的客戶，請先完成服務並重新整理叫號台");
-          const waiting = group.filter(a => a.status === "checked_in").sort((a, b) => (a.queue_number == null ? Infinity : number(a.queue_number)) - (b.queue_number == null ? Infinity : number(b.queue_number)) || text(a.appointment_time).localeCompare(text(b.appointment_time)))[0];
+          const waiting = group.filter(a => a.status === "checked_in" && !a.queue_deferred).sort((a, b) => (a.queue_number == null ? Infinity : number(a.queue_number)) - (b.queue_number == null ? Infinity : number(b.queue_number)) || text(a.appointment_time).localeCompare(text(b.appointment_time)))[0];
           if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。");
           if (body.expected_appointment_id && body.expected_appointment_id !== waiting.id) throw new DemoError(409, "候診順序已更新，請重新整理後確認下一位客戶");
           current.forEach(a => { a.status = "completed"; }); waiting.status = "in_progress";
           return { called: { id: waiting.id, queue_number: waiting.queue_number ?? null, patient_name: waiting.patient_name, appointment_time: text(waiting.appointment_time).slice(0, 5), status: waiting.status }, current_number: waiting.queue_number ?? null };
         }
-        return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: list.find(a => a.status === "in_progress")?.queue_number ?? null, waiting_count: list.filter(a => a.status === "checked_in").length, appointments: list }; }) };
+        return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: list.find(a => a.status === "in_progress")?.queue_number ?? null, waiting_count: list.filter(a => a.status === "checked_in" && !a.queue_deferred).length, appointments: list }; }) };
       }
       if (resource === "analytics") {
         const list = state.appointments, completed = list.filter(a => a.status === "completed").length;

@@ -9,7 +9,8 @@ export function receptionGroup(group: QueueGroup) {
   return {
     ...group,
     arrivals: group.appointments.filter(a => a.status === 'confirmed').sort((a, b) => a.appointment_time.localeCompare(b.appointment_time) || queueOrder(a, b)),
-    waiting: group.appointments.filter(a => a.status === 'checked_in').sort(queueOrder),
+    waiting: group.appointments.filter(a => a.status === 'checked_in' && !a.queue_deferred).sort(queueOrder),
+    deferred: group.appointments.filter(a => a.status === 'checked_in' && a.queue_deferred).sort(queueOrder),
     serving: group.appointments.filter(a => a.status === 'in_progress').sort(queueOrder),
     ended: group.appointments.filter(a => ['completed', 'cancelled', 'no_show'].includes(a.status)),
   };

@@ -27,15 +27,23 @@ export async function setupWorkspace(browser,origin,{width=1440,role='facility_a
   if(path.endsWith('/queue')){
     if(state.failQueue)return json({detail:'測試：接待名單暫時無法載入'},503);
     const date=url.searchParams.get('date')??today;
-    return json({date,groups:staff.map(person=>{const appointments=state.appointments.filter(a=>a.staff_id===person.id&&a.appointment_date===date);return {staff_id:person.id,staff_name:person.name,current_number:appointments.find(a=>a.status==='in_progress')?.queue_number??null,waiting_count:appointments.filter(a=>a.status==='checked_in').length,appointments};})});
+    return json({date,groups:staff.map(person=>{const appointments=state.appointments.filter(a=>a.staff_id===person.id&&a.appointment_date===date);return {staff_id:person.id,staff_name:person.name,current_number:appointments.find(a=>a.status==='in_progress')?.queue_number??null,waiting_count:appointments.filter(a=>a.status==='checked_in'&&!a.queue_deferred).length,appointments};})});
   }
   if(path.endsWith('/queue/call-next')){
     const body=req.postDataJSON(),group=state.appointments.filter(a=>a.appointment_date===body.date&&(a.staff_id??null)===(body.staff_id??null)),current=group.filter(a=>a.status==='in_progress');
     if(body.require_idle&&current.length)return json({detail:'目前仍有服務中的客戶，請先完成服務並重新整理叫號台'},409);
-    const next=group.filter(a=>a.status==='checked_in').sort((a,b)=>(a.queue_number??Infinity)-(b.queue_number??Infinity)||a.appointment_time.localeCompare(b.appointment_time))[0];
+    const next=group.filter(a=>a.status==='checked_in'&&!a.queue_deferred).sort((a,b)=>(a.queue_number??Infinity)-(b.queue_number??Infinity)||a.appointment_time.localeCompare(b.appointment_time))[0];
     if(!next)return json({detail:'目前沒有已報到的民眾可叫號'},409);
     if(body.expected_appointment_id&&next.id!==body.expected_appointment_id)return json({detail:'候診順序已更新，請重新整理後確認下一位客戶'},409);
     current.forEach(a=>a.status='completed');next.status='in_progress';return json({called:next,current_number:next.queue_number});
+  }
+  if(path.endsWith('/queue-defer')){
+    const id=path.split('/').at(-2),a=state.appointments.find(a=>a.id===id),body=req.postDataJSON();
+    if(state.failMutation)return json({detail:'測試：此預約已被其他人更新'},409);
+    if(a.appointment_date!==today||!(a.status==='checked_in'||body.deferred&&a.status==='in_progress'))return json({detail:'目前狀態無法處理過號或返回，請重新讀取名單'},409);
+    if(!!a.queue_deferred===body.deferred)return json(a);
+    if(a.status!==body.expected_status)return json({detail:'此客戶的服務狀態已更新，請重新讀取名單後確認'},409);
+    Object.assign(a,{queue_deferred:body.deferred,status:'checked_in'});return json(a);
   }
   if(path.endsWith('/check-in')){const id=path.split('/').at(-2),a=state.appointments.find(a=>a.id===id);a.status='checked_in';return json(a);}
   if(path.endsWith('/appointments')){

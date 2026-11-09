@@ -103,3 +103,17 @@ test("示範客戶搜尋、停用篩選及分頁實際影響名單", async () =>
   assert.equal((await session.request(adminBase + "/patients")).length, 2);
   assert.equal((await session.request(adminBase + "/patients?include_inactive=true")).length, 3);
 });
+
+test('示範過號不等於完成，跳過後返回保留原號碼且不打斷服務', async () => {
+  const session=createDemoSession();
+  const path=adminBase+'/appointments/demo-appointment-2/queue-defer';
+  const deferred=await session.request(path,post({deferred:true,expected_status:'in_progress'}));
+  assert.equal(deferred.status,'checked_in');assert.equal(deferred.queue_deferred,true);
+  const number=deferred.queue_number;
+  await session.request(adminBase+'/appointments/demo-appointment-0/check-in',post({}));
+  const called=await session.request(adminBase+'/queue/call-next',post({date:demoDay(),staff_id:'demo-doctor',require_idle:true}));
+  assert.equal(called.called.id,'demo-appointment-0');
+  const returned=await session.request(path,post({deferred:false,expected_status:'checked_in'}));
+  assert.equal(returned.queue_number,number);assert.equal(returned.queue_deferred,false);
+  assert.equal(session.snapshot().appointments.find(a=>a.id==='demo-appointment-0').status,'in_progress');
+});

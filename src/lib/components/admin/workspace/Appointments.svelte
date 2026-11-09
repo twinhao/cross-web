@@ -209,7 +209,7 @@
     },
     {
       label: "候診中",
-      value: rows.filter((a) => a.status === "checked_in").length,
+      value: rows.filter((a) => a.status === "checked_in" && !a.queue_deferred).length,
     },
     {
       label: "服務中",
@@ -662,7 +662,7 @@
                         {a.staff_name ?? "未指定人員"}
                       </p>
                     </Table.Cell><Table.Cell class="p-3">
-                      <StatusPill status={a.status} />
+                      <StatusPill status={a.status} deferred={a.queue_deferred} />
                     </Table.Cell><Table.Cell class="p-3">
                       <div class="flex justify-end gap-2">
                         <Button
@@ -697,7 +697,7 @@
                       facility.slot_duration,
                     )}
                   </p>
-                  <StatusPill status={a.status} />
+                  <StatusPill status={a.status} deferred={a.queue_deferred} />
                 </div>
                 <button
                   class="text-left font-semibold text-primary underline-offset-4 hover:underline"

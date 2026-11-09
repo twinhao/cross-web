@@ -36,9 +36,10 @@
     revision = $state(0), pending = $state(""), message = $state(""), updated = $state(""),
     chooseDate = $state(false), finishing = $state<QueueAppointmentItem | null>(null);
   let generation = 0, scope = "", focused = "";
+  let deferring = $state<QueueAppointmentItem | null>(null);
   const groups = $derived((board?.groups ?? []).map(receptionGroup));
   const arrivals = $derived(groups.reduce((sum, group) => sum + group.arrivals.length, 0));
-  const activeCount = $derived(groups.reduce((sum, group) => sum + group.waiting.length + group.serving.length, 0));
+  const activeCount = $derived(groups.reduce((sum, group) => sum + group.waiting.length + group.serving.length + group.deferred.length, 0));
   const ended = $derived(groups.reduce((sum, group) => sum + group.ended.length, 0));
   const disabled = $derived(!!pending || loading || !!error || !live);
   const recordsHref = $derived(clinicHref(facility.id, "appointments", { start: date, end: date, view: "list" }));
@@ -63,7 +64,7 @@
     if (!allowed || !canOperate) return;
     untrack(() => {
       const nextScope = `${id}:${day}`;
-      if (scope !== nextScope) { scope = nextScope; board = null; updated = ""; message = ""; finishing = null; focused = ""; }
+      if (scope !== nextScope) { scope = nextScope; board = null; updated = ""; message = ""; finishing = null; deferring = null; focused = ""; }
       void load(id, day);
     });
     return () => { generation++; };
@@ -72,7 +73,7 @@
     if (!canOperate) return;
     const refresh = () => {
       today = taipeiToday();
-      if (document.visibilityState === "visible" && !pending && !loading && !finishing) revision++;
+      if (document.visibilityState === "visible" && !pending && !loading && !finishing && !deferring) revision++;
     };
     const timer = setInterval(refresh, 10000);
     document.addEventListener("visibilitychange", refresh);
@@ -100,7 +101,7 @@
   function appointmentHref(appointment: QueueAppointmentItem) {
     return clinicHref(facility.id, "appointments", { start: date, end: date, view: "list", appointment: appointment.id });
   }
-  async function act(kind: "check-in" | "call-next" | "complete", appointment: QueueAppointmentItem, group?: QueueGroup) {
+  async function act(kind: "check-in" | "call-next" | "complete" | "defer" | "return", appointment: QueueAppointmentItem, group?: QueueGroup) {
     if (disabled || !canOperate) return;
     if (date !== taipeiToday()) { today = taipeiToday(); error = "現場操作請回到今天的接待名單。"; return; }
     const id = facility.id, day = date;
@@ -113,6 +114,10 @@
       } else if (kind === "complete") {
         await adminClinicsApi.appointments.update(id, appointment.id, { status: "completed" });
         success = `${appointment.patient_name} 的服務已完成。`;
+      } else if (kind === "defer" || kind === "return") {
+        await adminClinicsApi.queue.defer(id, appointment.id, kind === "defer", appointment.status);
+        deferring = null;
+        success = kind === "defer" ? `${appointment.patient_name} 已過號，保留原號碼並暫停候診。` : `${appointment.patient_name} 已返回候診，保留原號碼；目前服務不受影響。`;
       } else {
         const result = await adminClinicsApi.queue.callNext(id, { date: day, staff_id: group!.staff_id, require_idle: true, expected_appointment_id: appointment.id });
         const called = result.called;
@@ -156,10 +161,11 @@
         {#if view === "service"}
           {#if loading && !board}<AdminSkeleton label="載入候診與服務進度…" variant="cards" />
           {:else if board}
-            {#each groups.filter(group => group.waiting.length || group.serving.length) as group (group.staff_id ?? "none")}<Card.Root class="gap-0 overflow-hidden py-0 shadow-sm">
-              <div class="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-4"><h2 class="font-semibold">{group.staff_name ?? "未指定人員"}</h2><p class="text-sm text-muted-foreground">候診 {group.waiting.length} 位 · 服務中 {group.serving.length} 位</p></div>
-              <div class="space-y-3 p-4"><h3 class="text-sm font-medium">服務中</h3>{#each group.serving as appointment (appointment.id)}<div id={`${instanceId}-${appointment.id}`} tabindex="-1" class="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 outline-none focus:ring-2 focus:ring-primary">{@render number(appointment)}{@render person(appointment)}<Button variant="outline" class="min-h-11" disabled={disabled} aria-label={`完成${appointment.patient_name}的服務`} onclick={() => finishing = appointment}>完成服務</Button></div>{:else}<p class="text-sm text-muted-foreground">目前沒有服務中的客戶。</p>{/each}</div>
-              <div class="border-t p-4"><h3 class="mb-3 text-sm font-medium">候診中</h3><p class="mb-3 text-xs leading-5 text-muted-foreground">依號碼先後叫號，尚未報到的預約不列入候診。</p><ul class="space-y-2" aria-label={`${group.staff_name ?? "未指定人員"}候診名單`}>{#each group.waiting as appointment, index (appointment.id)}<li id={`${instanceId}-${appointment.id}`} tabindex="-1" class="flex flex-wrap items-center gap-3 rounded-xl border p-3 outline-none focus:ring-2 focus:ring-primary {focusId === appointment.id ? 'border-primary/40 bg-primary/5' : ''}">{@render number(appointment)}{@render person(appointment)}{#if index === 0}<Button class="min-h-11" disabled={disabled || !!group.serving.length} aria-label={`叫${appointment.patient_name}開始服務`} onclick={() => act("call-next", appointment, group)}>{pending.startsWith('call-next:') ? "叫號中…" : "叫下一位"}</Button>{/if}</li>{:else}<li class="py-2 text-sm text-muted-foreground">目前沒有已報到的候診客戶。</li>{/each}</ul>{#if group.serving.length && group.waiting.length}<p class="mt-3 text-xs leading-5 text-muted-foreground">請先完成目前服務，再叫下一位；叫號後會列為服務中。</p>{/if}</div>
+            {#each groups.filter(group => group.waiting.length || group.serving.length || group.deferred.length) as group (group.staff_id ?? "none")}<Card.Root class="gap-0 overflow-hidden py-0 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-4"><h2 class="font-semibold">{group.staff_name ?? "未指定人員"}</h2><p class="text-sm text-muted-foreground">候診 {group.waiting.length} 位 · 服務中 {group.serving.length} 位{group.deferred.length ? ` · 過號 ${group.deferred.length} 位` : ""}</p></div>
+              <div class="space-y-3 p-4"><h3 class="text-sm font-medium">服務中</h3>{#each group.serving as appointment (appointment.id)}<div id={`${instanceId}-${appointment.id}`} tabindex="-1" class="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 outline-none focus:ring-2 focus:ring-primary">{@render number(appointment)}{@render person(appointment)}<div class="flex w-full justify-end gap-2 sm:w-auto"><Button variant="outline" class="min-h-11" disabled={disabled} aria-label={`完成${appointment.patient_name}的服務`} onclick={() => finishing = appointment}>完成服務</Button><Button variant="ghost" class="min-h-11" disabled={disabled} aria-label={`將${appointment.patient_name}標記過號`} onclick={() => deferring = appointment}>過號</Button></div></div>{:else}<p class="text-sm text-muted-foreground">目前沒有服務中的客戶。</p>{/each}</div>
+              <div class="border-t p-4"><h3 class="mb-3 text-sm font-medium">候診中</h3><p class="mb-3 text-xs leading-5 text-muted-foreground">依號碼先後叫號；叫號未到可標記過號，返回後保留原號碼接續，不中斷目前服務。</p><ul class="space-y-2" aria-label={`${group.staff_name ?? "未指定人員"}候診名單`}>{#each group.waiting as appointment, index (appointment.id)}<li id={`${instanceId}-${appointment.id}`} tabindex="-1" class="flex flex-wrap items-center gap-3 rounded-xl border p-3 outline-none focus:ring-2 focus:ring-primary {focusId === appointment.id ? 'border-primary/40 bg-primary/5' : ''}">{@render number(appointment)}{@render person(appointment)}{#if index === 0}<div class="flex w-full justify-end gap-2 sm:w-auto"><Button class="min-h-11" disabled={disabled || !!group.serving.length} aria-label={`叫${appointment.patient_name}開始服務`} onclick={() => act("call-next", appointment, group)}>{pending.startsWith('call-next:') ? "叫號中…" : "叫下一位"}</Button><Button variant="ghost" class="min-h-11" disabled={disabled} aria-label={`將${appointment.patient_name}標記過號`} onclick={() => deferring = appointment}>過號</Button></div>{/if}</li>{:else}<li class="py-2 text-sm text-muted-foreground">目前沒有已報到的候診客戶。</li>{/each}</ul>{#if group.serving.length && group.waiting.length}<p class="mt-3 text-xs leading-5 text-muted-foreground">請先完成目前服務，再叫下一位；叫號後會列為服務中。</p>{/if}</div>
+              {#if group.deferred.length}<div class="border-t p-4"><h3 class="text-sm font-medium">過號暫停</h3><p class="mt-2 text-xs leading-5 text-muted-foreground">先繼續服務其他客戶，返回後再加入候診；過號不會列為未到或已完成。</p><ul class="mt-3 space-y-2" aria-label={`${group.staff_name ?? "未指定人員"}過號名單`}>{#each group.deferred as appointment (appointment.id)}<li id={`${instanceId}-${appointment.id}`} tabindex="-1" class="flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-3 outline-none focus:ring-2 focus:ring-primary">{@render number(appointment)}{@render person(appointment)}<Button variant="outline" class="min-h-11" disabled={disabled} aria-label={`確認${appointment.patient_name}已返回`} onclick={() => act("return", appointment)}>已返回</Button></li>{/each}</ul></div>{/if}
             </Card.Root>{:else}{#if !error}<AdminEmpty title="目前沒有候診或服務中的客戶" description="到院後先報到，客戶就會出現在這裡。">{#if arrivals}<Button class="min-h-11" onclick={() => setView('arrivals')}>前往報到</Button>{/if}</AdminEmpty>{/if}{/each}
           {/if}
         {/if}
@@ -173,5 +179,14 @@
     <Dialog.Header><Dialog.Title>確認完成服務</Dialog.Title><Dialog.Description>{finishing?.patient_name} · {date} {finishing?.appointment_time.slice(0, 5)}。確認實際服務已結束後，再完成這筆紀錄。</Dialog.Description></Dialog.Header>
     {#if error}<Feedback {error} /><Button variant="outline" class="min-h-11" disabled={loading || !!pending} onclick={() => revision++}>重新讀取名單</Button>{/if}
     <Dialog.Footer class="admin-dialog-footer"><Button variant="outline" class="min-h-11" disabled={!!pending} onclick={() => finishing = null}>返回現場接待</Button><Button class="min-h-11" disabled={disabled} onclick={() => finishing && act("complete", finishing)}>{pending ? "處理中…" : "確認完成服務"}</Button></Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root open={!!deferring} onOpenChange={value => { if (!value && !pending) deferring = null; }}>
+  <Dialog.Content class="admin-dialog" showCloseButton={!pending} onInteractOutside={event => { if (pending) event.preventDefault(); }} onEscapeKeydown={event => { if (pending) event.preventDefault(); }}>
+    <Dialog.Header><Dialog.Title>確認標記過號</Dialog.Title><Dialog.Description>{deferring?.patient_name} · {deferring?.queue_number ?? "—"} 號。確認叫號未到，暫停這位客戶的候診，讓其他客戶接續。</Dialog.Description></Dialog.Header>
+    <p class="text-sm text-muted-foreground">保留原號碼與報到紀錄，不會列為未到或已完成；返回時再按「已返回」。</p>
+    {#if error}<Feedback {error} /><Button variant="outline" class="min-h-11" disabled={loading || !!pending} onclick={() => { deferring = null; revision++; }}>重新讀取名單</Button>{/if}
+    <Dialog.Footer class="admin-dialog-footer"><Button variant="outline" class="min-h-11" disabled={!!pending} onclick={() => deferring = null}>返回現場接待</Button><Button class="min-h-11" disabled={disabled} onclick={() => deferring && act("defer", deferring)}>確認過號</Button></Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

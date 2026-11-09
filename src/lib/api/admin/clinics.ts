@@ -275,6 +275,9 @@ export const adminClinicsApi = {
   // ========== 叫號/報到（付費功能：standard 以上 / 試用；方案不足 403） ==========
 
   queue: {
+    /** 過號暫停／返回候診，保留原號碼並核對畫面狀態。 */
+    defer: (facilityId: string, appointmentId: string, deferred: boolean, expected_status: import("../../types/clinic.ts").AppointmentStatus) =>
+      api.post<ApiAppointment>(`${BASE_PATH}/${facilityId}/appointments/${appointmentId}/queue-defer`, { deferred, expected_status }),
     /** 叫號台看板（date 預設今日，Asia/Taipei） */
     list: (facilityId: string, date?: string) =>
       api.get<QueueBoard>(

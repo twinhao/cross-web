@@ -158,7 +158,7 @@
               {error}
             </p>{/if}
           {#if stage === "detail"}
-            <StatusPill status={appointment.status} />
+            <StatusPill status={appointment.status} deferred={appointment.queue_deferred} />
             <dl class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt class="text-muted-foreground">客戶姓名</dt>

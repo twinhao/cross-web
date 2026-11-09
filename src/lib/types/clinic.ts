@@ -506,6 +506,7 @@ export interface ApiAppointment {
   booking_method: "phone" | "walk_in" | "online";
   notes: string | null;
   queue_number: number | null; // 看診號（預約成立即取號；同診次隊列內遞增）
+  queue_deferred?: boolean;
   check_in_time: string | null; // 報到時間（ISO8601；未報到為 null）
   created_at: string;
   updated_at: string | null;
@@ -539,6 +540,7 @@ export interface ApiAppointmentUpdate {
 export interface QueueAppointmentItem {
   id: string;
   queue_number: number | null;
+  queue_deferred?: boolean;
   patient_name: string;
   appointment_time: string; // HH:MM
   status: AppointmentStatus;

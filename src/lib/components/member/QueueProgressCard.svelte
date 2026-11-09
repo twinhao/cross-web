@@ -6,7 +6,7 @@
 
 	/** 看診進度卡：目前叫號 / 您的號碼 / 還差 N 位；輪到本人時整卡高亮（移植自舊版 QueueProgressCard） */
 	let { status }: { status: MemberQueueStatus } = $props();
-	const isMyTurn = $derived(status.status === "in_progress");
+	const isMyTurn = $derived(!status.queue_deferred && status.status === "in_progress");
 </script>
 
 <Card class={cn("space-y-4 p-5", isMyTurn && "ring-2 ring-primary/40")}>
@@ -18,7 +18,9 @@
 		<span class="text-xs text-muted-foreground">每 15 秒自動更新</span>
 	</div>
 
-	{#if isMyTurn}
+	{#if status.queue_deferred}
+		<p class="rounded-xl bg-muted p-3 text-sm">目前已過號，候診暫停。返回後請至櫃檯確認，會保留原號碼重新安排。</p>
+	{:else if isMyTurn}
 		<div class="rounded-2xl bg-primary p-3 text-center text-sm font-bold text-primary-foreground">
 			輪到您了！請前往診間
 		</div>
