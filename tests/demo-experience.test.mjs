@@ -28,7 +28,7 @@ async function intact(page, errors, network) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.querySelector(".demo-scroll").scrollWidth > innerWidth), false);
 }
 
-test("示範門面與三視角在手機、平板、桌面亮暗色可操作，照片正常且清楚標註", async () => {
+test("示範門面與視角在手機、平板、桌面亮暗色可操作，照片正常且清楚標註", async () => {
   for (const width of [320, 390, 768, 1440]) for (const dark of [false, true]) {
     const { page, errors, network } = await open(width, dark);
     try {
@@ -62,8 +62,85 @@ test("示範門面與三視角在手機、平板、桌面亮暗色可操作，�
       await page.getByRole("region", { name: "院所上線準備", exact: true }).getByRole("status").getByText("已找到可線上預約的時段", { exact: true }).waitFor();
       await page.screenshot({ path: `${dir}/admin-${width}-${dark}.png`, animations: "disabled" });
       await intact(page, errors, network);
+      await page.getByRole("navigation", { name: "切換示範視角" }).getByRole("link", { name: "候診看板", exact: true }).click();
+      await page.getByText("候診叫號看板", { exact: true }).waitFor();
+      await page.getByText("王＊安", { exact: true }).waitFor();
+      assert.equal(await page.getByText("王小安（示範）", { exact: true }).count(), 0);
+      const compact = await page.getByLabel("示範體驗導覽", { exact: true }).boundingBox();
+      assert.ok(compact.height < (width < 640 ? 160 : 100));
+      await page.screenshot({ path: `${dir}/board-${width}-${dark}.png`, animations: "disabled", fullPage: true });
+      await intact(page, errors, network);
     } finally { await page.close(); }
   }
+});
+
+test("示範報到、過號與返回同步候診看板，保留原號且不打斷目前服務", async () => {
+  for (const width of [390, 1440]) {
+    const { page, errors, network } = await open(width);
+    const tabs = page.getByRole("navigation", { name: "切換示範視角" });
+    const board = async () => { await tabs.getByRole("link", { name: "候診看板", exact: true }).click(); await page.getByText("候診叫號看板", { exact: true }).waitFor(); };
+    const doctor = () => page.getByRole("region", { name: "林醫師（示範）候診名單", exact: true });
+    const reception = async () => { await page.getByRole("link", { name: "回到叫號與報到", exact: true }).click(); await page.getByRole("heading", { name: "叫號與報到", exact: true }).waitFor(); };
+    try {
+      await page.goto(preview.origin + "/demo?mode=admin&tab=queue&queue_view=arrivals", { waitUntil: "domcontentloaded" });
+      await page.getByRole("button", { name: "為陳小晴（示範）報到", exact: true }).click();
+      await page.getByRole("tab", { name: "候診與服務", exact: true }).click();
+      await page.getByRole("button", { name: "將王小安（示範）標記過號", exact: true }).click();
+      await page.getByRole("button", { name: "確認過號", exact: true }).click();
+      await page.getByRole("button", { name: "叫陳小晴（示範）開始服務", exact: true }).click();
+      await page.getByRole("button", { name: "完成陳小晴（示範）的服務", exact: true }).waitFor();
+      await board();
+      await doctor().getByLabel("目前叫號 1", { exact: true }).waitFor();
+      await doctor().getByText("陳＊晴", { exact: true }).waitFor();
+      assert.equal(await doctor().getByText("王＊安", { exact: true }).count(), 0);
+      await doctor().getByText("候診 0", { exact: true }).waitFor();
+      await reception();
+      await page.getByRole("button", { name: "確認王小安（示範）已返回", exact: true }).click();
+      await page.getByText("王小安（示範） 已返回候診，保留原號碼；目前服務不受影響。", { exact: true }).waitFor();
+      assert.ok(await page.getByRole("button", { name: "叫王小安（示範）開始服務", exact: true }).isDisabled());
+      await board();
+      await doctor().getByLabel("目前叫號 1", { exact: true }).waitFor();
+      await doctor().getByText("王＊安", { exact: true }).waitFor();
+      await doctor().getByText("候診 1", { exact: true }).waitFor();
+      await page.screenshot({ path: `${dir}/board-returned-${width}.png`, fullPage: true, animations: "disabled" });
+      await intact(page, errors, network);
+      await page.getByRole("button", { name: "重置", exact: true }).click();
+      await page.getByRole("button", { name: "確認重置", exact: true }).click();
+      await page.getByRole("heading", { name: "澄光美學診所｜示範", exact: true }).waitFor();
+      await board();
+      await doctor().getByLabel("目前叫號 3", { exact: true }).waitFor();
+      assert.equal(await doctor().getByText("陳＊晴", { exact: true }).count(), 0);
+      await intact(page, errors, network);
+    } finally { await page.close(); }
+  }
+});
+
+test("示範未到操作會反映於營運分析，日期範圍與看診統計可切換", async () => {
+  const { page, errors, network } = await open();
+  const metric = name => page.getByRole("heading", { name, exact: true }).locator("..").locator("p");
+  try {
+    await page.goto(preview.origin + "/demo?mode=admin&tab=appointments&view=list", { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "查看陳小晴（示範）的預約", exact: true }).filter({ visible: true }).first().click();
+    await page.getByRole("button", { name: "標記未到診", exact: true }).click();
+    await page.getByRole("button", { name: "確認標記未到診", exact: true }).click();
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    await page.getByRole("link", { name: "營運分析", exact: true }).filter({ visible: true }).first().click();
+    await page.getByRole("button", { name: "近 7 天", exact: true }).click();
+    await metric("總預約").getByText("8", { exact: true }).waitFor();
+    await metric("未到").getByText("2", { exact: true }).waitFor();
+    await metric("未到率").getByText("33.3%", { exact: true }).waitFor();
+    await metric("回訪率").getByText("66.7%", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "近 90 天", exact: true }).click();
+    await metric("總預約").getByText("16", { exact: true }).waitFor();
+    await metric("未到").getByText("3", { exact: true }).waitFor();
+    await page.screenshot({ path: `${dir}/analytics-updated.png`, fullPage: true, animations: "disabled" });
+    await page.getByRole("navigation", { name: "分析分類" }).getByRole("link", { name: "看診統計", exact: true }).click();
+    await page.getByText(/平均看診 \d+(\.\d+)? 分鐘/).first().waitFor();
+    await page.getByRole("button", { name: "近 7 天", exact: true }).click();
+    await page.getByRole("article").filter({ has: page.getByRole("heading", { name: "林醫師（示範）", exact: true }) }).getByText("平均看診 20 分鐘", { exact: true }).waitFor();
+    await page.screenshot({ path: `${dir}/durations-updated.png`, fullPage: true, animations: "disabled" });
+    await intact(page, errors, network);
+  } finally { await page.close(); }
 });
 
 test("示範使用頁面捲動，篩選不跳回頂端；報到、搜尋與常用時段可完整操作", async () => {
@@ -162,7 +239,7 @@ test("院所後台各功能可載入，新增服務會反映到示範門面，�
       await page.locator(".cross-admin h1").waitFor();
       await page.waitForFunction(() => !document.querySelector('.cross-admin [aria-label="載入後台中…"]'));
       if (tab === "analytics") await page.getByRole("heading", { name: "預約來源", exact: true }).waitFor();
-      if (tab === "stats") await page.getByText("平均看診 30 分鐘", { exact: false }).first().waitFor();
+      if (tab === "stats") await page.getByText(/平均看診 \d+(\.\d+)? 分鐘/).first().waitFor();
       if (tab === "queue") await page.getByRole("heading", { name: "林醫師（示範）", exact: true }).waitFor();
       if (tab === "patients") await page.getByRole("button", { name: "查看陳小晴（示範）的客戶檔案", exact: true }).first().waitFor();
       if (tab === "services") await page.getByText("初次肌膚諮詢", { exact: true }).waitFor();

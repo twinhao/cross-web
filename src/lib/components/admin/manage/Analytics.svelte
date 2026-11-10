@@ -1,5 +1,6 @@
 <script lang="ts">
   import AdminSkeleton from "../layout/AdminSkeleton.svelte";
+  import { inDemoContext } from "#lib/demo/context.ts";
   import * as Card from "#lib/components/ui/card/index.ts";
 
   import { adminClinicsApi } from "#lib/api/admin/clinics.ts";
@@ -26,6 +27,7 @@
     data = $state<FacilityAnalytics | null>(null),
     visitor = $state<VisitorCount | null>(null),
     doctors = $state<DoctorDurations | null>(null);
+  const demo = inDemoContext();
   const accessible = $derived(
     canAccessFeature(facility, stats ? "advanced_queue" : "analytics"),
   );
@@ -86,6 +88,7 @@
 </script>
 
 <div class="space-y-5">
+  {#if demo}<p class="text-sm text-muted-foreground">以下為虛構示範紀錄，會依日期範圍與本次操作更新。</p>{/if}
   <div class="flex flex-wrap gap-2" aria-label="分析日期範圍">
     {#each [7, 30, 90] as days (days)}<Button
         variant={range === days ? "default" : "outline"}

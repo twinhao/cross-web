@@ -13,6 +13,7 @@
   import ClinicDetailView from "#lib/components/clinic-detail/ClinicDetailView.svelte";
   import BookingFlow from "#lib/components/booking/BookingFlow.svelte";
   import Workspace from "#lib/components/admin/workspace/Workspace.svelte";
+  import DemoBoard from "#lib/components/demo/DemoBoard.svelte";
   import Seo from "#lib/components/Seo.svelte";
   import ThemeToggle from "#lib/components/ThemeToggle.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
@@ -24,7 +25,7 @@
   const auth = setAuth();
   auth.isLoading = false;
   const session = getDemoSession();
-  const view = $derived(["clinic", "booking", "admin", "success"].includes(page.url.searchParams.get("mode") ?? "") ? page.url.searchParams.get("mode")! : "clinic");
+  const view = $derived(["clinic", "booking", "admin", "board", "success"].includes(page.url.searchParams.get("mode") ?? "") ? page.url.searchParams.get("mode")! : "clinic");
   let revision = $state(0), resetOpen = $state(false), helpOpen = $state(false);
   let demoHeader: HTMLElement;
   let headerHeight = $state(128);
@@ -47,7 +48,7 @@
   let bookingResult = $state.raw<BookingPageResult | null>(null);
   let loadError = $state("");
   const receipt = $derived(view === "success" ? session.booking(page.url.searchParams.get("booking") ?? "") : null);
-  const tabs = [{ view: "clinic", label: "院所門面", href: "/demo" }, { view: "booking", label: "民眾預約", href: "/demo?mode=booking" }, { view: "admin", label: "院所後台", href: "/demo?mode=admin&tab=today" }];
+  const tabs = [{ view: "clinic", label: "院所門面", short: "門面", href: "/demo" }, { view: "booking", label: "民眾預約", short: "預約", href: "/demo?mode=booking" }, { view: "admin", label: "院所後台", short: "後台", href: "/demo?mode=admin&tab=today" }, { view: "board", label: "候診看板", short: "看板", href: "/demo?mode=board" }];
   $effect(() => {
     auth.user = demoUser(session.snapshot().facility, view === "admin");
   });
@@ -74,6 +75,7 @@
       destination = `/demo?${params}`;
     } else if (target.pathname === `/clinic/${DEMO_ID}`) destination = "/demo";
     else if (target.pathname === `/booking/${DEMO_ID}`) destination = "/demo?mode=booking";
+    else if (target.pathname === `/display/${DEMO_ID}`) destination = "/demo?mode=board";
     if (destination) { navigation.cancel(); void goto(destination); }
   });
   function reset() { session.reset(); resetDemoFavorites(); revision++; resetOpen = false; void goto("/demo"); }
@@ -85,16 +87,18 @@
     <div class="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-2 gap-y-2">
       <div class="flex min-w-0 items-center gap-2"><a href="/" aria-label="離開示範，回 Cross 首頁" class="inline-flex min-h-11 items-center gap-2 font-semibold"><ArrowLeft class="size-4" /><span class="hidden min-[360px]:inline">Cross</span></a><span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">虛構示範</span></div>
       <div class="flex items-center gap-1"><Button variant="ghost" size="icon" class="size-11" aria-label="示範說明" onclick={() => helpOpen = true}><CircleHelp class="size-4" /></Button><ThemeToggle /><Button variant="ghost" size="sm" class="min-h-11 min-w-11 px-2 sm:px-3" aria-label="重置" onclick={() => resetOpen = true}><RotateCcw class="size-4" /><span class="hidden sm:inline">重置</span></Button></div>
-      <nav aria-label="切換示範視角" class="order-3 grid w-full grid-cols-3 gap-1 rounded-xl bg-muted p-1 sm:order-none sm:w-auto sm:min-w-80">
-        {#each tabs as tab (tab.view)}<a href={tab.href} aria-current={view === tab.view || view === "success" && tab.view === "booking" ? "page" : undefined} class="flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors aria-[current=page]:bg-card aria-[current=page]:text-primary aria-[current=page]:shadow-sm">{tab.label}</a>{/each}
+      <nav aria-label="切換示範視角" class="order-3 grid w-full grid-cols-4 gap-1 rounded-xl bg-muted p-1 sm:order-none sm:w-auto sm:min-w-80">
+        {#each tabs as tab (tab.view)}<a href={tab.href} aria-label={tab.label} aria-current={view === tab.view || view === "success" && tab.view === "booking" ? "page" : undefined} class="flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors aria-[current=page]:bg-card aria-[current=page]:text-primary aria-[current=page]:shadow-sm"><span class="sm:hidden">{tab.short}</span><span class="hidden sm:inline">{tab.label}</span></a>{/each}
       </nav>
     </div>
-    <p class="mx-auto mt-1 max-w-screen-2xl text-[11px] leading-5 text-muted-foreground">虛構院所與 AI 人像・不收費、不通知，請勿輸入真實個資。</p>
+    <p class="mx-auto mt-1 max-w-screen-2xl text-[11px] leading-5 text-muted-foreground">虛構示範・不收費、不通知，請勿填真實個資。</p>
   </header>
   <div class="demo-scroll relative">
     {#key revision}
       {#if view === "admin"}
         <Workspace name="clinic" facilityId={DEMO_ID} />
+      {:else if view === "board"}
+        <DemoBoard />
       {:else if view === "booking" && bookingResult?.kind === "ok"}
         <main><BookingFlow clinicId={DEMO_ID} clinicConfig={bookingResult.clinicConfig} services={bookingResult.services} doctors={bookingResult.doctors} paymentType={bookingResult.paymentType} /></main>
       {:else if view === "booking" && bookingResult?.kind === "error"}

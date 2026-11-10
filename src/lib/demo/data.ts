@@ -1,9 +1,10 @@
 import { DEMO_CLINIC_ID } from "../clinic-discovery.ts";
-import type { MedicalFacility } from "../types/clinic.ts";
+import type { ApiPatientTimelineEvent, MedicalFacility } from "../types/clinic.ts";
 import type { User } from "../types/auth.ts";
 
 export const DEMO_ID = DEMO_CLINIC_ID;
 export type DemoRow = { id: string; [key: string]: unknown };
+export type DemoAppointment = DemoRow & { events: ApiPatientTimelineEvent[] };
 export const imageCredits = [
   { id: "17640379", caption: "暖白接待與休憩空間（素材示意）", author: "Rasul Abdurahimov", page: "https://www.pexels.com/photo/white-couch-and-sofas-in-room-17640379/" },
   { id: "17640381", caption: "自然採光與綠意等候區（素材示意）", author: "Rasul Abdurahimov", page: "https://www.pexels.com/photo/waiting-room-in-spa-17640381/" },
@@ -40,17 +41,43 @@ export function createDemoData() {
     schedules.push({ id: `shift-${day}-${person.id}-${session}`, staff_id: person.id, staff_name: person.name, facility_id: DEMO_ID, schedule_date: demoDay(day), session, start_time: start, end_time: end, max_patients: 1, is_available: true });
   }
   const patients: DemoRow[] = ["陳小晴", "林小宇", "王小安"].map((name, i) => ({ id: `demo-patient-${i}`, name: `${name}（示範）`, phone: "0900000000", gender: i === 1 ? "M" : "F", birth_date: "1995-01-01", national_id_last4: "0000", is_active: true, address: "虛構地址", medical_history: "示範資料", allergy_info: "示範資料", emergency_contact: "示範聯絡人", member_linked: false, preferred_staff_id: null, preferred_staff_name: null, created_at: created }));
-  const appointments: DemoRow[] = ["confirmed", "checked_in", "in_progress", "completed"].map((status, i) => ({
+  const appointments: DemoAppointment[] = ["confirmed", "checked_in", "in_progress", "completed"].map((status, i) => ({
     id: `demo-appointment-${i}`, facility_id: DEMO_ID, patient_id: patients[i % 3].id, patient_name: patients[i % 3].name, patient_phone: "0900000000", patient_gender: "female", service_id: services[i % 3].id, service_name: services[i % 3].service_name,
     staff_id: staff[i % 2].id, staff_name: staff[i % 2].name, appointment_date: demoDay(), appointment_time: `${["10", "13", "14", "16"][i]}:00:00`, duration_minutes: services[i % 3].duration_minutes,
-    status, booking_method: "online", queue_number: i + 1, notes: "虛構示範預約", check_in_time: status === "checked_in" ? created : null, created_at: created, updated_at: null,
+    status, booking_method: "online", queue_number: i + 1, notes: "虛構示範預約", check_in_time: null, created_at: created, updated_at: null, events: [],
   }));
+  // 今日名單保留可操作的四種狀態；歷史紀錄只用於示範回訪、未到與日期篩選。
+  function seedEvents(row: DemoAppointment, started: number, wait: number, duration: number) {
+    const stamp = (minutes: number) => new Date(started + minutes * 60_000).toISOString();
+    row.check_in_time = stamp(-wait);
+    row.events = [{ from_status: "confirmed", to_status: "checked_in", reason: null, created_at: stamp(-wait) }];
+    if (["in_progress", "completed"].includes(String(row.status))) row.events.push({ from_status: "checked_in", to_status: "in_progress", reason: null, created_at: stamp(0) });
+    if (row.status === "completed") row.events.push({ from_status: "in_progress", to_status: "completed", reason: null, created_at: stamp(duration) });
+  }
+  seedEvents(appointments[1], Date.now(), 0, 0);
+  seedEvents(appointments[2], Date.now() - 5 * 60_000, 7, 0);
+  seedEvents(appointments[3], Date.now() - 45 * 60_000, 8, 30);
+  [-1, -2, -4, -6, -9, -14, -22, -29, -35, -45, -60, -89].forEach((offset, i) => {
+    const person = patients[i % 2], member = staff[i % 2], service = services[i % 3];
+    const status = i % 5 === 2 ? "no_show" : i % 5 === 3 ? "cancelled" : "completed";
+    const row: DemoAppointment = {
+      id: `demo-history-${i}`, facility_id: DEMO_ID, patient_id: person.id, patient_name: person.name, patient_phone: person.phone,
+      staff_id: member.id, staff_name: member.name, service_id: service.id, service_name: service.service_name, duration_minutes: service.duration_minutes,
+      appointment_date: demoDay(offset), appointment_time: `${i % 2 ? "15" : "10"}:00:00`, status,
+      booking_method: ["online", "phone", "walk_in"][i % 3], queue_number: 1, queue_deferred: false,
+      notes: "虛構歷史紀錄，僅供分析示範", created_at: `${demoDay(offset - 1)}T08:00:00+08:00`, check_in_time: null, updated_at: null, events: [],
+    };
+    if (status === "completed") seedEvents(row, Date.parse(`${row.appointment_date}T${row.appointment_time}+08:00`), 5 + i, 20 + i * 2);
+    else row.events.push({ from_status: "confirmed", to_status: status, reason: "虛構歷史紀錄", created_at: `${row.appointment_date}T18:00:00+08:00` });
+    appointments.push(row);
+  });
   return { facility, staff, services, schedules, patients, appointments,
     assignments: Object.fromEntries(staff.map(person => [person.id, services.map(service => service.id)])),
     leaves: [] as DemoRow[],
     photos: imageCredits.map(photo => ({ id: `photo-${photo.id}`, url: `/demo/interior-${photo.id}.jpg`, caption: photo.caption })), galleryRevision: 1,
     announcements: [{ id: "demo-welcome", title: "歡迎體驗完整預約流程", content: "這是虛構示範院所。您可完成示範預約，再切換至後台查看與操作；重新整理頁面即可重置，任何操作都不會發送通知。", is_active: true, created_at: created, updated_at: null }] as DemoRow[],
     favorites: [] as string[],
+    pageViewDays: [] as string[],
   };
 }
 export type DemoData = ReturnType<typeof createDemoData>;

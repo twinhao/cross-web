@@ -1,4 +1,6 @@
-import { createDemoData, DEMO_ID, demoDay, type DemoRow } from "./data.ts";
+import { createDemoData, DEMO_ID, demoDay, type DemoAppointment, type DemoRow } from "./data.ts";
+import { demoAnalytics, demoBoard, demoCurrentNumber, demoDurations, demoPatientStats, demoVisitors } from "./reporting.ts";
+import type { AppointmentStatus } from "../types/clinic.ts";
 import { FALLBACK_TAXONOMY } from "../api/service-categories.ts";
 import { schedulePresets, validSchedulePresets, SESSION_KEYS, type SchedulePresets } from "../schedule-presets.ts";
 
@@ -19,6 +21,14 @@ export function createDemoSession() {
   let presets = schedulePresets();
   const objectUrls = new Set<string>();
   const newId = () => `demo-${crypto.randomUUID()}`;
+  function transition(row: DemoAppointment, status: AppointmentStatus, reason: string | null = null, forceEvent = false) {
+    if (row.status === status && !forceEvent) return;
+    const created_at = new Date().toISOString();
+    row.events.push({ from_status: row.status as AppointmentStatus, to_status: status, reason, created_at });
+    row.status = status; row.updated_at = created_at;
+    if (status === "checked_in" && !row.check_in_time) row.check_in_time = created_at;
+    if (["completed", "cancelled", "no_show"].includes(status)) row.queue_deferred = false;
+  }
   function reset() { for (const url of objectUrls) URL.revokeObjectURL(url); objectUrls.clear(); state = createDemoData(); presets = schedulePresets(); }
   function upload(body: RequestInit["body"]) {
     const file = body instanceof FormData ? body.get("file") : null;
@@ -82,9 +92,9 @@ export function createDemoSession() {
       state.patients.push(patient);
     }
     patient ??= state.patients[0];
-    const row: DemoRow = { ...body, id: newId(), facility_id: DEMO_ID, staff_id: person.id, staff_name: person.name, service_id: service?.id ?? null, service_name: service?.service_name ?? null, duration_minutes: service?.duration_minutes ?? state.facility.slot_duration,
+    const row: DemoAppointment = { ...body, id: newId(), facility_id: DEMO_ID, staff_id: person.id, staff_name: person.name, service_id: service?.id ?? null, service_name: service?.service_name ?? null, duration_minutes: service?.duration_minutes ?? state.facility.slot_duration,
       patient_id: patient.id, patient_name: patient.name, patient_phone: patient.phone,
-      appointment_date: date, appointment_time: `${time}:00`, status: "confirmed", booking_method: online ? "online" : body.booking_method, queue_number: state.appointments.filter(a => a.appointment_date === date).length + 1, notes: body.notes ?? null, check_in_time: null, created_at: new Date().toISOString(), updated_at: null };
+      appointment_date: date, appointment_time: `${time}:00`, status: "confirmed", booking_method: online ? "online" : body.booking_method ?? "walk_in", queue_number: state.appointments.filter(a => a.appointment_date === date).length + 1, notes: body.notes ?? null, check_in_time: null, created_at: new Date().toISOString(), updated_at: null, events: [] };
     state.appointments.push(row); return online ? booking(row) : row;
   }
   function handle(endpoint: string, options: Options = {}): unknown {
@@ -102,9 +112,13 @@ export function createDemoSession() {
     }
     const publicBase = `/api/v1/booking/clinics/${DEMO_ID}`;
     if (path === "/api/v1/booking/clinics" && method === "GET") return [{ ...state.facility, logo: state.facility.logo_url, online_booking_enabled: true, members: state.staff }];
-    if (path === publicBase && method === "GET") return { ...state.facility, logo: state.facility.logo_url, online_booking_enabled: true, members: state.staff };
+    if (path === publicBase && method === "GET") {
+      if (!state.pageViewDays.includes(demoDay())) state.pageViewDays.push(demoDay());
+      return { ...state.facility, logo: state.facility.logo_url, online_booking_enabled: true, members: state.staff };
+    }
     if (path.startsWith(publicBase + "/")) {
       const suffix = path.slice(publicBase.length);
+      if (suffix === "/queue-board" && method === "GET") return demoBoard(state, url.searchParams.get("date") ?? demoDay());
       if (suffix === "/config" && method === "GET") return { ...state.facility, clinic_name: state.facility.name, logo: state.facility.logo_url, primary_color: "#315d50", online_booking_enabled: true };
       if (suffix === "/services" && method === "GET") return state.services.filter(row => row.is_active);
       if (suffix === "/doctors" && method === "GET") return state.staff.filter(row => row.is_active && row.is_public_visible).map(row => ({ ...row, specialties: row.main_specialties, avatar: row.avatar_url }));
@@ -174,12 +188,12 @@ export function createDemoSession() {
         return state.schedules.filter(row => (!url.searchParams.get("start_date") || text(row.schedule_date) >= url.searchParams.get("start_date")!) && (!url.searchParams.get("end_date") || text(row.schedule_date) <= url.searchParams.get("end_date")!));
       }
       if (resource === "patients") {
-        if (id) { const person = rows(state.patients, id, method, body) as DemoRow; const list = state.appointments.filter(a => a.patient_id === id); return { ...person, stats: { total: list.length, completed: list.filter(a => a.status === "completed").length, cancelled: 0, no_show: 0, upcoming: list.filter(live).length, no_show_rate: 0, first_visit: demoDay(), last_visit: demoDay(), top_staff_name: "林醫師（示範）" }, timeline: list.map(a => ({ ...a, appointment_id: a.id, events: [] })) }; }
+        if (id) { const person = rows(state.patients, id, method, body) as DemoRow; const list = state.appointments.filter(a => a.patient_id === id); return { ...person, stats: demoPatientStats(list), timeline: list.slice().sort((a, b) => `${b.appointment_date} ${b.appointment_time}`.localeCompare(`${a.appointment_date} ${a.appointment_time}`)).map(a => ({ ...a, appointment_id: a.id })) }; }
         const query = (url.searchParams.get("q") ?? "").trim().toLocaleLowerCase();
         const offset = Math.max(0, number(url.searchParams.get("offset")) || 0);
         const limit = Math.min(50, Math.max(1, number(url.searchParams.get("limit")) || 50));
         return state.patients.filter(person => (url.searchParams.get("include_inactive") === "true" || person.is_active) && (!query || [person.name, person.phone, person.national_id_last4].some(value => text(value).toLocaleLowerCase().includes(query))))
-          .slice(offset, offset + limit).map(person => ({ ...person, appointment_count: state.appointments.filter(a => a.patient_id === person.id).length, no_show_count: state.appointments.filter(a => a.patient_id === person.id && a.status === "no_show").length, last_visit_date: demoDay() }));
+          .slice(offset, offset + limit).map(person => { const stats = demoPatientStats(state.appointments.filter(a => a.patient_id === person.id)); return { ...person, appointment_count: stats.total, no_show_count: stats.no_show, last_visit_date: stats.last_visit }; });
       }
       if (resource === "appointments") {
         if (child) {
@@ -193,14 +207,29 @@ export function createDemoSession() {
             if (row.status !== "checked_in" && !(deferred && row.status === "in_progress")) throw new DemoError(409, "目前狀態無法處理過號或返回，請重新讀取名單");
             if (!!row.queue_deferred === deferred) return row;
             if (row.status !== body.expected_status) throw new DemoError(409, "此客戶的服務狀態已更新，請重新讀取名單後確認");
-            Object.assign(row, { queue_deferred: deferred, status: "checked_in" }); return row;
+            transition(row, "checked_in", deferred ? "過號暫停" : "已返回，依原號碼接續", true);
+            row.queue_deferred = deferred; return row;
           }
           if (!["confirmed", "checked_in"].includes(text(row.status))) throw new DemoError(409, "目前狀態無法報到，請先核對預約。");
-          if (row.status === "confirmed") Object.assign(row, { status: "checked_in", check_in_time: new Date().toISOString() });
+          if (row.status === "confirmed") transition(row, "checked_in");
           return row;
         }
         if (!id && method === "POST") return addAppointment(body, false);
-        if (id) return rows(state.appointments, id, method, body);
+        if (id) {
+          const row = state.appointments.find(a => a.id === id);
+          if (!row) throw new DemoError(404, "找不到示範預約。");
+          if (method === "PATCH") {
+            if (body.status != null) {
+              if (!["confirmed", "checked_in", "in_progress", "completed", "cancelled", "no_show"].includes(text(body.status))) throw new DemoError(422, "無效的預約狀態。");
+              transition(row, body.status as AppointmentStatus, body.status_reason ? text(body.status_reason) : null);
+            }
+            // 狀態事件由示範操作產生，表單不得覆蓋既有紀錄。
+            const { status, events, check_in_time, ...changes } = body;
+            void status; void events; void check_in_time;
+            return rows(state.appointments, id, method, changes);
+          }
+          return rows(state.appointments, id, method, body);
+        }
         const start = url.searchParams.get("start_date") ?? url.searchParams.get("date") ?? "0000", end = url.searchParams.get("end_date") ?? url.searchParams.get("date") ?? "9999";
         return state.appointments.filter(a => text(a.appointment_date) >= start && text(a.appointment_date) <= end);
       }
@@ -213,16 +242,16 @@ export function createDemoSession() {
           const waiting = group.filter(a => a.status === "checked_in" && !a.queue_deferred).sort((a, b) => (a.queue_number == null ? Infinity : number(a.queue_number)) - (b.queue_number == null ? Infinity : number(b.queue_number)) || text(a.appointment_time).localeCompare(text(b.appointment_time)))[0];
           if (!waiting) throw new DemoError(409, "目前沒有已報到的示範客人。");
           if (body.expected_appointment_id && body.expected_appointment_id !== waiting.id) throw new DemoError(409, "候診順序已更新，請重新整理後確認下一位客戶");
-          current.forEach(a => { a.status = "completed"; }); waiting.status = "in_progress";
+          current.forEach(a => transition(a, "completed")); transition(waiting, "in_progress");
           return { called: { id: waiting.id, queue_number: waiting.queue_number ?? null, patient_name: waiting.patient_name, appointment_time: text(waiting.appointment_time).slice(0, 5), status: waiting.status }, current_number: waiting.queue_number ?? null };
         }
-        return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: list.find(a => a.status === "in_progress")?.queue_number ?? null, waiting_count: list.filter(a => a.status === "checked_in" && !a.queue_deferred).length, appointments: list }; }) };
+        return { date, groups: state.staff.map(person => { const list = state.appointments.filter(a => a.staff_id === person.id && a.appointment_date === date); return { staff_id: person.id, staff_name: person.name, current_number: demoCurrentNumber(list), waiting_count: list.filter(a => a.status === "checked_in" && !a.queue_deferred).length, appointments: list }; }) };
       }
       if (resource === "analytics") {
-        const list = state.appointments, completed = list.filter(a => a.status === "completed").length;
-        if (id === "visitor-count") return { visitor_count: 126, page_view_count: 248 };
-        if (id === "doctor-durations") return { doctors: state.staff.map(person => ({ staff_id: person.id, staff_name: person.name, avg_consult_minutes: 30, avg_wait_minutes: 5, consult_count: completed, wait_count: completed })) };
-        return { start_date: url.searchParams.get("start_date") ?? demoDay(-30), end_date: url.searchParams.get("end_date") ?? demoDay(), total: list.length, confirmed: list.filter(a => a.status === "confirmed").length, completed, cancelled: list.filter(a => a.status === "cancelled").length, no_show: 0, no_show_rate: 0, unique_patients: state.patients.length, repeat_patient_rate: 0.25, trend: [{ period: demoDay(), count: list.length }], by_method: [{ method: "online", count: list.filter(a => a.booking_method === "online").length }], by_hour: [{ hour: 10, count: list.length }] };
+        if (method !== "GET") throw new DemoError(405, "分析僅提供讀取。");
+        if (id === "visitor-count") return demoVisitors(state, url.searchParams);
+        if (id === "doctor-durations") return demoDurations(state, url.searchParams);
+        if (!id) return demoAnalytics(state, url.searchParams);
       }
     }
     throw new DemoError(403, "此操作不提供示範；不會連線至正式資料或發送通知。請使用目前的示範功能或重置資料。");
