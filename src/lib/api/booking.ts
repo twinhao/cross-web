@@ -63,16 +63,4 @@ export const bookingApi = {
   getBooking: async (bookingId: string): Promise<BookingResponse> => {
     return api.get<BookingResponse>(`/api/v1/booking/appointments/${bookingId}`);
   },
-
-  sendOtp: async (phone: string): Promise<void> => {
-    return api.post("/api/v1/otp/send", { phone });
-  },
-
-  verifyOtp: async (phone: string, code: string): Promise<boolean> => {
-    const result = await api.post<{ verified: boolean }>("/api/v1/otp/verify", {
-      phone,
-      code,
-    });
-    return result.verified;
-  },
 };
