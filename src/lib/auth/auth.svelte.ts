@@ -3,6 +3,7 @@ import { goto } from "$app/navigation";
 import { authApi } from "#lib/api/auth.ts";
 import { memberApi } from "#lib/api/member.ts";
 import { onTokenExpired } from "#lib/auth/auth-events.ts";
+import { sessionExpiredLoginPath, shouldClearSession } from "#lib/auth/session.ts";
 import { canAccessAdmin, getAdminHomePath, isSystemAdmin } from "#lib/auth/roles.ts";
 import type { User } from "#lib/types/auth.ts";
 
@@ -34,7 +35,9 @@ export class Auth {
 	refreshUser = async (): Promise<void> => {
 		try {
 			this.user = await authApi.me();
-		} catch {
+		} catch (error) {
+			// 暫時性錯誤（斷線、5xx）保留憑證與目前登入狀態，下次載入再試
+			if (!shouldClearSession(error)) return;
 			this.user = null;
 			localStorage.removeItem("access_token");
 			localStorage.removeItem("refresh_token");
@@ -60,7 +63,7 @@ export class Auth {
 	confirmSessionExpired = () => {
 		this.showSessionExpiredDialog = false;
 		this.sessionExpiredMessage = "您的登入已過期，請重新登入";
-		goto("/admin/login");
+		goto(sessionExpiredLoginPath(window.location.pathname, window.location.search));
 
 		// 重置標記
 		setTimeout(() => {

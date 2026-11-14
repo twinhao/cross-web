@@ -9,6 +9,12 @@ const AUTH_ENDPOINTS = [
   "/api/v1/auth/login",
   "/api/v1/auth/register",
   "/api/v1/auth/refresh",
+  // 會員登入：401 代表登入失敗，不是既有工作階段過期
+  "/api/v1/member/google",
+  "/api/v1/member/apple",
+  "/api/v1/member/login",
+  "/api/v1/member/register",
+  "/api/v1/member/refresh",
 ];
 
 interface RequestOptions extends RequestInit {
