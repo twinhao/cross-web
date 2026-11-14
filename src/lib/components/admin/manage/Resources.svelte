@@ -18,6 +18,7 @@
   const formId = $props.id();
   let rows = $state<ApiResource[]>([]),
     loading = $state(true),
+    loadError = $state(""),
     error = $state(""),
     formError = $state(""),
     message = $state(""),
@@ -33,11 +34,11 @@
     void revision;
     let live = true;
     loading = true;
-    error = "";
+    loadError = "";
     adminClinicsApi.resources
       .list(id)
       .then((v) => { if (live) rows = v; })
-      .catch((e) => { if (live) error = apiMessage(e, "無法載入診間與設備"); })
+      .catch((e) => { if (live) loadError = apiMessage(e, "無法載入診間與設備"); })
       .finally(() => { if (live) loading = false; });
     return () => { live = false; };
   });
@@ -61,6 +62,8 @@
   async function run(action: () => Promise<unknown>, done: string, fail: string) {
     busy = true;
     formError = "";
+    error = "";
+    message = "";
     try {
       await action();
       editor = false;
@@ -104,9 +107,9 @@
     每間診間、每台儀器各建一筆，同一種類放在同一個分類（例如三間「治療室」）。在服務項目勾選需要的分類後，預約會自動分配當時有空的一台，同一台不會被重複預約。
   </p>
   {#if !canManage}<p class="text-sm text-muted-foreground">資料為唯讀，修改請洽院所管理員。</p>{/if}
-  <Feedback {error} {message} />
+  <Feedback error={loadError || error} {message} />
   {#if loading}<AdminSkeleton label="載入診間與設備中…" variant="list" />
-  {:else if !error}
+  {:else if !loadError}
     {#each groups as [group, items] (group)}
       <section class="rounded-2xl border bg-card">
         <h3 class="border-b px-5 py-3 text-sm font-semibold">{group}<span class="ml-2 font-normal text-muted-foreground">{items.filter((r) => r.is_active).length} 台可用</span></h3>

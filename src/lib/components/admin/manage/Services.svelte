@@ -273,13 +273,13 @@
         <Field.Legend variant="label" class="text-sm font-medium">需要的診間或設備</Field.Legend>
         {#if categories.length}
           <div class="flex flex-wrap gap-x-5 gap-y-2.5">
-            {#each [...new Set([...categories, ...needs])] as c (c)}
+            {#each [...new Set([...categories, ...needs])] as c, i (c)}
               <Field.Field orientation="horizontal" class="w-auto items-center gap-2">
                 <Checkbox
-                  id={`${formId}-need-${c}`}
+                  id={`${formId}-need-${i}`}
                   checked={needs.includes(c)}
                   onCheckedChange={(on) => (needs = on ? [...needs, c] : needs.filter((x) => x !== c))}
-                /><Field.Label for={`${formId}-need-${c}`} class="cursor-pointer text-sm font-normal">{c}{categories.includes(c) ? "" : "（已無可用）"}</Field.Label>
+                /><Field.Label for={`${formId}-need-${i}`} class="cursor-pointer text-sm font-normal">{c}{categories.includes(c) ? "" : "（已無可用）"}</Field.Label>
               </Field.Field>
             {/each}
           </div>

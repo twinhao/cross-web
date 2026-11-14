@@ -307,11 +307,11 @@
             >
               <Tabs.List
                 aria-label="院所設定分類"
-                class="grid w-full grid-cols-2 sm:inline-flex sm:w-fit"
+                class="grid w-full grid-cols-3 sm:inline-flex sm:w-fit"
               >
                 {#each settingsPanels as key (key)}<Tabs.Trigger
                     value={key}
-                    class="px-4 py-2"
+                    class="px-2 py-2 sm:px-4"
                   >
                     {PANEL_LABELS[key]}
                   </Tabs.Trigger>{/each}
