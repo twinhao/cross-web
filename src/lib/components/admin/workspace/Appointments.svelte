@@ -659,7 +659,7 @@
                           facility.slot_duration} 分鐘
                       </p>
                       <p class="mt-1 text-xs text-muted-foreground">
-                        {a.staff_name ?? "未指定人員"}
+                        {a.staff_name ?? "未指定人員"}{a.resource_names?.length ? ` · ${a.resource_names.join("、")}` : ""}
                       </p>
                     </Table.Cell><Table.Cell class="p-3">
                       <StatusPill status={a.status} deferred={a.queue_deferred} />

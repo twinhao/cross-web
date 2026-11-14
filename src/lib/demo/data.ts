@@ -74,6 +74,7 @@ export function createDemoData() {
   return { facility, staff, services, schedules, patients, appointments,
     assignments: Object.fromEntries(staff.map(person => [person.id, services.map(service => service.id)])),
     leaves: [] as DemoRow[],
+    resources: [] as DemoRow[],
     photos: imageCredits.map(photo => ({ id: `photo-${photo.id}`, url: `/demo/interior-${photo.id}.jpg`, caption: photo.caption })), galleryRevision: 1,
     announcements: [{ id: "demo-welcome", title: "歡迎體驗完整預約流程", content: "這是虛構示範院所。您可完成示範預約，再切換至後台查看與操作；重新整理頁面即可重置，任何操作都不會發送通知。", is_active: true, created_at: created, updated_at: null }] as DemoRow[],
     favorites: [] as string[],

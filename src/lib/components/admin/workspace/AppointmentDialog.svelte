@@ -198,6 +198,10 @@
                 <dt class="text-muted-foreground">服務人員</dt>
                 <dd class="mt-1">{appointment.staff_name ?? "未指定"}</dd>
               </div>
+              {#if appointment.resource_names?.length}<div>
+                <dt class="text-muted-foreground">診間與設備</dt>
+                <dd class="mt-1">{appointment.resource_names.join("、")}</dd>
+              </div>{/if}
               <div>
                 <dt class="text-muted-foreground">預約方式</dt>
                 <dd class="mt-1">

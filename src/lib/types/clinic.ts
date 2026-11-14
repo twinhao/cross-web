@@ -455,6 +455,10 @@ export interface ApiService {
   price: number;
   show_price?: boolean;
   duration_minutes: number;
+  /** 需要的診間／設備分類，每類占用一台 */
+  resource_categories?: string[];
+  /** 結束後清潔準備分鐘（只占用診間／設備） */
+  buffer_minutes?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string | null;
@@ -466,6 +470,16 @@ export interface ApiServiceCreate {
   price: number;
   show_price?: boolean;
   duration_minutes?: number;
+  resource_categories?: string[];
+  buffer_minutes?: number;
+}
+
+/** 院所的診間或設備；每個實體一筆，停用不刪除 */
+export interface ApiResource {
+  id: string;
+  name: string;
+  category: string;
+  is_active: boolean;
 }
 
 export interface ApiServiceUpdate {
@@ -474,6 +488,8 @@ export interface ApiServiceUpdate {
   price?: number;
   show_price?: boolean;
   duration_minutes?: number;
+  resource_categories?: string[];
+  buffer_minutes?: number;
   is_active?: boolean;
 }
 
@@ -507,6 +523,8 @@ export interface ApiAppointment {
   notes: string | null;
   queue_number: number | null; // 看診號（預約成立即取號；同診次隊列內遞增）
   queue_deferred?: boolean;
+  /** 分配到的診間／設備（成立時快照） */
+  resource_names?: string[];
   check_in_time: string | null; // 報到時間（ISO8601；未報到為 null）
   created_at: string;
   updated_at: string | null;

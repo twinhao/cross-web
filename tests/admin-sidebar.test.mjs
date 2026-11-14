@@ -243,7 +243,7 @@ test("設定子選單可直接切換，選取精確到子頁，收合圖示支�
     const nav=page.getByRole("navigation",{name:"後台主要導覽",exact:true});
     await nav.getByRole("button",{name:"展開院所設定",exact:true}).click();
     const children=nav.getByRole("list",{name:"院所設定子選單",exact:true});
-    assert.deepEqual((await children.getByRole("link").allTextContents()).map(text=>text.trim()),["基本資料","人員設定","服務項目","公告"]);
+    assert.deepEqual((await children.getByRole("link").allTextContents()).map(text=>text.trim()),["基本資料","人員設定","服務項目","診間與設備","公告"]);
     await children.getByRole("link",{name:"人員設定",exact:true}).click();await page.waitForURL("**tab=personnel**");
     assert.equal(await children.getByRole("link",{name:"人員設定",exact:true}).getAttribute("aria-current"),"page");
     assert.equal(await nav.locator('[aria-current="page"]').count(),1);

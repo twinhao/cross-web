@@ -30,6 +30,7 @@
   import ClinicPhotoManager from "../manage/ClinicPhotoManager.svelte";
   import Personnel from "../manage/Personnel.svelte";
   import Services from "../manage/Services.svelte";
+  import Resources from "../manage/Resources.svelte";
   import Announcements from "../manage/Announcements.svelte";
   import Analytics from "../manage/Analytics.svelte";
   import Subscription from "../manage/Subscription.svelte";
@@ -246,7 +247,7 @@
         </p>{/if}
       {#if loading && !facility}<AdminSkeleton
           label="正在載入院所工作區…"
-          variant={tab === "today" || tab === "analytics" ? "dashboard" : tab === "schedule" ? "calendar" : tab === "info" || tab === "subscription" ? "form" : tab === "personnel" || tab === "services" ? "cards" : "list"}
+          variant={tab === "today" || tab === "analytics" ? "dashboard" : tab === "schedule" ? "calendar" : tab === "info" || tab === "subscription" ? "form" : tab === "personnel" || tab === "services" || tab === "resources" ? "cards" : "list"}
         />
       {:else if facility}
         {#if subscriptionIssue && tab !== "subscription" && !pageHasSubscriptionGate}<p
@@ -357,6 +358,8 @@
                 {:else}{#key tab}{#if tab === "personnel"}<Personnel
                         {facilityId}
                       />{:else if tab === "services"}<Services
+                        {facilityId}
+                      />{:else if tab === "resources"}<Resources
                         {facilityId}
                       />{:else if tab === "announcements" && canManageGallery}<Announcements
                         {facilityId}

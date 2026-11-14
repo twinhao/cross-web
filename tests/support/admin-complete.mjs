@@ -32,6 +32,7 @@ export async function setupComplete(browser,origin,{role='superadmin',width=1440
   if(/^\/staff\/[^/]+\/services/.test(suffix)){if(method==='POST'){state.links.push(body.service_id);return json({service_id:body.service_id});}if(method==='DELETE'){state.links=state.links.filter(x=>x!==suffix.split('/').at(-1));return json({});}return json(state.links.map(id=>({service_id:id})));}
   if(/^\/staff\/[^/]+\/leaves/.test(suffix)){if(method==='POST'){state.leaves.push({...body,id:'leave-new'});return json(state.leaves.at(-1));}if(method==='DELETE')state.leaves=[];return json(state.leaves);}
   if(suffix.startsWith('/staff/')){const id=suffix.split('/')[2],s=state.staff.find(x=>x.id===id);if(suffix.endsWith('/avatar'))s.avatar_url='/cross-icon.png';if(method==='PATCH')Object.assign(s,body);if(method==='DELETE')state.staff=state.staff.filter(x=>x.id!==id);return json(s);}
+  if(suffix==='/resources')return json([]);
   if(suffix==='/services'){if(method==='POST'){state.services.push({...body,id:'service-new',is_active:true});return json(state.services.at(-1));}return json(state.services);}
   if(suffix.startsWith('/services/')){const id=suffix.split('/').at(-1),s=state.services.find(x=>x.id===id);if(method==='PATCH')Object.assign(s,body);if(method==='DELETE')state.services=state.services.filter(x=>x.id!==id);return json(s);}
   if(suffix==='/announcements'){if(method==='POST'){state.announcements.push({...body,id:'ann-new',is_active:true,created_at:'2026-10-23'});return json(state.announcements.at(-1));}return json(state.announcements);}

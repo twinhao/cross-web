@@ -17,6 +17,7 @@
   import { apiMessage } from "#lib/admin/scheduling.ts";
   import { clinicHref } from "#lib/admin/workspace.ts";
   import type { ApiService } from "#lib/types/clinic.ts";
+  import { Badge } from "#lib/components/ui/badge/index.ts";
   let { facilityId }: { facilityId: string } = $props();
   let rows = $state<ApiService[]>([]),
     loading = $state(true),
@@ -33,7 +34,22 @@
     price = $state<number | undefined>(0),
     showPrice = $state(true),
     duration = $state<number | undefined>(30),
-    active = $state(true);
+    active = $state(true),
+    needs = $state<string[]>([]),
+    buffer = $state<number | undefined>(0),
+    // 可選的診間／設備分類（只列啟用中的）；載入失敗不影響服務設定
+    categories = $state<string[]>([]);
+  $effect(() => {
+    void revision;
+    adminClinicsApi.resources
+      .list(facilityId)
+      .then((v) => (categories = [...new Set(v.filter((r) => r.is_active).map((r) => r.category))]))
+      .catch(() => (categories = []));
+  });
+  const needLabel = (s: ApiService) =>
+    s.resource_categories?.length
+      ? `需要 ${s.resource_categories.join("、")}${s.buffer_minutes ? `，結束後清潔 ${s.buffer_minutes} 分鐘` : ""}`
+      : "";
   $effect(() => {
     const id = facilityId,
       r = revision;
@@ -64,6 +80,8 @@
     showPrice = s?.show_price ?? true;
     duration = s?.duration_minutes ?? 30;
     active = s?.is_active ?? true;
+    needs = [...(s?.resource_categories ?? [])];
+    buffer = s?.buffer_minutes ?? 0;
     formError = "";
     editor = true;
   }
@@ -78,6 +96,8 @@
         price: price ?? 0,
         show_price: showPrice,
         duration_minutes: duration ?? 30,
+        resource_categories: needs,
+        buffer_minutes: needs.length ? (buffer ?? 0) : 0,
       };
       if (selected)
         await adminClinicsApi.services.update(facilityId, selected.id, {
@@ -141,6 +161,7 @@
                 ? "不公開價格"
                 : `NT$ ${Number(s.price).toLocaleString("zh-TW")}`}
             </p>
+            {#if needLabel(s)}<Badge variant="secondary" class="mt-2">{needLabel(s)}</Badge>{/if}
             <p class="mt-2 whitespace-pre-wrap text-sm">{s.description}</p>
           </div>
           {#if canManage}<div class="flex gap-2">
@@ -248,6 +269,29 @@
           />
         </Field.Field>
       </div>
+      <Field.Set class="gap-3 rounded-xl border border-border p-4">
+        <Field.Legend variant="label" class="text-sm font-medium">需要的診間或設備</Field.Legend>
+        {#if categories.length}
+          <div class="flex flex-wrap gap-x-5 gap-y-2.5">
+            {#each [...new Set([...categories, ...needs])] as c (c)}
+              <Field.Field orientation="horizontal" class="w-auto items-center gap-2">
+                <Checkbox
+                  id={`${formId}-need-${c}`}
+                  checked={needs.includes(c)}
+                  onCheckedChange={(on) => (needs = on ? [...needs, c] : needs.filter((x) => x !== c))}
+                /><Field.Label for={`${formId}-need-${c}`} class="cursor-pointer text-sm font-normal">{c}{categories.includes(c) ? "" : "（已無可用）"}</Field.Label>
+              </Field.Field>
+            {/each}
+          </div>
+          {#if needs.length}<Field.Field class="gap-2">
+            <Field.Label for={`${formId}-buffer`} class="text-sm font-medium">結束後清潔準備（分鐘）</Field.Label>
+            <Input id={`${formId}-buffer`} type="number" min="0" max="240" step="5" bind:value={buffer} aria-describedby={`${formId}-buffer-hint`} />
+            <p id={`${formId}-buffer-hint`} class="text-xs leading-6 text-muted-foreground">只占用診間或設備，不占用人員時間。</p>
+          </Field.Field>{/if}
+        {:else}
+          <p class="text-xs leading-6 text-muted-foreground">只需人員的服務不必設定。療程需要固定診間或儀器時，先到「<a class="underline underline-offset-4" href={clinicHref(facilityId, "resources")}>診間與設備</a>」建立。</p>
+        {/if}
+      </Field.Set>
       {#if selected}<Field.Field
           orientation="horizontal"
           class="items-center gap-2.5"

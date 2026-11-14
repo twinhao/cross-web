@@ -9,6 +9,7 @@ import type {
   ApiStaff,
   ApiStaffCreate,
   ApiStaffUpdate,
+  ApiResource,
   ApiService,
   ApiServiceCreate,
   ApiServiceUpdate,
@@ -198,6 +199,17 @@ export const adminClinicsApi = {
 
     delete: (facilityId: string, serviceId: string) =>
       api.delete<void>(`${BASE_PATH}/${facilityId}/services/${serviceId}`),
+  },
+
+  // ========== 診間與設備 ==========
+
+  resources: {
+    list: (facilityId: string) =>
+      api.get<ApiResource[]>(`${BASE_PATH}/${facilityId}/resources`),
+    create: (facilityId: string, data: { name: string; category: string }) =>
+      api.post<ApiResource>(`${BASE_PATH}/${facilityId}/resources`, data),
+    update: (facilityId: string, resourceId: string, data: Partial<Pick<ApiResource, "name" | "category" | "is_active">>) =>
+      api.patch<ApiResource>(`${BASE_PATH}/${facilityId}/resources/${resourceId}`, data),
   },
 
   // ========== 預約 ==========

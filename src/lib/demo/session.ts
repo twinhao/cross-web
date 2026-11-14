@@ -180,6 +180,7 @@ export function createDemoSession() {
       if (resource === "staff" && id && child === "schedules") return method === "GET" && !childId ? state.schedules.filter(row => row.staff_id === id) : rows(state.schedules, childId, method, { ...body, staff_id: id, staff_name: state.staff.find(row => row.id === id)?.name }, { is_available: true });
       if (resource === "staff") return rows(state.staff, id, method, body, { is_active: true, is_public_visible: true, is_bookable: true });
       if (resource === "services") return rows(state.services, id, method, body, { is_active: true, show_price: true });
+      if (resource === "resources") return rows(state.resources, id, method, body, { is_active: true });
       if (resource === "announcements") return rows(state.announcements, id, method, body, { is_active: true });
       if (resource === "staff-leaves") return state.leaves;
       if (resource === "schedules" && id === "batch" && method === "POST") { const created = (body.items as Record<string, unknown>[]).map(item => rows(state.schedules, undefined, "POST", item, { is_available: true })); return { created, created_count: created.length, skipped_existing: 0, skipped_leave: 0, skipped_invalid: 0 }; }
