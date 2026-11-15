@@ -324,17 +324,6 @@
       >
         <ArrowRight class="size-4" />
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        class={workbench ? "inline-flex" : "sm:hidden"}
-        aria-expanded={showFilters}
-        onclick={() => (showFilters = !showFilters)}
-      >
-        {showFilters ? "收合篩選" : "更多篩選"}{filterCount
-          ? `（${filterCount}）`
-          : ""}
-      </Button>
       <div class="w-full sm:ml-auto sm:w-auto">
         <Tabs.List
           aria-label="預約檢視方式"
@@ -354,10 +343,10 @@
     <div
       class={workbench
         ? "grid grid-cols-[minmax(0,1fr)_auto] gap-3"
-        : "grid gap-3 sm:grid-cols-2 xl:grid-cols-3"}
+        : "grid grid-cols-[minmax(0,1fr)_auto] gap-3 sm:grid-cols-2 xl:grid-cols-3"}
     >
       <div class="space-y-1">
-        <Field.Label for="appointments-search" class="text-sm">
+        <Field.Label for="appointments-search" class={workbench ? "text-sm" : "sr-only text-sm sm:not-sr-only"}>
           搜尋客戶
         </Field.Label><Input
           id="appointments-search"
@@ -365,7 +354,9 @@
           placeholder="姓名或電話"
         />
       </div>
-      {#if workbench}<div class="flex items-end sm:justify-end"><Button variant="outline" aria-expanded={showFilters} onclick={() => showFilters = !showFilters}>{showFilters ? "收合篩選" : "更多篩選"}{filterCount ? `（${filterCount}）` : ""}</Button></div>{:else}<div class="space-y-1">
+      {#if workbench}<div class="flex items-end sm:justify-end"><Button variant="outline" aria-expanded={showFilters} onclick={() => showFilters = !showFilters}>{showFilters ? "收合篩選" : "更多篩選"}{filterCount ? `（${filterCount}）` : ""}</Button></div>{:else}<div class="flex items-end sm:hidden"><Button variant="outline" aria-expanded={showFilters} onclick={() => (showFilters = !showFilters)}>{showFilters ? "收合篩選" : "更多篩選"}{filterCount ? `（${filterCount}）` : ""}</Button></div>
+      <!-- 手機平常用上方的今天／前後一日切換，日期欄收進更多篩選 -->
+      <div class={showFilters ? "col-span-2 space-y-1 sm:col-span-1" : "hidden space-y-1 sm:block"}>
         <Field.Label for="appointments-start" class="text-sm">
           {view === "week" ? "起始日期" : "日期"}
         </Field.Label><DateInput
@@ -383,10 +374,8 @@
       {/if}
       {#if view === "list" && !workbench}<div
           class={showFilters
-            ? "space-y-1"
-            : workbench
-              ? "hidden"
-              : "hidden space-y-1 sm:block"}
+            ? "col-span-2 space-y-1 sm:col-span-1"
+            : "hidden space-y-1 sm:block"}
         >
           <Field.Label for="appointments-end" class="text-sm">
             結束日期
@@ -402,7 +391,7 @@
         </div>{/if}
       <div
         class={showFilters
-          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "col-span-2 space-y-1 sm:col-span-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
@@ -426,7 +415,7 @@
       </div>
       <div
         class={showFilters
-          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "col-span-2 space-y-1 sm:col-span-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
@@ -450,7 +439,7 @@
       </div>
       <div
         class={showFilters
-          ? workbench ? "col-span-2 space-y-1" : "space-y-1"
+          ? workbench ? "col-span-2 space-y-1" : "col-span-2 space-y-1 sm:col-span-1"
           : workbench
             ? "hidden"
             : "hidden space-y-1 sm:block"}
