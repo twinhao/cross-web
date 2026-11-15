@@ -23,7 +23,7 @@ Cross Web 使用 SvelteKit 3.1 / Svelte 5，UI 一律繁體中文。正式網址
 
 ## 開發與驗證
 
-- Node 22.17 以上或 24；pnpm 10.34.5。
+- Node 22.18 以上（本機使用 26）；pnpm 12.21.0。
 - `pnpm dev`，預設 http://localhost:5173。
 - `pnpm check`、`pnpm lint`、`pnpm build`、`pnpm test`。瀏覽器測試前先建置，允許本機測試伺服器與無頭 Chrome；測試會拒絕過期產物。
 - `pnpm preview`。唯讀正式 API 驗收需明確覆寫本機的 `BACKEND_URL`，不可拿 `.env.local` 的本機後端結果當正式資料。

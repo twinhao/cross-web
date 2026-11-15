@@ -45,7 +45,7 @@ export function buildProblem() {
 
 /** 對建置產物啟動 vite preview，回傳 { origin, stop } */
 export async function startPreview(port) {
-  const server = spawn("pnpm", ["exec", "vite", "preview", "--port", String(port), "--strictPort"], {
+  const server = spawn("node_modules/.bin/vite", ["preview", "--port", String(port), "--strictPort"], {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   });
