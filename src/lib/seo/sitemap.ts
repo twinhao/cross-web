@@ -1,7 +1,6 @@
 // sitemap.xml 與 robots.txt 的內容（移植自舊 Next 的 app/sitemap.ts、app/robots.ts）。
 // 序列化照 Next 16.4.0 的 resolveSitemap / resolveRobots（next/dist/build/webpack/loaders/metadata/resolve-route-data.js），
 // 輸出與舊版逐位元組相同。純 TS 模組：node --test 直接 import，內部一律相對路徑。
-import { developerDocuments } from "../developers.ts";
 import { categoriesWithCounts, citiesWithCounts, type LandingClinic } from "./landing-data.ts";
 
 const SITE = "https://cross.twinhao.com";
@@ -15,17 +14,10 @@ export interface SitemapEntry {
   priority: number;
 }
 
-/** 靜態頁（首頁、開發者文件、搜尋、落地頁索引、方案、加入、法律頁），順序同舊版 */
+/** 靜態頁（首頁、搜尋、落地頁索引、方案、加入、法律頁），順序同舊版 */
 export function staticSitemapEntries(now: Date): SitemapEntry[] {
   return [
     { url: `${SITE}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: `${SITE}/developers`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    ...developerDocuments.map(({ slug }) => ({
-      url: `${SITE}/developers/docs/${slug}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })),
     { url: `${SITE}/search`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE}/area`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE}/specialty`, lastModified: now, changeFrequency: "daily", priority: 0.8 },

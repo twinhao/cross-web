@@ -250,40 +250,5 @@
       "auth": false,
       "expectStatus": 404
     }
-  ],
-  "developers": [
-    {
-      "path": "/developers",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/quickstart",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/api",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/ecg",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/app-integration",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/vendor-onboarding",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/roadmap",
-      "auth": false
-    },
-    {
-      "path": "/developers/docs/not-found",
-      "auth": false,
-      "expectStatus": 404
-    }
   ]
 }

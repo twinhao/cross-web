@@ -42,7 +42,6 @@
 				},
 				{ label: "服務條款", href: "/terms" },
 				{ label: "退款政策", href: "/refund" },
-				{ label: "開發者文件", href: "/developers" },
 			],
 		},
 	];

@@ -122,7 +122,7 @@ test('院所帳號在掛載前擋下系統管理頁及其他院所，沒有發�
   } finally { await page.close(); }
 });
 
-test('Svelte 看板只呈現遮罩姓名；Svelte 文件 SSR、內頁導覽及未知 slug 正常', async () => {
+test('Svelte 看板只呈現遮罩姓名；已下架的開發者文件回 404', async () => {
   const { page, errors } = await setup({ authenticated: false });
   try {
     await page.goto(`${preview.origin}/display/${id}`);
@@ -130,24 +130,10 @@ test('Svelte 看板只呈現遮罩姓名；Svelte 文件 SSR、內頁導覽及�
     assert.equal(await page.title(), '候診叫號看板 | Cross');
     assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, nofollow');
     assert.doesNotMatch(await page.locator('body').innerText(), /王志明/);
-    const response = await fetch(preview.origin + '/developers/docs/quickstart');
-    const html = await response.text();
-    assert.equal(response.status, 200);
-    assert.match(html, /developer-document/);
-    assert.match(html, /<h1/);
-    assert.match(html, /<title>快速開始 · 開發者 \| Cross<\/title>/);
-    const missing = await fetch(preview.origin + '/developers/docs/not-found');
+    const missing = await fetch(preview.origin + '/developers');
     assert.equal(missing.status, 404);
-    const missingHtml = await missing.text();
-    assert.match(missingHtml, /<title>404: This page could not be found.<\/title>/);
-    assert.match(missingHtml, /#organization/);
-    await page.goto(preview.origin + '/developers');
-    await page.getByRole('link', { name: /快速開始/ }).first().click();
-    await page.waitForURL('**/developers/docs/quickstart');
-    await page.locator('article').waitFor();
-    assert.equal(await page.title(), '快速開始 · 開發者 | Cross');
     await page.setViewportSize({ width: 390, height: 844 });
-    for (const path of ['/developers', '/admin/login']) {
+    for (const path of ['/admin/login']) {
       await page.goto(preview.origin + path);
       await page.waitForLoadState('networkidle');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, path);

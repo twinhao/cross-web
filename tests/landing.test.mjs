@@ -376,8 +376,8 @@ test("sitemap.xml：與 3100 基準逐位元組相同（同一個產生時間）
 test("sitemap.xml：院所、縣市（編碼）、科別依舊版順序與欄位", async (t) => {
   const { body } = await getSitemap(t, MANY);
   const locs = [...body.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
-  assert.equal(locs.length, 16 + 5 + 2 + 4);
-  assert.deepEqual(locs.slice(16), [
+  assert.equal(locs.length, 9 + 5 + 2 + 4);
+  assert.deepEqual(locs.slice(9), [
     ...["t1", "t2", "t3", "k1", "n1"].map((id) => `https://cross.twinhao.com/clinic/${id}`),
     `https://cross.twinhao.com/area/${encodeURIComponent("臺北市")}`,
     `https://cross.twinhao.com/area/${ENC_KAOHSIUNG}`,
@@ -393,12 +393,12 @@ test("sitemap.xml：院所、縣市（編碼）、科別依舊版順序與欄位
   assert.match(body, /<loc>https:\/\/cross\.twinhao\.com\/specialty\/dentistry<\/loc>\n<lastmod>[^<]+<\/lastmod>\n<changefreq>weekly<\/changefreq>\n<priority>0\.7<\/priority>/);
 });
 
-test("sitemap.xml：沒有院所資料（後端失敗）→ 只輸出 16 個靜態頁並 console.warn，仍回 200", async (t) => {
+test("sitemap.xml：沒有院所資料（後端失敗）→ 只輸出 9 個靜態頁並 console.warn，仍回 200", async (t) => {
   const warn = t.mock.method(console, "warn", () => {});
   const { res, body } = await getSitemap(t, [], { clinicsStatus: 503 });
   assert.equal(res.status, 200);
   const baseline = readFileSync(new URL("./support/landing/sitemap-3100.xml", import.meta.url), "utf8");
-  // 基準的前 16 筆（靜態頁）原封不動，後面沒有任何動態頁
+  // 基準的前 9 筆（靜態頁）原封不動，後面沒有任何動態頁
   const staticPart = baseline.slice(0, baseline.indexOf("<url>\n<loc>https://cross.twinhao.com/clinic/"));
   assert.equal(body, `${staticPart}</urlset>\n`);
   assert.equal(warn.mock.callCount(), 1);

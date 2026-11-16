@@ -146,28 +146,6 @@ test("只給 openGraph：og:description 退回頁面描述，twitter 維持全�
   );
 });
 
-test("openGraph 只給 title、url（舊版 /developers、/developers/docs/[slug]）", () => {
-  const description =
-    "用 Cross 的本機沙盒、OpenAPI 與 Python／JavaScript 範例，完成心率與合成 ECG 的第一條資料流程。";
-  assert.deepEqual(
-    headLines({
-      title: "開發者入口",
-      description,
-      canonical: "/developers",
-      openGraph: { title: "Cross 開發者入口", url: "/developers" },
-    }),
-    lines(`
-      title=開發者入口 | Cross
-      description=${description}
-      ${ROOT_KEYWORDS}${ROBOTS}
-      canonical=https://cross.twinhao.com/developers
-      og:title=Cross 開發者入口
-      og:description=${description}
-      og:url=https://cross.twinhao.com/developers
-      ${ROOT_TWITTER.trim()}`),
-  );
-});
-
 test("覆寫 keywords（舊版 /area/[city]、/specialty/[code]）", () => {
   const city = "高雄市";
   const path = `/area/${encodeURIComponent(city)}`;

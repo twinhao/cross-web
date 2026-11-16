@@ -2,19 +2,19 @@
 
 ## 產品主軸
 
-Cross 以「線上預約與院所營運管理」為核心，優先完成醫美院所的諮詢與療程預約導入及付費驗證。民眾找院所／預約與院所導入是主要入口；開發者文件、設備與 API 為次要擴充，不可將預約描述為參考應用或附加能力。
+Cross 以「線上預約與院所營運管理」為核心，優先完成醫美院所的諮詢與療程預約導入及付費驗證。民眾找院所／預約與院所導入是主要入口。開發者文件（`/developers`）與設備沙盒已於 2026-11-16 下架，不要重新加入。
 
 ## 目前架構（2026-10-25）
 
 Cross Web 使用 SvelteKit 3.1 / Svelte 5，UI 一律繁體中文。正式網址 https://cross.twinhao.com，發布紀錄位於上層 `docs/deployment-sveltekit-2026-10-23.md`。
 
 - 路由：`src/routes/`；共用程式、型別、元件：`src/lib/`，匯入採用 `package.json` 的 `#lib/*` subpath imports（含副檔名）。
-- 公開頁、預約、會員、開發者文件、看板使用 Svelte。UI 使用 Svelte 5 runes、Tailwind 4、shadcn-svelte / Bits UI，沿用既有設計 tokens。
+- 公開頁、預約、會員、看板使用 Svelte。UI 使用 Svelte 5 runes、Tailwind 4、shadcn-svelte / Bits UI，沿用既有設計 tokens。
 - 院所工作區：`src/lib/components/admin/workspace/`，今日工作台、預約、叫號、排班（含批次）及客戶清單使用原生 Svelte 5。`AdminPage.svelte` 在掛載前檢查院所歸屬與角色。
 - 完整原生後台：`src/lib/components/admin/manage/` 包含登入、平台管理、院所／Logo、人員／照片／服務對應／休假、服務、公告、客戶完整檔案、分析、訂閱與修改密碼。React／Radix React 依賴、JSX 設定及 `admin-compat/` 已移除。完整範圍見 `docs/admin-compatibility.md`。
 - API 代理：`src/routes/api/v1/[...path]/+server.ts`；本機 Vite proxy 指向 `http://localhost:8001`。`BACKEND_URL` 為伺服器變數，`src/env.ts` 明確宣告允許公開的既有 `NEXT_PUBLIC_` 變數，私密後端網址不會進入瀏覽器。
 - 登入與主題沿用 `access_token` / `refresh_token` / `theme` 儲存鍵；不要建立另一份 React token 狀態。
-- 需登入頁面關閉 SSR。公開文件與公開頁保留 SSR 與 SEO；看板使用遮罩姓名並設 noindex。
+- 需登入頁面關閉 SSR。公開頁保留 SSR 與 SEO；看板使用遮罩姓名並設 noindex。
 - 框架設定：`vite.config.ts` 的 `sveltekit(...)`，SvelteKit 3 不使用 `svelte.config.js`；TypeScript extends `$app/tsconfig`。
 - 正式網站為 Cloudflare Workers + Static Assets，Worker `cross-web`，唯一正式入口 `cross.twinhao.com`；設定在 `wrangler.jsonc` 的 `env.production`。Cloud Run API 與 Neon PostgreSQL 18 維持既有位置。
 - 預覽 Worker `cross-web-preview` 預設禁止寫入正式 API；正式 Worker 關閉 workers.dev 及版本預覽網址。`BACKEND_URL` 必須明確設定，禁止缺值時自動回退正式後端。
