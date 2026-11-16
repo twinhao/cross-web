@@ -24,13 +24,13 @@ test('手機與桌面的今日、院所設定移除方案卡；完整資料及�
         await page.goto(preview.origin+target);await page.locator('.cross-admin h1').waitFor();
         assert.equal(await page.getByRole('heading',{name:'訂閱與付款狀態',exact:true}).count(),0);
         assert.equal(await page.getByText(/目前方案：/).count(),0);
-        assert.equal(await page.getByRole('button',{name:'啟用 90 天試用',exact:true}).count(),0);
+        assert.equal(await page.getByRole('button',{name:'啟用 30 天試用',exact:true}).count(),0);
       }
       await page.screenshot({path:`${evidence}/settings-${width}.png`,animations:'disabled'});
       await page.goto(preview.origin+'/admin/subscription');
       await page.getByRole('heading',{name:'訂閱與付款狀態',exact:true}).waitFor();
       assert.equal(await page.getByRole('heading',{name:'訂閱與付款狀態',exact:true}).count(),1);
-      assert.equal(await page.getByRole('button',{name:'啟用 90 天試用',exact:true}).count(),1);
+      assert.equal(await page.getByRole('button',{name:'啟用 30 天試用',exact:true}).count(),1);
       await page.getByText('既有付款紀錄',{exact:true}).waitFor();
       await page.screenshot({path:`${evidence}/subscription-${width}.png`,animations:'disabled'});
       assert.equal(requests.filter(r=>r.method!=='GET').length,0);
@@ -52,7 +52,7 @@ test('有效試用不在日常頁重複倒數，訂閱頁仍顯示試用狀態�
     await page.getByRole('heading',{name:'訂閱與付款狀態',exact:true}).waitFor();
     await page.getByText('試用中',{exact:true}).waitFor();
     await page.getByText('到期日',{exact:true}).waitFor();
-    assert.equal(await page.getByRole('button',{name:'啟用 90 天試用',exact:true}).count(),0);
+    assert.equal(await page.getByRole('button',{name:'啟用 30 天試用',exact:true}).count(),0);
     assert.deepEqual(errors,[]);
   }finally{await page.close();}
 });

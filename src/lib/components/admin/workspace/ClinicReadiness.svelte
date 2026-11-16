@@ -138,7 +138,7 @@
       done: facility.is_active,
       text: facility.is_active
         ? "院所已啟用，可查看公開頁。"
-        : "尚未啟用，請確認審核進度或院所停用狀態。",
+        : "尚未公開，資料整理好後可到「編輯資訊」開啟上架。",
       href: clinicHref(facility.id, "info"),
     },
     {

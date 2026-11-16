@@ -102,7 +102,7 @@ export const adminClinicsApi = {
   updateSubscription: (id: string, data: FacilitySubscriptionUpdate) =>
     api.patch<MedicalFacility>(`${BASE_PATH}/${id}/subscription`, data),
 
-  // 一鍵試用 90 天（facility_admin 自助；限每院所一次，已用過回 409）
+  // 一鍵試用 30 天（facility_admin 自助；限每院所一次，已用過回 409）
   startTrial: (id: string) =>
     api.post<MedicalFacility>(`${BASE_PATH}/${id}/start-trial`),
 

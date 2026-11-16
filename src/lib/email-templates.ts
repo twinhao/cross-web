@@ -122,7 +122,7 @@ export function applicationNotificationEmail(
     [
       h1("新的夥伴加入申請"),
       p(
-        `<strong style="color:${INK};">${esc(businessName)}</strong> 送出了申請。<br>對方完成信箱驗證後，這筆會出現在後台的「待審核」。`,
+        `<strong style="color:${INK};">${esc(businessName)}</strong> 送出了申請。<br>對方完成信箱驗證後會立即開通，並另以 Telegram 通知。`,
       ),
       rows(items),
       `<div style="height:20px;"></div>`,

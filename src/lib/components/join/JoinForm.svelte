@@ -329,7 +329,7 @@
 				>——剛剛填的新密碼沒有被使用。
 			</p>
 			<p class="max-w-md text-sm leading-relaxed text-muted-foreground">
-				現在就能進後台整理院所資料；上架到民眾端需通過審核，屆時會寄信通知。
+				現在就能進後台整理院所資料，並已開始 30 天完整功能試用；準備好後可自行公開上架。
 			</p>
 			<p class="max-w-md text-xs leading-relaxed text-muted-foreground">
 				不記得原本的密碼？下次登入前請來信 <strong class="font-medium text-foreground">office@twinhao.com</strong>
@@ -459,7 +459,7 @@
 					<p class="text-center text-xs text-muted-foreground">
 						已經完成過驗證了？直接
 						<a href="/admin/login" class="font-medium text-primary underline-offset-2 hover:underline">前往登入</a
-						>。帳號開通後即可整理院所資料；上架到民眾端需審核通過，屆時會寄信通知。
+						>。帳號開通後即可整理院所資料，準備好後自行公開上架。
 					</p>
 				</div>
 			</div>

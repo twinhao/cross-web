@@ -49,5 +49,5 @@ test("方案常數僅保留現行三方案與試用天數，未恢復舊版 Pric
   assert.equal(existsSync("src/lib/components/pricing/PricingTable.svelte"), false);
   const constants = await import("../src/lib/constants/pricing-constants.ts");
   assert.deepEqual(Object.keys(constants), ["PRICING_PLANS", "TRIAL_DAYS"]);
-  assert.equal(constants.TRIAL_DAYS, 90);
+  assert.equal(constants.TRIAL_DAYS, 30);
 });

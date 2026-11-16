@@ -156,7 +156,7 @@
       onUpdated(await adminClinicsApi.startTrial(facility.id));
       await auth.refreshUser();
       trialConfirm = false;
-      message = "90 天試用已啟用";
+      message = "30 天試用已啟用";
     } catch (e) {
       error = apiMessage(e, "試用啟用失敗");
     } finally {
@@ -217,7 +217,7 @@
             trialConfirm = true;
           }}
         >
-          啟用 90 天試用
+          啟用 30 天試用
         </Button>{/if}<Button href="/pricing" variant="outline">
         查看方案與聯絡續約
       </Button>
@@ -425,7 +425,7 @@
 </Modal>
 <Modal
   bind:open={trialConfirm}
-  title="啟用 90 天試用"
+  title="啟用 30 天試用"
   description="每間院所僅能啟用一次，確認後立即開始計算試用期限。"
   {busy}
 >

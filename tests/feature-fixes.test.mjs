@@ -36,7 +36,7 @@ test('桌面與手機的櫃檯可代訂、報到、叫號；服務、資料及�
    await page.getByRole('button',{name:/^叫.*開始服務$/}).first().waitFor();
    for(const tab of ['info','services','personnel','subscription']){
     await page.goto(preview.origin+path(tab));await page.locator('.cross-admin h1').waitFor();
-    for(const name of ['編輯資訊','新增服務','新增人員','啟用 90 天試用','編輯訂閱'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
+    for(const name of ['編輯資訊','新增服務','新增人員','啟用 30 天試用','編輯訂閱'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
    }
    await page.screenshot({path:`${evidence}/receptionist-${width}.png`,animations:'disabled'});
    assert.deepEqual(errors,[]);

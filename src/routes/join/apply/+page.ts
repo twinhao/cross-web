@@ -10,7 +10,7 @@ export const load: PageLoad = ({ setHeaders }) => {
 		seo: {
 			title: "申請加入 Cross",
 			description:
-				"填寫商家資料申請加入 Cross 預約平台。送出後我們會寄驗證信，設定密碼並通過審核即可開通院所後台。",
+				"填寫商家資料申請加入 Cross 預約平台。送出後輸入信箱驗證碼並設定密碼，立即開通院所後台與 30 天試用。",
 			canonical: "/",
 		} satisfies SeoProps,
 	};

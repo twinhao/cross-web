@@ -48,4 +48,4 @@ export const PRICING_PLANS = [
 }[];
 
 // 試用天數（全站文案統一引用，避免散落各頁不一致；後台 subscription-banner 使用）
-export const TRIAL_DAYS = 90;
+export const TRIAL_DAYS = 30;
