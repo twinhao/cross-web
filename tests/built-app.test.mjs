@@ -21,7 +21,7 @@ before(async () => {
 after(() => preview?.stop());
 
 // 舊版這五頁是 SSG（CDN 快取一年，部署時清除）；首頁舊版也是 SSG（3100 基準回 s-maxage=31536000）
-for (const path of ["/", "/terms", "/privacy", "/refund", "/pricing"]) {
+for (const path of ["/", "/terms", "/privacy", "/refund", "/pricing", "/support"]) {
   test(`${path} 帶靜態頁快取標頭（GET 與 HEAD）`, async () => {
     if (problem) assert.fail(problem);
     for (const method of ["GET", "HEAD"]) {

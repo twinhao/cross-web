@@ -42,6 +42,7 @@
 				},
 				{ label: "服務條款", href: "/terms" },
 				{ label: "退款政策", href: "/refund" },
+				{ label: "客服與支援", href: "/support" },
 			],
 		},
 	];
