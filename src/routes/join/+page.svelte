@@ -7,6 +7,7 @@
   import PublicFrame from "#lib/components/public/PublicFrame.svelte";
   import { Button } from "#lib/components/ui/button/index.ts";
   import { clinicLineContact } from "#lib/contact.ts";
+  import { TRIAL_DAYS } from "#lib/constants/pricing-constants.ts";
 
   let { data } = $props();
   const steps = [
@@ -44,7 +45,7 @@
           <Button href="/join/apply" size="lg" class="min-h-11 w-full gap-1.5 px-3 sm:w-auto sm:px-6 [&_svg]:size-4">申請院所導入 <ArrowRight aria-hidden="true" /></Button>
           <Button href="/demo?mode=booking" size="lg" variant="outline" class="min-h-11 w-full gap-1.5 px-3 sm:w-auto sm:px-6 [&_svg]:size-4">體驗示範預約 <ArrowRight aria-hidden="true" /></Button>
         </div>
-        <p class="mt-3 text-xs leading-6 text-muted-foreground">示範使用虛構資料，不建立實際預約。</p>
+        <p class="mt-3 text-xs leading-6 text-muted-foreground">申請後立即開通，免費試用完整功能 {TRIAL_DAYS} 天，不需綁定付款方式。示範使用虛構資料，不建立實際預約。</p>
         <div class="mt-2 flex items-center text-sm sm:mt-5">
           <a href="/pricing" class="inline-flex min-h-11 items-center gap-1.5 font-medium text-primary underline-offset-4 hover:underline">查看方案與費用 <ArrowRight class="size-4" aria-hidden="true" /></a>
         </div>

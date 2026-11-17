@@ -9,7 +9,7 @@
   import { Button } from "#lib/components/ui/button/index.js";
   import { Card, CardContent } from "#lib/components/ui/card/index.js";
   import { clinicLineContact } from "#lib/contact.ts";
-  import { PRICING_PLANS } from "#lib/constants/pricing-constants.ts";
+  import { PRICING_PLANS, TRIAL_DAYS } from "#lib/constants/pricing-constants.ts";
   import { PLAN_LABELS } from "#lib/feature-access.ts";
   import * as Table from "#lib/components/ui/table/index.ts";
   import * as Accordion from "#lib/components/ui/accordion/index.ts";
@@ -43,7 +43,7 @@
         先建立門面，再選適合的預約管理。
       </h1>
       <p class="mt-5 max-w-2xl text-base leading-8 text-muted-foreground">
-        以電話與現場為主、準備開放線上預約，或需要更進一步管理？依團隊現在的工作方式選擇，費用與開通安排在導入前確認。
+        以電話與現場為主、準備開放線上預約，或需要更進一步管理？依團隊現在的工作方式選擇。新加入的院所可先免費試用完整功能 {TRIAL_DAYS} 天，到期自動轉為免費版。
       </p>
       <Button href="/join#product-preview" variant="link" class="mt-4 min-h-11 px-0">先看院所門面與工作台示意 <ArrowRight aria-hidden="true" /></Button>
       <div class="mt-10 grid gap-6 lg:grid-cols-3">

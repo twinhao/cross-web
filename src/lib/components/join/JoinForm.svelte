@@ -9,7 +9,7 @@
 	import Store from "@lucide/svelte/icons/store";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
-	import { PRICING_PLANS } from "#lib/constants/pricing-constants.ts";
+	import { PRICING_PLANS, TRIAL_DAYS } from "#lib/constants/pricing-constants.ts";
 	import { PLAN_LABELS } from "#lib/feature-access.ts";
 	import { onMount, untrack } from "svelte";
 	import { categoriesFor } from "#lib/api/service-categories.ts";
@@ -89,7 +89,9 @@
 	// 重寄冷卻（後端同信箱 60 秒節流；前端先擋掉必然失敗的點擊）
 	let resendIn = $state(0);
 	// 信箱本來就有 Cross 帳號：密碼沿用原本那組，要把這件事講清楚再放行進後台
-	let openedExisting = $state(false);
+	let opened = $state(false);
+	let existingAccount = $state(false);
+	let trialEnds = $state("");
 
 	$effect(() => {
 		if (resendIn <= 0) return;
@@ -99,14 +101,14 @@
 
 	// 換步時按鈕會卸載或轉 disabled，焦點被瀏覽器丟回 body。把焦點移到該步標題，
 	// 一次解決「鍵盤使用者失去位置」與「螢幕閱讀器不知道畫面換了」兩件事。
-	// openedExisting 也要在依賴內：那個「密碼沿用原本那組」的畫面是全流程最不能漏聽的。
+	// opened 也要在依賴內：那個「密碼沿用原本那組」的畫面是全流程最不能漏聽的。
 	// 宣告在還原 sessionStorage 之前（同舊版 effect 順序）：重整後還原成「已送出」時會聚焦輸碼畫面的標題。
 	let headingEl = $state<HTMLHeadingElement | null>(null);
 	let moved = false;
 	$effect(() => {
 		void step;
 		void submitted;
-		void openedExisting;
+		void opened;
 		if (!moved) {
 			moved = true; // 初次載入不搶焦點
 			return;
@@ -128,7 +130,7 @@
 		}
 	});
 	$effect(() => {
-		const pending = submitted && !openedExisting;
+		const pending = submitted && !opened;
 		const snapshot = JSON.stringify({ form });
 		try {
 			if (pending) sessionStorage.setItem(JOIN_PENDING_STORAGE_KEY, snapshot);
@@ -208,13 +210,15 @@
 			}
 			localStorage.setItem("access_token", json.access_token);
 			localStorage.setItem("refresh_token", json.refresh_token);
-			if (json.existing_account) {
-				// 密碼沿用原帳號那組——先講清楚再讓他進後台，否則他會拿剛設的新密碼去登入
-				openedExisting = true;
-			} else {
-				// 整頁導向讓登入狀態在載入時讀 localStorage 完成登入
-				window.location.assign("/admin");
-			}
+			// 先停在完成畫面說明試用期限（既有帳號另外講清楚密碼沿用哪一組），再讓他進後台
+			existingAccount = json.existing_account === true;
+			trialEnds = new Date(Date.now() + TRIAL_DAYS * 86_400_000).toLocaleDateString("zh-TW", {
+				timeZone: "Asia/Taipei",
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			});
+			opened = true;
 		} catch {
 			verifyError = "無法連線到伺服器，請稍後再試";
 		} finally {
@@ -308,8 +312,8 @@
 {/snippet}
 
 {#if submitted}
-	{#if openedExisting}
-		<!-- 帳號已開通、但信箱本來就有 Cross 帳號 → 先講清楚密碼沿用哪一組 -->
+	{#if opened}
+		<!-- 帳號已開通：說明試用期限；信箱本來就有 Cross 帳號時另外講清楚密碼沿用哪一組 -->
 		<div
 			class="flex flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-card p-10 text-center shadow-xl ring-1 ring-foreground/5"
 			style="animation: fadeInUp 0.5s ease-out both"
@@ -324,17 +328,25 @@
 			>
 				後台已開通
 			</h2>
+			{#if existingAccount}
+				<p class="max-w-md text-sm leading-relaxed text-muted-foreground">
+					這個信箱本來就有 Cross 帳號，登入密碼<strong class="font-medium text-foreground">沿用原本那組</strong
+					>——剛剛填的新密碼沒有被使用。
+				</p>
+			{/if}
 			<p class="max-w-md text-sm leading-relaxed text-muted-foreground">
-				這個信箱本來就有 Cross 帳號，登入密碼<strong class="font-medium text-foreground">沿用原本那組</strong
-				>——剛剛填的新密碼沒有被使用。
+				已為你開啟 <strong class="font-medium text-foreground">{TRIAL_DAYS} 天完整功能試用</strong>，可使用到
+				{trialEnds}；到期後自動轉為免費版，院所資料都會保留。
 			</p>
 			<p class="max-w-md text-sm leading-relaxed text-muted-foreground">
-				現在就能進後台整理院所資料，並已開始 30 天完整功能試用；準備好後可自行公開上架。
+				現在就能進後台整理院所資料，準備好後可自行公開上架。
 			</p>
-			<p class="max-w-md text-xs leading-relaxed text-muted-foreground">
-				不記得原本的密碼？下次登入前請來信 <strong class="font-medium text-foreground">office@twinhao.com</strong>
-				協助重設。
-			</p>
+			{#if existingAccount}
+				<p class="max-w-md text-xs leading-relaxed text-muted-foreground">
+					不記得原本的密碼？下次登入前請來信 <strong class="font-medium text-foreground">office@twinhao.com</strong>
+					協助重設。
+				</p>
+			{/if}
 			<Button size="lg" class="mt-1" onclick={() => window.location.assign("/admin")}>
 				進入院所後台
 				<ArrowRight class="size-4" />
