@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<!-- 主題初始化：在任何內容繪製前依 localStorage「theme」（light|dark|system，與 next-themes、mode-watcher 共用）
 		     套用 <html class="dark">。放在 app.html 而非 ModeWatcher 的 head 注入，ssr=false 的頁面也不會閃白。 -->
-		<script>
+		<script nonce="%sveltekit.nonce%">
 			(function () {
 				try {
 					var mode = localStorage.getItem('theme') || 'system';

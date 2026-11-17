@@ -20,7 +20,7 @@
 		console: {
 			headline: "院所管理 Console",
 			subtitle: "線上接收預約，管理排程與人員。",
-			bullets: ["24 小時線上接收預約", "排程班表與人員管理", "LINE 自動提醒，降低爽約"],
+			bullets: ["24 小時線上接收預約", "排程班表與人員管理", "App 推播提醒，降低爽約"],
 		},
 	} as const;
 

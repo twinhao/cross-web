@@ -117,3 +117,20 @@ test('示範過號不等於完成，跳過後返回保留原號碼且不打斷�
   assert.equal(returned.queue_number,number);assert.equal(returned.queue_deferred,false);
   assert.equal(session.snapshot().appointments.find(a=>a.id==='demo-appointment-0').status,'in_progress');
 });
+
+test("示範時段套用診間設備：唯一一間被占用（含清潔時間）的時段不可約，取消後恢復", async () => {
+  const session = createDemoSession();
+  await session.request(adminBase + "/resources", post({ name: "雷射室", category: "雷射室" }));
+  await session.request(adminBase + "/services/demo-consult", { method: "PATCH", body: JSON.stringify({ resource_categories: ["雷射室"], buffer_minutes: 30 }) });
+  const slots = await session.request(publicBase + "/slots?service_id=demo-consult");
+  const day = slots.find(d => d.slots.filter(s => s.isAvailable).length > 1), first = day.slots.find(s => s.isAvailable);
+  const receipt = await session.request(publicBase + "/appointments", post({ clinic_id: DEMO_ID, service_id: "demo-consult", member_patient_id: "demo-patient-0", appointment_date: day.date, appointment_time: first.time }));
+  const row = session.snapshot().appointments.find(a => a.id === receipt.id);
+  assert.equal(row.resources[0].name, "雷射室");
+  const end = (h => h[0] * 60 + h[1])(first.time.split(":").map(Number)) + row.duration_minutes + 30;
+  const after = (await session.request(publicBase + "/slots?service_id=demo-consult")).find(d => d.date === day.date).slots;
+  for (const s of after) { const [h, m] = s.time.split(":").map(Number); if (h * 60 + m < end && h * 60 + m + row.duration_minutes > Number(first.time.slice(0, 2)) * 60 + Number(first.time.slice(3))) assert.equal(s.isAvailable, false, s.time); }
+  await session.request(adminBase + "/appointments/" + receipt.id, { method: "PATCH", body: JSON.stringify({ status: "cancelled" }) });
+  const restored = (await session.request(publicBase + "/slots?service_id=demo-consult")).find(d => d.date === day.date).slots.find(s => s.time === first.time);
+  assert.equal(restored.isAvailable, true);
+});

@@ -2,7 +2,7 @@ import { BACKEND_URL, ALLOW_PRODUCTION_WRITES } from "$app/env/private";
 import type { RequestHandler } from './$types';
 
 // 明確指定正式與預覽後端；未設定時回傳錯誤，不隱性連到正式環境。
-const handler: RequestHandler = async ({ request, url }) => {
+const handler: RequestHandler = async ({ request, url, getClientAddress }) => {
     if (!BACKEND_URL) return new Response('後端尚未設定', { status: 503 });
     const backendUrl = BACKEND_URL;
     const productionBackend = new URL(backendUrl).hostname.endsWith('.run.app');
@@ -26,6 +26,9 @@ const handler: RequestHandler = async ({ request, url }) => {
 		}
 		headers.set(key, value);
 	}
+
+	// 後端以此做每 IP 節流；以連線 IP 覆寫，避免沿用瀏覽器自帶的同名標頭。
+	headers.set('x-client-ip', getClientAddress());
 
 	// 有 body 的請求先 buffer，避免串流失去 content-length 導致 FastAPI multipart 解析失敗
 	let body: ArrayBuffer | undefined;
