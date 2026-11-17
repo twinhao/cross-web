@@ -7,7 +7,7 @@
 /**
  * 舊版 SSG／預先渲染的頁面：CDN 快取一年（部署時清除），與登入狀態無關（登入相關畫面都在瀏覽器端）。
  * 使用：/、/terms、/privacy、/refund、/pricing、/auth、/auth/complete-profile、/member、/member/favorites、
- * /member/patients、/join、/join/apply、/join/verify
+ * /member/patients、/join、/join/apply
  */
 export const STATIC_PAGE_CACHE = "public, max-age=0, must-revalidate, s-maxage=31536000, stale-while-revalidate";
 

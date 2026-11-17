@@ -10,7 +10,7 @@
     ["dashboard", "總覽"],
     ["clinics", "院所管理"],
     ["users", "使用者管理"],
-    ["applications", "加入申請"],
+    ["applications", "新加入院所"],
     ["settings", "系統設定"],
   ];
   import AdminFrame from "../layout/AdminFrame.svelte";

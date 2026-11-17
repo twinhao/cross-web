@@ -57,7 +57,9 @@ export async function startPreview(port) {
         resolve();
       }
     });
-    server.on("exit", (code) => reject(new Error(`vite preview 結束（${code}）`)));
+    let stderr = "";
+    server.stderr.on("data", (chunk) => (stderr += chunk));
+    server.on("exit", (code) => reject(new Error(`vite preview 結束（${code}）${stderr.trim().slice(-500)}`)));
   });
   return { origin: `http://localhost:${port}`, stop: () => server.kill() };
 }

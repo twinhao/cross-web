@@ -264,7 +264,6 @@ for (const [path, cache, title, checks] of [
   ["/member/appointments/x", DYNAMIC_PAGE_CACHE, SITE_TITLE, [MEMBER_LOADING]],
   ["/join", STATIC_PAGE_CACHE, "院所導入 | Cross", [/讓預約更有條理，/, /申請院所導入/]],
   ["/join/apply", STATIC_PAGE_CACHE, "申請加入 Cross | Cross", [/成為 Cross 合作夥伴/, /第 1 \/ 3 步 · 你經營的是哪一種？/]],
-  ["/join/verify", STATIC_PAGE_CACHE, "驗證信箱並設定密碼 | Cross", [/data-content-skeleton="form"/]],
 ]) {
   test(`${path}：伺服器 HTML 保留對應外框與快取標頭`, async () => {
     if (problem) assert.fail(problem);
@@ -281,15 +280,3 @@ for (const [path, cache, title, checks] of [
   });
 }
 
-// /join/verify 的伺服器 HTML 不依 ?token= 而不同（伺服器端只輸出共用骨架；回應進 CDN 快取一年，
-// 不能把某個 token 的內容快取給別人）
-test("/join/verify：伺服器 HTML 與 token 無關", async () => {
-  if (problem) assert.fail(problem);
-  const main = (html) => html.slice(html.indexOf("<main"), html.indexOf("</main>"));
-  const [a, b] = await Promise.all(
-    ["/join/verify", "/join/verify?token=secret-token-123"].map((p) => fetch(base + p).then((r) => r.text())),
-  );
-  assert.doesNotMatch(b, /secret-token-123/);
-  assert.match(main(a), /data-content-skeleton="form"/);
-  assert.equal(main(b), main(a));
-});

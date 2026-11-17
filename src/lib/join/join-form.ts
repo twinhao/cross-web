@@ -2,7 +2,7 @@ import { JOIN_CATEGORIES } from "../constants/join-constants.ts";
 import type { PaymentType } from "../types/clinic.ts";
 import type { JoinApplication, JoinCategory } from "../types/join.ts";
 
-// 夥伴加入表單（/join/apply）與驗證信設定密碼（/join/verify）的純邏輯，
+// 夥伴加入表單（/join/apply）的純邏輯，
 // 移植自舊版 components/join/join-form.tsx 與 verify-form.tsx。相對路徑 import：node --test 可直接載入本檔。
 
 export interface JoinFormState {
@@ -118,13 +118,6 @@ export function validateOtpForm(code: string, password: string, confirm: string)
 /** verify-code 失敗訊息：只有字串才拿來當訊息；422 的 detail 是陣列，直接顯示會壞 */
 export function verifyCodeErrorMessage(json: { detail?: unknown } | null): string {
   return typeof json?.detail === "string" ? json.detail : "驗證失敗，請稍後再試";
-}
-
-/** 驗證信連結設定密碼：回傳錯誤訊息，通過回 null */
-export function validateVerifyPassword(password: string, confirm: string): string | null {
-  if (password.length < MIN_PASSWORD) return `密碼至少 ${MIN_PASSWORD} 碼`;
-  if (password !== confirm) return "兩次輸入的密碼不一致";
-  return null;
 }
 
 /** 讀回 sessionStorage 的「已送出」表單：有 email 才算；無痕視窗 / 壞資料當作全新填寫 */

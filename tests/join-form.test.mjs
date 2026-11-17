@@ -11,7 +11,6 @@ import {
   selectJoinCategory,
   toggleServiceCategory,
   validateOtpForm,
-  validateVerifyPassword,
   verifyCodeErrorMessage,
 } from "../src/lib/join/join-form.ts";
 
@@ -135,12 +134,6 @@ test("驗證碼失敗訊息：只有字串 detail 才顯示（422 的陣列不 r
   assert.equal(verifyCodeErrorMessage({ detail: "驗證碼錯誤" }), "驗證碼錯誤");
   assert.equal(verifyCodeErrorMessage({ detail: [{ msg: "x" }] }), "驗證失敗，請稍後再試");
   assert.equal(verifyCodeErrorMessage(null), "驗證失敗，請稍後再試");
-});
-
-test("驗證信連結的設定密碼：至少 8 碼、兩次一致", () => {
-  assert.equal(validateVerifyPassword("1234567", "1234567"), "密碼至少 8 碼");
-  assert.equal(validateVerifyPassword("12345678", "12345679"), "兩次輸入的密碼不一致");
-  assert.equal(validateVerifyPassword("12345678", "12345678"), null);
 });
 
 test("重整後還原「已送出」狀態：有 email 才還原，壞資料當作全新填寫", () => {

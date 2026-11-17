@@ -219,14 +219,6 @@
     {
       "path": "/join/apply",
       "auth": false
-    },
-    {
-      "path": "/join/verify",
-      "auth": false
-    },
-    {
-      "path": "/join/verify?token=invalid-token-for-parity",
-      "auth": false
     }
   ],
   "shortlink": [

@@ -24,12 +24,12 @@
     FacilityApplication,
   } from "#lib/types/clinic.ts";
   const labels: Record<ApplicationStatus, string> = {
-    pending_review: "待審核",
+    approved: "已開通",
     pending_verification: "待驗證信箱",
-    approved: "已核准",
+    pending_review: "舊流程待審",
     rejected: "已拒絕",
   };
-  let status = $state<ApplicationStatus>("pending_review"),
+  let status = $state<ApplicationStatus>("approved"),
     rows = $state<FacilityApplication[]>([]),
     loading = $state(true),
     error = $state(""),
@@ -106,9 +106,9 @@
 
 <div class="space-y-5">
   <div>
-    <h1 class="text-2xl font-semibold tracking-tight">加入申請</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">新加入院所</h1>
     <p class="mt-1 text-sm text-muted-foreground">
-      審核院所導入申請並建立合作院所。
+      院所驗證信箱後即自動開通並開始試用，不需審核；這裡可查看聯絡資料並跟進。
     </p>
   </div>
   <nav aria-label="申請狀態" class="flex flex-wrap gap-2">
@@ -180,7 +180,7 @@
             </p>{/if}
         </Card.Root>{:else}<AdminEmpty
           title={"目前沒有" + labels[status] + "的申請"}
-          description="可切換上方申請狀態，查看其他審核進度。"
+          description="可切換上方狀態，查看其他申請。"
         />{/each}
     </div>{/if}
 </div>

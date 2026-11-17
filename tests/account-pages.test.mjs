@@ -67,8 +67,3 @@ test("/join/apply：metadata 同舊版（沒有自己的 canonical → 沿用全
   });
 });
 
-test("/join/verify：帶一次性 token 的頁面 noindex、nofollow，描述沿用全站，靜態頁快取", async () => {
-  const { data, headers } = await runLoad("../src/routes/join/verify/+page.ts");
-  assert.deepEqual(headers, [{ "cache-control": STATIC_PAGE_CACHE }]);
-  assert.deepEqual(data.seo, { title: "驗證信箱並設定密碼", canonical: "/", noindex: true });
-});
