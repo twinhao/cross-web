@@ -35,11 +35,7 @@
 		{
 			title: "關於 Cross",
 			links: [
-				{
-					label: "隱私權政策",
-					href: "https://blog.twinhao.com/5nilhs02DalcM7",
-					external: true,
-				},
+				{ label: "隱私權政策", href: "/privacy" },
 				{ label: "服務條款", href: "/terms" },
 				{ label: "退款政策", href: "/refund" },
 				{ label: "客服與支援", href: "/support" },
