@@ -8,6 +8,7 @@
 	import { NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } from "$app/env/public";
 	import { setAuth } from "#lib/auth/auth.svelte.ts";
 	import SessionExpiredDialog from "#lib/components/auth/SessionExpiredDialog.svelte";
+	import NavigationSkeleton from "#lib/components/loading/NavigationSkeleton.svelte";
 	import Seo, { SITE_NAME, SITE_URL } from "#lib/components/Seo.svelte";
 	import { resetFavoritesOnUserChange } from "#lib/hooks/favorites.svelte.ts";
 	import { createSmoothScrollPause } from "#lib/navigation/smooth-scroll.ts";
@@ -86,5 +87,7 @@
 {/if}
 
 {@render children()}
+
+<NavigationSkeleton />
 
 <SessionExpiredDialog open={auth.showSessionExpiredDialog} onConfirm={auth.confirmSessionExpired} />
