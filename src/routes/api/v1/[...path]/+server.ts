@@ -1,8 +1,9 @@
 import { BACKEND_URL, ALLOW_PRODUCTION_WRITES } from "$app/env/private";
 import type { RequestHandler } from './$types';
+import { edgeCached, isEdgeCacheable } from '#lib/edge-cache.ts';
 
 // 明確指定正式與預覽後端；未設定時回傳錯誤，不隱性連到正式環境。
-const handler: RequestHandler = async ({ request, url, getClientAddress }) => {
+const handler: RequestHandler = async ({ request, url, getClientAddress, platform }) => {
     if (!BACKEND_URL) return new Response('後端尚未設定', { status: 503 });
     const backendUrl = BACKEND_URL;
     const productionBackend = new URL(backendUrl).hostname.endsWith('.run.app');
@@ -37,6 +38,7 @@ const handler: RequestHandler = async ({ request, url, getClientAddress }) => {
 		headers.set('content-length', body.byteLength.toString());
 	}
 
+	const forward = async () => {
 	const response = await fetch(targetUrl, {
 		method: request.method,
 		headers,
@@ -55,6 +57,15 @@ const handler: RequestHandler = async ({ request, url, getClientAddress }) => {
 		statusText: response.statusText,
 		headers: responseHeaders
 	});
+	};
+
+	// Workers 才有 caches.default 與 waitUntil；本機 Node 預覽直接轉送
+	const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
+	const ctx = (platform as { ctx?: { waitUntil(p: Promise<unknown>): void } } | undefined)?.ctx;
+	if (cache && ctx && isEdgeCacheable(request, url.pathname)) {
+		return edgeCached(url.toString(), cache, (p) => ctx.waitUntil(p), forward);
+	}
+	return forward();
 };
 
 export const GET = handler;
