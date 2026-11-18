@@ -13,10 +13,11 @@
   import { getAuth } from "#lib/auth/auth.svelte.ts";
   import { canAccessAdmin, getAdminHomePath } from "#lib/auth/roles.ts";
   import { ACCOUNT_LINKS, isAccountPage } from "#lib/member/navigation.ts";
-  let { next }: {next?:string}=$props();
+  let { next, path }: {next?:string; path?:string}=$props();
+  const pathname=$derived(path ?? page.url.pathname);
   const auth=getAuth();
   const isAdmin=$derived(canAccessAdmin(auth.user));
-  const accountActive=$derived(isAccountPage(page.url.pathname));
+  const accountActive=$derived(isAccountPage(pathname));
   const displayName=$derived(auth.user?.display_name || auth.user?.email.split("@")[0] || "我的帳戶");
   let open=$state(false);
   afterNavigate(()=>open=false);
@@ -33,7 +34,7 @@
         <p class="truncate px-3 pt-3 pb-1 text-sm font-semibold">{auth.user.display_name || "我的帳戶"}</p>
         <p class="truncate px-3 pb-3 text-xs text-muted-foreground">{auth.user.email}</p>
         <nav aria-label="帳戶功能" class="grid border-t pt-1">
-          {#each ACCOUNT_LINKS as link (link.href)}<Button href={link.href} aria-current={page.url.pathname === link.href ? "page" : undefined} variant="ghost" class="min-h-11 justify-start rounded-lg" onclick={()=>open=false}>{link.label}</Button>{/each}
+          {#each ACCOUNT_LINKS as link (link.href)}<Button href={link.href} aria-current={pathname === link.href ? "page" : undefined} variant="ghost" class="min-h-11 justify-start rounded-lg" onclick={()=>open=false}>{link.label}</Button>{/each}
           <Button href="/join" variant="ghost" class="min-h-11 justify-start rounded-lg md:hidden" onclick={()=>open=false}>院所導入</Button>
           <Button variant="ghost" class="min-h-11 justify-start rounded-lg border-t" onclick={()=>{open=false;auth.logout("/");}}><LogOut/>登出</Button>
         </nav>

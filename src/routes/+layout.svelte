@@ -86,8 +86,6 @@
 	<Seo canonical="/" />
 {/if}
 
-{@render children()}
-
-<NavigationSkeleton />
+<NavigationSkeleton>{@render children()}</NavigationSkeleton>
 
 <SessionExpiredDialog open={auth.showSessionExpiredDialog} onConfirm={auth.confirmSessionExpired} />

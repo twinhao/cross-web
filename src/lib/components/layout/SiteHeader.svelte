@@ -9,7 +9,9 @@
 	import { isAppointmentPage } from "#lib/member/navigation.ts";
 	import { BRAND_ICON } from "#lib/brand.ts";
 
-	let { home = false, compact = false }: { home?: boolean; compact?: boolean } = $props();
+	// path：換頁骨架以目標網址呈現選取狀態，預設為目前網址
+	let { home = false, compact = false, path }: { home?: boolean; compact?: boolean; path?: string } = $props();
+	const pathname = $derived(path ?? page.url.pathname);
 	const auth = getAuth();
 	const isAdmin = $derived(canAccessAdmin(auth.user));
 </script>
@@ -34,7 +36,7 @@
 			</Button>
 			<Button href="/search" aria-label="線上預約" size="sm" class={isAdmin ? "min-h-11 @max-[18rem]:hidden" : "min-h-11"}><span class="@max-[18rem]:hidden">線上預約</span><span class="hidden @max-[18rem]:inline">找院所</span></Button>
 			{#if !auth.isLoading && !isAdmin}
-				<Button href="/member" aria-label="我的預約" aria-current={isAppointmentPage(page.url.pathname) ? "page" : undefined} variant={isAppointmentPage(page.url.pathname) ? "secondary" : "ghost"} size="sm" class="min-h-11"><span class="@max-[18rem]:hidden">我的預約</span><span class="hidden @max-[18rem]:inline">預約</span></Button>
+				<Button href="/member" aria-label="我的預約" aria-current={isAppointmentPage(pathname) ? "page" : undefined} variant={isAppointmentPage(pathname) ? "secondary" : "ghost"} size="sm" class="min-h-11"><span class="@max-[18rem]:hidden">我的預約</span><span class="hidden @max-[18rem]:inline">預約</span></Button>
 			{/if}
 			{#if !isAdmin}<span class={auth.isAuthenticated ? "hidden md:inline-flex" : "inline-flex"}><ClinicEntry /></span>{/if}
 			{/if}
@@ -42,7 +44,7 @@
 				<ThemeToggle class={home || isAdmin ? "size-11" : undefined} />
 			</span>
 			<span class={compact ? (auth.isAuthenticated ? "inline-flex" : "hidden") : (auth.isAuthenticated ? "inline-flex" : "hidden md:inline-flex")}>
-				<AuthButton next={compact ? page.url.pathname : undefined}/>
+				<AuthButton next={compact ? pathname : undefined} {path}/>
 			</span>
 		</nav>
 	</div>
