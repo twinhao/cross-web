@@ -1,11 +1,16 @@
 <script lang="ts">
 	import PageIntro from "#lib/components/public/PageIntro.svelte";
 	import PublicFrame from "#lib/components/public/PublicFrame.svelte";
+	import Seo from "#lib/components/Seo.svelte";
+
+	let { data } = $props();
 
 	// 內容需與 App Store 隱私權營養標示、實際蒐集與刪除行為一致（docs/appstore/ios）
 	const h2 = "mb-2 text-lg font-semibold text-foreground";
 	const list = "mt-2 list-inside list-disc space-y-1";
 </script>
+
+<Seo {...data.seo} />
 
 <PublicFrame>
 	<PageIntro eyebrow="CROSS / 使用說明與政策" title="隱私權政策" />

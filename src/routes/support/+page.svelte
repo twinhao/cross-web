@@ -1,6 +1,9 @@
 <script lang="ts">
 	import PageIntro from "#lib/components/public/PageIntro.svelte";
 	import PublicFrame from "#lib/components/public/PublicFrame.svelte";
+	import Seo from "#lib/components/Seo.svelte";
+
+	let { data } = $props();
 
 	// App Store 規定的支援網址：民眾端常見問題與客服聯絡方式
 	const faqs = [
@@ -34,6 +37,8 @@
 		},
 	];
 </script>
+
+<Seo {...data.seo} />
 
 <PublicFrame>
 	<PageIntro eyebrow="CROSS / 使用說明與政策" title="客服與支援" />

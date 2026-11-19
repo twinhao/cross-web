@@ -82,7 +82,7 @@
 <ModeWatcher modeStorageKey="theme" defaultMode="system" disableTransitions disableHeadScriptInjection />
 
 <!-- 頁面沒有提供 seo（例如需登入的頁面）時輸出全站預設 metadata，與舊版 root layout 相同 -->
-{#if !page.data.seo}
+{#if !page.data.seo && !page.error}
 	<Seo canonical="/" />
 {/if}
 

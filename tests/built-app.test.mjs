@@ -144,24 +144,21 @@ test("快取標頭只加在靜態頁：不存在的路徑（404）不帶一年 s
   assert.doesNotMatch(res.headers.get("cache-control") ?? "", /s-maxage=31536000/);
 });
 
-// 舊版沒有自訂 not-found：找不到路由時渲染 Next 預設 404 頁（只在 root layout 內，無 header / footer）。
-// 伺服器 <head>：全站 metadata + robots noindex，全站與「404: …」兩個 <title>，並有全站 JSON-LD（3100 基準實測）。
-// 順序與舊版不同（Svelte 把受管的 <title> 放在 head 最後）；瀏覽器端分頁標題由 Svelte 設為全站標題，與舊版相同。
-test("找不到路由：Next 預設 404 頁與 <head>", async () => {
+// 找不到路由：中文錯誤頁，含民眾端頁首與回首頁／搜尋入口；只有一組 noindex 標題
+test("找不到路由：中文 404 頁與 <head>", async () => {
   if (problem) assert.fail(problem);
   const res = await fetch(`${base}/no-such-page-for-404-test`);
   const html = await res.text();
   assert.equal(res.status, 404);
   const head = html.slice(0, html.indexOf("</head>"));
-  assert.deepEqual(
-    [...head.matchAll(/<title>([^<]*)<\/title>/g)].map((m) => m[1]).sort(),
-    ["404: This page could not be found.", "Cross | 線上預約與院所管理平台"],
-  );
-  assert.match(head, /<meta name="robots" content="noindex"/);
+  assert.deepEqual([...head.matchAll(/<title>([^<]*)<\/title>/g)].map((m) => m[1]), ["找不到頁面 | Cross"]);
+  assert.equal([...head.matchAll(/<meta name="robots"/g)].length, 1);
+  assert.match(head, /<meta name="robots" content="noindex/);
   assert.match(head, /application\/ld\+json/);
-  assert.match(html, /<h1 class="next-error-h1"[^>]*>\s*404\s*<\/h1>/);
-  assert.match(html, /This page could not be found\./);
-  assert.doesNotMatch(html, /public-content/, "不應包在民眾端外框內");
+  assert.match(html, /<h1[^>]*>找不到頁面<\/h1>/);
+  assert.match(html, /public-content/, "包在民眾端外框內（有頁首）");
+  assert.match(html, /href="\/search"/);
+  assert.doesNotMatch(html, /could not be found/);
 });
 
 // 舊版 app/robots.ts 是靜態 metadata route（build 時產生，部署才更新）；新版 prerender 成靜態檔，Vercel 由 CDN 直接回應

@@ -39,7 +39,7 @@ export interface BookingPageApi {
 
 /**
  * 載入預約頁資料並決定要顯示什麼（舊版 server component 的順序）：
- * 任一請求失敗 → 伺服器異常（BookingError）；config 為空 → 404；未開通線上預約 → 導回院所頁（顯示現場 / 電話預約）。
+ * 後端回 404 或 config 為空 → 找不到頁面；其他請求失敗 → 伺服器異常（BookingError）；未開通線上預約 → 導回院所頁（顯示現場 / 電話預約）。
  */
 export async function loadBookingPage(api: BookingPageApi, clinicId: string): Promise<BookingPageResult> {
   let clinicConfig: ClinicConfig | null;
@@ -52,6 +52,8 @@ export async function loadBookingPage(api: BookingPageApi, clinicId: string): Pr
       api.getDoctors(clinicId),
     ]);
   } catch (error) {
+    // 網址中的院所不存在（後端 404）不是伺服器異常
+    if ((error as { status?: unknown } | null)?.status === 404) return { kind: "notFound" };
     console.error("Failed to load booking data:", error);
     return { kind: "error" };
   }

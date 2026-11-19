@@ -5,8 +5,14 @@
 
 {#if !board.enabled}
   <div class={`flex flex-col items-center justify-center gap-3 px-6 text-center ${embedded ? 'min-h-96' : 'min-h-screen'}`}>
-    <p class="text-2xl font-semibold">此院所尚未開通候診看板</p>
-    <p class="text-muted-foreground">候診室大螢幕為「專業方案」功能，升級後即可啟用。</p>
+    <!-- 後端對不存在的院所回 enabled=false 且 facility_name=null，不應誤導為方案問題 -->
+    {#if board.facility_name === null}
+      <p class="text-2xl font-semibold">找不到這個院所的看板</p>
+      <p class="text-muted-foreground">請確認網址，或到院所後台重新複製看板連結。</p>
+    {:else}
+      <p class="text-2xl font-semibold">此院所尚未開通候診看板</p>
+      <p class="text-muted-foreground">候診室大螢幕為「專業方案」功能，升級後即可啟用。</p>
+    {/if}
   </div>
 {:else}
   <main class={`flex flex-col px-4 py-5 sm:px-10 ${embedded ? 'min-h-[calc(100dvh-var(--demo-header-height))]' : 'min-h-screen'}`}>

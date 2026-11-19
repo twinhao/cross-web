@@ -1,7 +1,12 @@
 <script lang="ts">
 	import PageIntro from "#lib/components/public/PageIntro.svelte";
 	import PublicFrame from "#lib/components/public/PublicFrame.svelte";
+	import Seo from "#lib/components/Seo.svelte";
+
+	let { data } = $props();
 </script>
+
+<Seo {...data.seo} />
 
 <PublicFrame>
 	<PageIntro eyebrow="CROSS / 使用說明與政策" title="服務條款" />

@@ -225,10 +225,13 @@ test("載入成功：付款方式取自 config（缺值為 undefined）", async 
   assert.equal(r.paymentType, undefined);
 });
 
-test("任一請求失敗 → 伺服器異常；config 為空 → 404；未開通線上預約 → 導回診所頁", async (t) => {
+test("請求失敗 → 伺服器異常；後端 404 或 config 為空 → 找不到；未開通線上預約 → 導回診所頁", async (t) => {
   t.mock.method(console, "error", () => {});
   assert.deepEqual(await loadBookingPage(api({ getDoctors: async () => { throw new Error("x"); } }), "c1"), { kind: "error" });
   assert.deepEqual(await loadBookingPage(api({ getClinicConfig: async () => null }), "c1"), { kind: "notFound" });
+  // 網址的院所不存在：後端 404 不算伺服器異常
+  const missing = Object.assign(new Error("API Error: 404 Not Found"), { status: 404 });
+  assert.deepEqual(await loadBookingPage(api({ getClinicConfig: async () => { throw missing; } }), "c1"), { kind: "notFound" });
   assert.deepEqual(
     await loadBookingPage(api({ getClinicConfig: async () => ({ ...config, online_booking_enabled: false }) }), "c1"),
     { kind: "redirect", to: "/clinic/c1" },

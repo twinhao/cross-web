@@ -5,7 +5,7 @@
 	import BookingError from "#lib/components/booking/BookingError.svelte";
 	import BookingFlow from "#lib/components/booking/BookingFlow.svelte";
 	import BookingLoading from "#lib/components/booking/BookingLoading.svelte";
-	import NextErrorFallback from "#lib/components/NextErrorFallback.svelte";
+	import ErrorPage from "#lib/components/ErrorPage.svelte";
 	import PublicFrame from "#lib/components/public/PublicFrame.svelte";
 
 	// 移植自舊版 app/booking/[clinic-id]/page.tsx + loading.tsx + app/booking/layout.tsx（PublicFrame，無 footer）
@@ -14,7 +14,7 @@
 
 	let result = $state.raw<BookingPageResult | null>(null);
 
-	// 載入院所設定、服務、人員（任一失敗 → 伺服器異常；config 為空 → 404；未開通線上預約 → 導回院所頁）。
+	// 載入院所設定、服務、人員（查無院所或 config 為空 → 找不到頁面；其他失敗 → 伺服器異常；未開通線上預約 → 導回院所頁）。
 	// 換院所時先回到骨架再重抓，舊回應作廢（對應舊版換 param 重新渲染整頁）。
 	$effect(() => {
 		const id = clinicId;
@@ -33,8 +33,7 @@
 </script>
 
 {#if result?.kind === "notFound"}
-	<!-- 舊版 notFound()：沒有自訂 not-found，由 root 的預設 404 取代整個 booking layout（無 header） -->
-	<NextErrorFallback status={404} message="This page could not be found." />
+	<ErrorPage />
 {:else}
 	<PublicFrame footer={false} booking>
 		{#if result === null || result.kind === "redirect"}
